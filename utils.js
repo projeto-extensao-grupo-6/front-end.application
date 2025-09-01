@@ -25,7 +25,7 @@
     
         FORMATO_MYSQl: 'YYYY/MM/DD',
 
-        formatar(data){
+        formatarData(data){
             if(!data || !dayjs(data).isValid()) return null;
             return dayjs(data).format(this.FORMATO_MYSQl);
         },
