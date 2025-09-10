@@ -213,7 +213,6 @@ function Cadastro() {
         </form>
       </div>
 
-      {/* MODAL DE SUCESSO */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <Box
           sx={{
