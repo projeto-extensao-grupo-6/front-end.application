@@ -1,0 +1,36 @@
+.btn-novo-cliente {
+  min-width: 131px;
+  height: 34px;
+  position: relative;
+  
+  border-radius: 3px;
+  opacity: 1;
+  
+  padding: 8px 12px;
+  gap: 6px;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  border: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  
+  background-color: #007EA7;
+;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  
+  transition: background-color 0.2s ease;
+}
+
+.btn-novo-cliente:hover {
+  background-color: #ddd;
+}
+
+.btn-novo-cliente:active {
+  background-color: #ddd;
+}

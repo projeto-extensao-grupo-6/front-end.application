@@ -1,0 +1,17 @@
+.table-container {
+  width: calc(100% - 2vw);
+  height: calc(100% - 10vh);
+  position: absolute;
+  top: 8vh;
+  left: 1vw;
+  
+  display: flex;
+  flex-direction: column;
+  
+  border-radius: 4px;
+  border: 1px solid #E5E7EB;
+  background-color: #ffffff;
+  
+  box-sizing: border-box;
+  overflow: hidden;
+}

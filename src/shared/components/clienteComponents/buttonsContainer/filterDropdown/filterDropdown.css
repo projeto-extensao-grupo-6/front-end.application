@@ -1,0 +1,95 @@
+.filter-dropdown {
+  min-width: 122px;
+  height: 38px;
+  position: relative;
+  
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  opacity: 1;
+  
+  padding: 9px 12px;
+  gap: 8px;
+  
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  cursor: pointer;
+  box-sizing: border-box;
+  
+  background-color: #ffffff;
+  color: #333333;
+  
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0%;
+  white-space: nowrap;
+  
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.filter-dropdown:hover {
+  background-color: #F9FAFB;
+  border-color: #D1D5DB;
+}
+
+.filter-dropdown:active {
+  background-color: #F3F4F6;
+  border-color: #9CA3AF;
+}
+
+.filter-dropdown-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  min-width: 100%;
+  
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  z-index: 10;
+  display: none;
+}
+
+.filter-dropdown-menu.active {
+  display: block;
+}
+
+.filter-dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: #333333;
+  
+  transition: background-color 0.2s ease;
+}
+
+.filter-dropdown-item:hover {
+  background-color: #F3F4F6;
+}
+
+.filter-dropdown-item:first-child {
+  border-radius: 6px 6px 0 0;
+}
+
+.filter-dropdown-item:last-child {
+  border-radius: 0 0 6px 6px;
+}

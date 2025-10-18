@@ -1,0 +1,50 @@
+.btn-export {
+  min-width: 106px;
+  height: 38px;
+  position: relative;
+  
+  border-radius: 4px;
+  border: 1px solid #333333;
+  opacity: 1;
+  
+  padding: 9px 12px;
+  gap: 8px;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  cursor: pointer;
+  box-sizing: border-box;
+  
+  background-color: #333333;
+  color: #ffffff;
+  
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0%;
+  white-space: nowrap;
+  
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-export:hover {
+  background-color: #1f1f1f;
+  border-color: #1f1f1f;
+}
+
+.btn-export:active {
+  background-color: #0a0a0a;
+  border-color: #0a0a0a;
+}
+
+.btn-export-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

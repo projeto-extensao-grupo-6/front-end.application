@@ -1,0 +1,15 @@
+.main-box {
+  width: 90vw;
+  height: 80vh;
+  position: absolute;
+  top: 10%;
+  left: 5%;
+  right: 5%;
+
+  border-radius: 4px;
+  border: 1px solid #E5E7EB;
+  opacity: 1;
+
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
