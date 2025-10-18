@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./filterDropdown.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { faAngleDown } from "@fortawesome/free-solid-svg-icons";
 
 function FilterDropdown({ label, options, onSelect }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,7 +21,7 @@ function FilterDropdown({ label, options, onSelect }) {
     <div className="filter-dropdown" onClick={handleToggle}>
       <span>{selected}</span>
       <span className="filter-dropdown-icon">
-        <FontAwesomeIcon icon={faChevronDown} />
+        <FontAwesomeIcon icon={faAngleDown} />
       </span>
       <div className={`filter-dropdown-menu ${isOpen ? "active" : ""}`}>
         {options.map((option, index) => (
