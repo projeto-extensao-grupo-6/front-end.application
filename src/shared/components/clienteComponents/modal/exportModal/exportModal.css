@@ -1,0 +1,213 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 1;
+}
+
+.export-modal {
+  width: 459px;
+  height: auto;
+  max-height: 90vh;
+  overflow-y: auto;
+  
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  padding: 24px;
+  
+  box-sizing: border-box;
+  opacity: 1;
+  
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.modal-icon {
+  width: 40px;
+  height: 40px;
+  color: #3B82F6;
+}
+
+.modal-title {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #333333;
+}
+
+.export-content {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 16px;
+}
+
+.btn-escolher-arquivo {
+  padding: 10px 24px;
+  
+  background-color: #F3F4F6;
+  color: #333333;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  
+  width: fit-content;
+}
+
+.btn-escolher-arquivo:hover {
+  background-color: #E5E7EB;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.drag-drop-area {
+  width: 100%;
+  min-height: 200px;
+  
+  border: 2px dashed #D1D5DB;
+  border-radius: 8px;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  
+  padding: 24px;
+  box-sizing: border-box;
+  
+  background-color: #F9FAFB;
+  
+  transition: all 0.3s ease;
+  
+  cursor: pointer;
+}
+
+.drag-drop-area.drag-over {
+  border-color: #3B82F6;
+  background-color: #EFF6FF;
+}
+
+.drag-drop-icon {
+  width: 48px;
+  height: 48px;
+  color: #9CA3AF;
+}
+
+.drag-drop-text {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  color: #6B7280;
+  text-align: center;
+}
+
+.drag-drop-text strong {
+  color: #3B82F6;
+}
+
+.selected-file {
+  width: 100%;
+  padding: 12px;
+  
+  background-color: #EFF6FF;
+  border: 1px solid #3B82F6;
+  border-radius: 6px;
+  
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  color: #333333;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-icon {
+  color: #3B82F6;
+}
+
+.btn-remove-file {
+  background: none;
+  border: none;
+  color: #EF4444;
+  cursor: pointer;
+  padding: 4px;
+  
+  transition: color 0.2s ease;
+}
+
+.btn-remove-file:hover {
+  color: #DC2626;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modal-btn.cancel {
+  background-color: #F3F4F6;
+  color: #333333;
+  border: 1px solid #E5E7EB;
+}
+
+.modal-btn.cancel:hover {
+  background-color: #E5E7EB;
+}
+
+.modal-btn.export {
+  background-color: #3B82F6;
+  color: #ffffff;
+}
+
+.modal-btn.export:hover {
+  background-color: #2563EB;
+}
+
+.modal-btn.export:disabled {
+  background-color: #9CA3AF;
+  cursor: not-allowed;
+}

@@ -25,6 +25,30 @@
   color: #333333;
 }
 
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  
+  width: fit-content;
+}
+
+.status-badge.ativo {
+  background-color: #D1FAE5;
+  color: #059669;
+}
+
+.status-badge.finalizado {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
 .historico-servicos {
   margin-top: 16px;
 }

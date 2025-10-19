@@ -8,16 +8,20 @@ import FilterDropdown from "../../shared/components/clienteComponents/buttonsCon
 import TableContainer from "../../shared/components/clienteComponents/tableContainer/tableContainer";
 import PaginationContainer from "../../shared/components/clienteComponents/paginationContainer/paginationContainer";
 import BtnSwitchPages from "../../shared/components/clienteComponents/buttonsContainer/buttons/btnSwitchPages/btnSwitchPages";
+import ClienteModal from "../../shared/components/clienteComponents/modal/clienteModal";
+import ExportModal from "../../shared/components/clienteComponents/modal/exportModal/exportModal";
+import CalendarModal from "../../shared/components/clienteComponents/modal/calendarModal/calendarModal";
+
 import "./historico-clientes.css";
 
-// Dados mockados para teste
+
 const mockData = [
   {
     id: 1,
     nome: "João Silva",
     contato: "(11) 98765-4321",
     email: "joao.silva@email.com",
-    servico: "Manutenção Elétrica",
+    status: "Ativo",
     endereco: "Rua das Flores, 123",
     cidade: "São Paulo",
     uf: "SP",
@@ -47,7 +51,7 @@ const mockData = [
     nome: "Maria Oliveira",
     contato: "(11) 97654-3210",
     email: "maria.oliveira@email.com",
-    servico: "Instalação Hidráulica",
+    status: "Finalizado",
     endereco: "Av. Paulista, 1000",
     cidade: "São Paulo",
     uf: "SP",
@@ -68,7 +72,7 @@ const mockData = [
     nome: "Carlos Santos",
     contato: "(11) 96543-2109",
     email: "carlos.santos@email.com",
-    servico: "Pintura Residencial",
+    status: "Ativo",
     endereco: "Rua Augusta, 500",
     cidade: "São Paulo",
     uf: "SP",
@@ -79,7 +83,7 @@ const mockData = [
     nome: "Ana Paula",
     contato: "(11) 95432-1098",
     email: "ana.paula@email.com",
-    servico: "Reforma Geral",
+    status: "Finalizado",
     endereco: "Rua da Consolação, 250",
     cidade: "São Paulo",
     uf: "SP",
@@ -118,7 +122,7 @@ const mockData = [
     nome: "Roberto Lima",
     contato: "(11) 94321-0987",
     email: "roberto.lima@email.com",
-    servico: "Instalação de Ar Condicionado",
+    status: "Ativo",
     endereco: "Rua Vergueiro, 800",
     cidade: "São Paulo",
     uf: "SP",
@@ -139,7 +143,7 @@ const mockData = [
     nome: "Fernanda Costa",
     contato: "(11) 93210-9876",
     email: "fernanda.costa@email.com",
-    servico: "Dedetização",
+    status: "Finalizado",
     endereco: "Av. Rebouças, 1500",
     cidade: "São Paulo",
     uf: "SP",
@@ -150,7 +154,7 @@ const mockData = [
     nome: "Lucas Pereira",
     contato: "(11) 92109-8765",
     email: "lucas.pereira@email.com",
-    servico: "Jardinagem",
+    status: "Ativo",
     endereco: "Rua Oscar Freire, 300",
     cidade: "São Paulo",
     uf: "SP",
@@ -171,7 +175,7 @@ const mockData = [
     nome: "Juliana Alves",
     contato: "(11) 91098-7654",
     email: "juliana.alves@email.com",
-    servico: "Limpeza de Piscina",
+    status: "Finalizado",
     endereco: "Rua dos Pinheiros, 450",
     cidade: "São Paulo",
     uf: "SP",
@@ -203,38 +207,69 @@ function HistoricoClientes() {
   const [erro, setErro] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedCliente, setSelectedCliente] = useState(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+
+
   const itemsPerPage = 7;
 
   const totalItems = historico.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  // Paginação
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = historico.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleNovoCliente = () => {
-    console.log("Novo cliente clicado");
+    setModalMode("create");
+    setSelectedCliente(null);
+    setIsModalOpen(true);
   };
 
-  const handleExportar = () => {
-    console.log("Exportar clicado");
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedCliente(null);
   };
 
-  const handleOrdenar = (option) => {
-    console.log("Ordenar por:", option);
+  const handleSubmitCliente = (clienteData) => {
+    if (modalMode === "edit") {
+      // Atualizar cliente existente
+      setHistorico(prev => 
+        prev.map(c => c.id === clienteData.id ? { ...c, ...clienteData } : c)
+      );
+      console.log("Cliente atualizado:", clienteData);
+    } else {
+      // Adicionar novo cliente
+      const novoCliente = {
+        ...clienteData,
+        id: historico.length + 1,
+        historicoServicos: []
+      };
+      setHistorico(prev => [...prev, novoCliente]);
+      console.log("Novo cliente adicionado:", novoCliente);
+    }
   };
+
 
   const handleFiltrar = (option) => {
     console.log("Filtrar por:", option);
   };
 
   const handleEdit = (id) => {
-    console.log("Editar cliente:", id);
+    const cliente = historico.find(c => c.id === id);
+    if (cliente) {
+      setSelectedCliente(cliente);
+      setModalMode("edit");
+      setIsModalOpen(true);
+    }
   };
 
   const handleDelete = (id) => {
     console.log("Excluir cliente:", id);
+    setHistorico(prev => prev.filter(c => c.id !== id));
   };
 
   const handlePrevPage = () => {
@@ -248,7 +283,26 @@ function HistoricoClientes() {
       setCurrentPage(currentPage + 1);
     }
   };
+  
+  const handleExportar = () => {
+    setIsExportModalOpen(true);
+  };
 
+  const handleExportSubmit = (file) => {
+    console.log("Exportar arquivo:", file);
+  };
+
+    const handleOrdenar = (option) => {
+    console.log("Ordenar por:", option);
+    if (option === "Data") {
+      setIsCalendarModalOpen(true);
+    }
+  };
+
+  const handleSelectDate = (date) => {
+    console.log("Data selecionada:", date);
+    // Aqui você adiciona a lógica de filtrar por data
+  };
   return (
     <MainBox>
       <ButtonsContainer>
@@ -256,17 +310,15 @@ function HistoricoClientes() {
         <SearchBar
           placeholder="Buscar cliente..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
         />
         <FilterDropdown
-          label="Ordenar Por"
-          options={["Data", "Nome", "Email"]}
-          onSelect={handleOrdenar}
+          label="Ordenar"
+          options={["Nome A-Z", "Nome Z-A", "Status Ativo", "Status Finalizado"]}
         />
         <FilterDropdown
           label="Situação"
-          options={["Todos", "Ativos", "Inativos"]}
-          onSelect={handleFiltrar}
+          options={["Todos", "Ativos", "Finalizados"]}
         />
         <BtnExport onClick={handleExportar} />
       </ButtonsContainer>
@@ -285,14 +337,30 @@ function HistoricoClientes() {
         <BtnSwitchPages 
           direction="prev" 
           onClick={handlePrevPage}
-          disabled={currentPage == 1}
+          disabled={currentPage === 1}
         />
         <BtnSwitchPages 
           direction="next" 
           onClick={handleNextPage}
-          disabled={currentPage == totalPages}
+          disabled={currentPage === totalPages}
         />
       </PaginationContainer>
+
+      <ClienteModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitCliente}
+      />
+            <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExportSubmit}
+      />
+         <CalendarModal
+        isOpen={isCalendarModalOpen}
+        onClose={() => setIsCalendarModalOpen(false)}
+        onSelectDate={handleSelectDate}
+      />
     </MainBox>
   );
 }

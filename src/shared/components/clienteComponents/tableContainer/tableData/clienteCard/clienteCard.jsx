@@ -22,7 +22,11 @@ function ClienteCard({ cliente, onEdit, onDelete }) {
         <span className="cliente-card-field">{cliente.nome}</span>
         <span className="cliente-card-field">{cliente.contato}</span>
         <span className="cliente-card-field">{cliente.email}</span>
-        <span className="cliente-card-field">{cliente.servico}</span>
+        <span className="cliente-card-field">
+          <span className={`status-badge ${cliente.status === 'Ativo' ? 'ativo' : 'finalizado'}`}>
+            {cliente.status || 'Ativo'}
+          </span>
+        </span>
         <div className="cliente-card-actions">
           <FontAwesomeIcon
             icon={faPenToSquare}
@@ -30,7 +34,6 @@ function ClienteCard({ cliente, onEdit, onDelete }) {
             onClick={handleEdit}
             title="Editar"
           />
-          
         </div>
       </div>
 
