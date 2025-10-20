@@ -32,7 +32,6 @@ function Login() {
 
       setTimeout(() => {
         setModalOpen(false);
-        // window.location.href = "/dashboard";
       }, 2000);
     } catch (error) {
       setError(error.message);
@@ -67,7 +66,6 @@ function Login() {
           className="w-full max-w-md backdrop-blur-sm p-8 rounded-xl"
         >
           <div className="flex flex-col gap-6">
-            {/* Cabeçalho */}
             <div className="mb-10 text-center flex flex-col gap-2">
               <h1 className="text-3xl font-bold text-[#111827] mb-2">
                 Entre na sua conta
@@ -89,7 +87,6 @@ function Login() {
                   transition={{ duration: 0.4 }}
                   className="space-y-6"
                 >
-                  {/* Email */}
                   <div className="space-y-3">
                     <label
                       htmlFor="email"
@@ -190,8 +187,6 @@ function Login() {
           </div>
         </motion.div>
       </div>
-
-      {/* Modal de sucesso */}
       <AnimatePresence>
         {modalOpen && (
           <motion.div

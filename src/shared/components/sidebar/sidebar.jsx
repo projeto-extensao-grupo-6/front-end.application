@@ -11,90 +11,105 @@ import {
   ChevronLeft,
   Assignment,
 } from "@mui/icons-material";
+import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../../assets/logo/logo-sidebar.png";
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const menuItems = [
-    { text: "Painel de Controle", icon: <Dashboard /> },
-    { text: "Controle de Estoque", icon: <Inventory /> },
-    { text: "Agendamentos", icon: <Event /> },
-    { text: "Clientes", icon: <People /> },
-    { text: "Controle de Acesso", icon: <Lock /> },
-    { text: "Controle de Funcionários", icon: <Work /> },
-    { text: "Pedidos e Serviços", icon: <Assignment /> },
+    { text: "Painel de Controle", icon: <Dashboard />, path: "/paginaInicial" },
+    { text: "Controle de Estoque", icon: <Inventory />, path: "/estoque" },
+    { text: "Pedidos e Serviços", icon: <Assignment />, path: "/pedidos" },
+    { text: "Agendamentos", icon: <Event />, path: "/agendamentos" },
+    { text: "Clientes", icon: <People />, path: "/clientes" },
+    { text: "Controle de Funcionários", icon: <Work />, path: "/funcionarios" },
+    { text: "Controle de Acesso", icon: <Lock />, path: "/acesso" },
   ];
 
   return (
     <>
-      {/* Overlay escurecido */}
+      {/* Overlay escurecido (funcional e cobrindo toda a tela) */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, pointerEvents: "auto" }}
-            exit={{ opacity: 0, pointerEvents: "none" }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/50 z-[1300] cursor-pointer"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1399] cursor-pointer"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+            }}
           />
         )}
       </AnimatePresence>
 
+      {/* Sidebar */}
       <motion.aside
         animate={{ x: sidebarOpen ? 0 : "-100%" }}
-        transition={{ type: "spring", stiffness: 280, damping: 30 }}
-        className="fixed top-0 left-0 h-full w-[270px] bg-white text-gray-700 shadow-2xl z-[1400] flex flex-col"
+        transition={{ type: "spring", stiffness: 260, damping: 28 }}
+        className="fixed top-0 left-0 h-full w-[270px] bg-white text-gray-700 shadow-2xl z-[1400] flex flex-col border-r border-gray-200"
       >
-        <div
-          className="relative flex flex-col items-center px-4"
-          style={{ paddingTop: "16px", paddingBottom: "32px" }}
-        >
+        {/* Logo e botão fechar */}
+        <div className="relative flex flex-col items-center px-4 pt-6 pb-8">
           <button
             onClick={() => setSidebarOpen(false)}
             className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition cursor-pointer"
           >
-            <ChevronLeft style={{ fontSize: 36 }} />
+            <ChevronLeft style={{ fontSize: 34 }} />
           </button>
 
           <img
             src={Logo}
             alt="Logo"
-            className="w-[50%] h-auto object-contain my-4"
+            className="w-[55%] h-auto object-contain my-5 drop-shadow-sm"
           />
         </div>
 
-        <div className="flex-grow overflow-y-auto flex flex-col items-start">
-          <ul
-            className="flex flex-col gap-4 w-full mt-2"
-            style={{ paddingLeft: "2rem" }}
-          >
-            {menuItems.map((item, i) => (
-              <li key={i} className="w-full flex justify-start">
-                <button
-                  className="flex items-center gap-2 w-fit text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition cursor-pointer"
-                  style={{ marginLeft: 0 }}
-                >
-                  <span
-                    className="text-gray-600"
-                    style={{ fontSize: "1.5rem" }}
-                  >
-                    {item.icon}
-                  </span>
-                  <span className="text-base font-medium">{item.text}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Menu principal */}
+        <nav className="flex-grow overflow-y-auto w-full">
+          <ul className="flex flex-col gap-2 px-6">
+            {menuItems.map((item, i) => {
+              const isActive = location.pathname === item.path;
 
-        <div
-          className="mt-auto pt-8 flex justify-start"
-          style={{ paddingLeft: "2rem", paddingBottom: "3rem" }}
-        >
+              return (
+                <li key={i}>
+                  <button
+                    onClick={() => navigate(item.path)}
+                    className={`flex items-center gap-3 w-full text-left px-3 py-3 rounded-lg transition-all duration-150 cursor-pointer ${
+                      isActive
+                        ? "bg-[#003d6b] text-white shadow-sm"
+                        : "hover:bg-[#003d6b]/10 hover:text-[#003d6b] text-gray-700"
+                    }`}
+                  >
+                    <span
+                      className={`${
+                        isActive ? "text-white" : "text-gray-600"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="text-base font-medium">{item.text}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Botão Sair */}
+        <div className="mt-auto px-6 pb-8">
           <button
-            className="flex items-center gap-2 w-full text-gray-700 hover:bg-gray-100 px-4 py-3 rounded-xl transition text-lg font-bold cursor-pointer"
-            style={{ fontSize: "1.125rem" }}
+            onClick={() => navigate("/")}
+            className="flex items-center gap-3 w-full text-gray-700 hover:bg-[#003d6b]/10 hover:text-[#003d6b] px-3 py-3 rounded-lg font-semibold text-lg transition-all duration-150 cursor-pointer"
           >
-            <Logout style={{ fontSize: 28 }} />
+            <Logout style={{ fontSize: 26 }} />
             <span>Sair</span>
           </button>
         </div>
