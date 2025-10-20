@@ -1,0 +1,119 @@
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dashboard,
+  Inventory,
+  Event,
+  People,
+  Lock,
+  Work,
+  Logout,
+  ChevronLeft,
+  Assignment,
+} from "@mui/icons-material";
+import { useLocation, useNavigate } from "react-router-dom";
+import Logo from "../../../assets/logo/logo-sidebar.png";
+
+export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const menuItems = [
+    { text: "Painel de Controle", icon: <Dashboard />, path: "/paginaInicial" },
+    { text: "Controle de Estoque", icon: <Inventory />, path: "/estoque" },
+    { text: "Pedidos e Serviços", icon: <Assignment />, path: "/pedidos" },
+    { text: "Agendamentos", icon: <Event />, path: "/agendamentos" },
+    { text: "Clientes", icon: <People />, path: "/clientes" },
+    { text: "Controle de Funcionários", icon: <Work />, path: "/funcionarios" },
+    { text: "Controle de Acesso", icon: <Lock />, path: "/acesso" },
+  ];
+
+  return (
+    <>
+      {/* Overlay escurecido (funcional e cobrindo toda a tela) */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1399] cursor-pointer"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <motion.aside
+        animate={{ x: sidebarOpen ? 0 : "-100%" }}
+        transition={{ type: "spring", stiffness: 260, damping: 28 }}
+        className="fixed top-0 left-0 h-full w-[270px] bg-white text-gray-700 shadow-2xl z-[1400] flex flex-col border-r border-gray-200"
+      >
+        {/* Logo e botão fechar */}
+        <div className="relative flex flex-col items-center px-4 pt-6 pb-8">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition cursor-pointer"
+          >
+            <ChevronLeft style={{ fontSize: 34 }} />
+          </button>
+
+          <img
+            src={Logo}
+            alt="Logo"
+            className="w-[55%] h-auto object-contain my-5 drop-shadow-sm"
+          />
+        </div>
+
+        {/* Menu principal */}
+        <nav className="flex-grow overflow-y-auto w-full">
+          <ul className="flex flex-col gap-2 px-6">
+            {menuItems.map((item, i) => {
+              const isActive = location.pathname === item.path;
+
+              return (
+                <li key={i}>
+                  <button
+                    onClick={() => navigate(item.path)}
+                    className={`flex items-center gap-3 w-full text-left px-3 py-3 rounded-lg transition-all duration-150 cursor-pointer ${
+                      isActive
+                        ? "bg-[#003d6b] text-white shadow-sm"
+                        : "hover:bg-[#003d6b]/10 hover:text-[#003d6b] text-gray-700"
+                    }`}
+                  >
+                    <span
+                      className={`${
+                        isActive ? "text-white" : "text-gray-600"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="text-base font-medium">{item.text}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Botão Sair */}
+        <div className="mt-auto px-6 pb-8">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-3 w-full text-gray-700 hover:bg-[#003d6b]/10 hover:text-[#003d6b] px-3 py-3 rounded-lg font-semibold text-lg transition-all duration-150 cursor-pointer"
+          >
+            <Logout style={{ fontSize: 26 }} />
+            <span>Sair</span>
+          </button>
+        </div>
+      </motion.aside>
+    </>
+  );
+}
