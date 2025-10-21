@@ -1,8 +1,16 @@
-import React from 'react'
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css'
-import Login from './pages/login/login.jsx'
-import Cadastro from './pages/cadastro/cadastro.jsx'
+import './App.css';
+import Login from './pages/login/login.jsx';
+import Cadastro from './pages/cadastro/cadastro.jsx';
+import PaginaInicial from './pages/paginaInicial/paginaInicial.jsx';
+import Funcionarios from './pages/funcionarios/funcionarios.jsx';
+import Clientes from './pages/clientes/clientes.jsx';
+import Estoque from './pages/estoque/estoque.jsx';
+import Pedidos from './pages/pedidos/pedidos.jsx';
+import Agendamentos from './pages/agendamentos/agendamentos.jsx';
+import Acesso from './pages/acesso/acesso.jsx';
 import HistoricoClientes from './pages/clientes/historico-clientes.jsx'
 
 function App() {
@@ -13,7 +21,7 @@ function App() {
       <Route path="/cadastro" element={<Cadastro />} />
       <Route path="/historico-clientes" element={<HistoricoClientes />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;
