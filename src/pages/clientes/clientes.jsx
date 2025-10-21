@@ -15,7 +15,7 @@ export default function Clientes() {
         <main className="flex-1 p-8">
           <div className="max-w-[1800px] mx-auto text-center">
             <h1 className="text-3xl font-bold text-gray-800">Clientes</h1>
-            <p className="text-gray-500 text-lg">Visualize todos os funcionários de sua empresa</p>
+            <p className="text-gray-500 text-lg">Visualize todos os clientes</p>
           </div>
         </main>
       </div>

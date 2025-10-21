@@ -11,10 +11,9 @@ import BtnSwitchPages from "../../shared/components/clienteComponents/buttonsCon
 import ClienteModal from "../../shared/components/clienteComponents/modal/clienteModal";
 import ExportModal from "../../shared/components/clienteComponents/modal/exportModal/exportModal";
 import CalendarModal from "../../shared/components/clienteComponents/modal/calendarModal/calendarModal";
-
-import "./historico-clientes.css";
 import Sidebar from "../../shared/components/sidebar/sidebar";
 import Header from "../../shared/components/header/header";
+import "./historico-clientes.css";
 
 const mockData = [
   {
@@ -308,10 +307,9 @@ function HistoricoClientes() {
 
   return (
     <>
-    <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-    <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-
-    <MainBox>
+      <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+    <MainBox> 
       <ButtonsContainer>
         <BtnNovoCliente onClick={handleNovoCliente} />
         <SearchBar
@@ -352,7 +350,7 @@ function HistoricoClientes() {
           disabled={currentPage === totalPages}
         />
       </PaginationContainer>
-
+      </MainBox>
       <ClienteModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -368,7 +366,6 @@ function HistoricoClientes() {
         onClose={() => setIsCalendarModalOpen(false)}
         onSelectDate={handleSelectDate}
       />
-    </MainBox>
   </>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./clienteModal.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 function ClienteModal({ isOpen, onClose, onSubmit, cliente = null, mode = "create" }) {
   const [formData, setFormData] = useState({
@@ -11,10 +11,13 @@ function ClienteModal({ isOpen, onClose, onSubmit, cliente = null, mode = "creat
     endereco: "",
     cidade: "",
     uf: "",
+    cep: "",
+    numero: "",
     possuiServico: false,
-    servicoPrestado: "",
     status: "Ativo"
   });
+
+  const [servicosPrestados, setServicosPrestados] = useState([""]);
 
   useEffect(() => {
     if (cliente && mode === "edit") {
@@ -25,10 +28,17 @@ function ClienteModal({ isOpen, onClose, onSubmit, cliente = null, mode = "creat
         endereco: cliente.endereco || "",
         cidade: cliente.cidade || "",
         uf: cliente.uf || "",
+        cep: cliente.cep || "",
+        numero: cliente.numero || "",
         possuiServico: cliente.status === "Ativo",
-        servicoPrestado: "",
         status: cliente.status || "Ativo"
       });
+      
+      if (cliente.historicoServicos && cliente.historicoServicos.length > 0) {
+        setServicosPrestados(cliente.historicoServicos.map(s => s.servico));
+      } else {
+        setServicosPrestados([""]);
+      }
     } else {
       setFormData({
         nome: "",
@@ -37,10 +47,12 @@ function ClienteModal({ isOpen, onClose, onSubmit, cliente = null, mode = "creat
         endereco: "",
         cidade: "",
         uf: "",
+        cep: "",
+        numero: "",
         possuiServico: false,
-        servicoPrestado: "",
         status: "Ativo"
       });
+      setServicosPrestados([""]);
     }
   }, [cliente, mode, isOpen]);
 
@@ -60,10 +72,37 @@ function ClienteModal({ isOpen, onClose, onSubmit, cliente = null, mode = "creat
     }));
   };
 
+  const handleServicoChange = (index, value) => {
+    const newServicos = [...servicosPrestados];
+    newServicos[index] = value;
+    setServicosPrestados(newServicos);
+  };
+
+  const adicionarServico = () => {
+
+    const ultimoServico = servicosPrestados[servicosPrestados.length - 1];
+    if (ultimoServico.trim() === "") {
+      alert("Preencha o serviço atual antes de adicionar um novo");
+      return;
+    }
+    
+    setServicosPrestados([...servicosPrestados, ""]);
+  };
+
+  const removerServico = (index) => {
+    if (servicosPrestados.length > 1) {
+      const newServicos = servicosPrestados.filter((_, i) => i !== index);
+      setServicosPrestados(newServicos);
+    }
+  };
+
   const handleSubmit = () => {
+    const servicosFiltrados = servicosPrestados.filter(s => s.trim() !== "");
+    
     const dataToSubmit = {
       ...formData,
-      contato: formData.telefone
+      contato: formData.telefone,
+      servicosPrestados: servicosFiltrados
     };
     
     if (mode === "edit" && cliente) {
@@ -175,17 +214,35 @@ function ClienteModal({ isOpen, onClose, onSubmit, cliente = null, mode = "creat
           {!formData.possuiServico && (
             <div className="historico-section">
               <h3 className="historico-title">Histórico de serviços prestados</h3>
-              <div className="form-group">
-                <input
-                  type="text"
-                  name="servicoPrestado"
-                  className="form-input"
-                  placeholder="Digite o serviço prestado"
-                  value={formData.servicoPrestado}
-                  onChange={handleChange}
-                />
-              </div>
-              <button type="button" className="btn-add-servico">
+              
+              {servicosPrestados.map((servico, index) => (
+                <div key={index} className="servico-item">
+                  <div className="form-group" style={{ marginBottom: '8px' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Digite o serviço prestado"
+                      value={servico}
+                      onChange={(e) => handleServicoChange(index, e.target.value)}
+                    />
+                  </div>
+                  {servicosPrestados.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn-remove-servico"
+                      onClick={() => removerServico(index)}
+                    >
+                      <FontAwesomeIcon icon={faXmark} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              
+              <button 
+                type="button" 
+                className="btn-add-servico" 
+                onClick={adicionarServico}
+              >
                 + Adicionar serviço
               </button>
             </div>
