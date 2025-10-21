@@ -1,27 +1,3 @@
-// import React, { useState } from "react";
-// import Header from "../../shared/components/header/header";
-// import Sidebar from "../../shared/components/sidebar/sidebar";
-
-// export default function Estoque() {
-//   const [sidebarOpen, setSidebarOpen] = useState(false);
-//   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
-//   return (
-//     <div className="flex bg-gray-50 min-h-screen">
-//       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-//       <div className="flex-1 flex flex-col min-h-screen">
-//         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-//         <div className="h-[80px]" />
-//         <main className="flex-1 p-8">
-//           <div className="max-w-[1800px] mx-auto text-center">
-//             <h1 className="text-3xl font-bold text-gray-800">Estoque</h1>
-//             <p className="text-gray-500 text-lg">Visualize todos os funcionários de sua empresa</p>
-//           </div>
-//         </main>
-//       </div>
-//     </div>
-//   );
-// }
 import React, { useState } from "react";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
@@ -46,13 +22,13 @@ const EstoqueKpis = ({ stats }) => (
         className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col justify-between"
       >
         <div className="flex items-start justify-between">
-          <h3 className="text-sm font-medium text-gray-500">{stat.title}</h3>
-          <Package className="w-5 h-5 text-gray-400" />
+          <h3 className="text-sm font-semibold text-gray-800">{stat.title}</h3>
+          <Package className="w-5 h-5 text-[#003d6b]" />
         </div>
         <div className="mt-4">
           <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
           {stat.caption && (
-            <p className="mt-1 text-sm text-gray-500 flex items-center">
+            <p className="mt-1 text-sm text-gray-900 flex items-center">
               {stat.captionColor === 'green' && <ArrowUp className="w-4 h-4 mr-1 text-green-500" />}
               {stat.caption}
             </p>
@@ -190,7 +166,7 @@ export default function Estoque() {
 
               {/* Barra de Ações e Pesquisa */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                <button className="w-full md:w-auto bg-[#003d6b] text-white font-semibold py-2 px-4 rounded-md hover:bg-[#002a4d] transition-colors flex items-center justify-center">
+                <button className="w-full md:w-auto bg-[#007EA7] text-white font-semibold py-2 px-4 rounded-md hover:bg-[#308edb] transition-colors flex items-center justify-center">
                   Novo Item
                 </button>
 
@@ -208,7 +184,7 @@ export default function Estoque() {
                     {/* Simulação do filtro ativo */}
                     {searchTerm && (
                         <div className="absolute top-1/2 transform -translate-y-1/2 right-0 pr-4">
-                            <span className="flex items-center bg-gray-200 text-gray-700 text-xs font-medium px-2 py-1 rounded">
+                            <span className="flex items-center bg-gray-200 text-gray-800 text-xs font-medium px-2 py-1 rounded">
                                 {searchTerm}
                                 <button onClick={() => setSearchTerm('')} className="ml-1 text-gray-500 hover:text-gray-800">
                                     &times;
@@ -220,13 +196,13 @@ export default function Estoque() {
 
                   {/* Botões de Filtro */}
                   <div className="flex gap-3">
-                    <button className="flex items-center gap-2 border border-gray-300 py-2 px-3 rounded-md text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button className="flex items-center gap-2 border border-gray-300 py-2 px-3 rounded-md text-sm text-gray-900 font-extrabold hover:bg-gray-50 transition-colors">
                       <CalendarDays className="w-4 h-4" /> Data
                     </button>
-                    <button className="flex items-center gap-2 border border-gray-300 py-2 px-3 rounded-md text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                      <Filter className="w-4 h-4" /> Filtrar
+                    <button className="flex items-center gap-2 border border-gray-300 py-2 px-3 rounded-md text-sm text-gray-900 font-extrabold hover:bg-gray-50 transition-colors">
+                      <Filter className="w-4 h-4" /> Filtrar  
                     </button>
-                    <button className="flex items-center gap-2 border border-gray-300 py-2 px-3 rounded-md text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button className="flex items-center gap-2 border border-gray-300 py-2 px-3 rounded-md text-sm text-gray-900 font-extrabold hover:bg-gray-50 transition-colors">
                       <Download className="w-4 h-4" /> Exportar
                     </button>
                   </div>
@@ -245,22 +221,22 @@ export default function Estoque() {
                           // Adicionar lógica para selecionar todos
                         />
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">
                         Nome
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">
                         Descrição
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">
                         Preço
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">
                         Quantidade em estoque
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">
                         Situação
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">
                         Ações
                       </th>
                     </tr>
@@ -273,19 +249,19 @@ export default function Estoque() {
                             type="checkbox"
                             checked={selectedItems.includes(item.nome)}
                             onChange={() => handleCheckboxChange(item.nome)}
-                            className={`w-4 h-4 ${selectedItems.includes(item.nome) ? 'text-[#003d6b] border-[#003d6b] bg-gray-200' : 'text-gray-400 border-gray-300'} rounded focus:ring-[#003d6b]`}
+                            className={`w-4 h-4 ${selectedItems.includes(item.nome) ? 'text-[#003d6b] border-[#003d6b] bg-gray-700' : 'text-gray-900 border-gray-300'} rounded focus:ring-[#003d6b]`}
                           />
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {item.nome}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                           {item.descricao}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                           {item.preco}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                           {item.quantidade}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
