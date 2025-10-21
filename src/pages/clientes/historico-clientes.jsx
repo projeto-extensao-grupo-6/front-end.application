@@ -13,6 +13,7 @@ import ExportModal from "../../shared/components/clienteComponents/modal/exportM
 import CalendarModal from "../../shared/components/clienteComponents/modal/calendarModal/calendarModal";
 import Sidebar from "../../shared/components/sidebar/sidebar";
 import Header from "../../shared/components/header/header";
+import SuccessModal from "../../shared/components/clienteComponents/modal/successModal/successModal"; 
 import "./historico-clientes.css";
 
 const mockData = [
@@ -200,7 +201,7 @@ const mockData = [
       }
     ]
   }
-];
+]
 
 function HistoricoClientes() {
   const [historico, setHistorico] = useState(mockData);
@@ -213,14 +214,12 @@ function HistoricoClientes() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   
-
   const itemsPerPage = 7;
-
   const totalItems = historico.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = historico.slice(indexOfFirstItem, indexOfLastItem);
@@ -238,13 +237,11 @@ function HistoricoClientes() {
 
   const handleSubmitCliente = (clienteData) => {
     if (modalMode === "edit") {
-      // Atualizar cliente existente
       setHistorico(prev => 
         prev.map(c => c.id === clienteData.id ? { ...c, ...clienteData } : c)
       );
       console.log("Cliente atualizado:", clienteData);
     } else {
-      // Adicionar novo cliente
       const novoCliente = {
         ...clienteData,
         id: historico.length + 1,
@@ -252,9 +249,11 @@ function HistoricoClientes() {
       };
       setHistorico(prev => [...prev, novoCliente]);
       console.log("Novo cliente adicionado:", novoCliente);
+
+      setIsModalOpen(false);
+      setIsSuccessModalOpen(true);
     }
   };
-
 
   const handleFiltrar = (option) => {
     console.log("Filtrar por:", option);
@@ -294,7 +293,7 @@ function HistoricoClientes() {
     console.log("Exportar arquivo:", file);
   };
 
-    const handleOrdenar = (option) => {
+  const handleOrdenar = (option) => {
     console.log("Ordenar por:", option);
     if (option === "Data") {
       setIsCalendarModalOpen(true);
@@ -305,68 +304,89 @@ function HistoricoClientes() {
     console.log("Data selecionada:", date);
   };
 
+  const handleSuccessConfirm = () => {
+    setIsSuccessModalOpen(false);
+    window.location.href = "./agendamentos";
+    console.log("Usuário aceitou avançar");
+  };
+
   return (
     <>
       <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-    <MainBox> 
-      <ButtonsContainer>
-        <BtnNovoCliente onClick={handleNovoCliente} />
-        <SearchBar
-          placeholder="Buscar cliente..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
-        <FilterDropdown
-          label="Ordenar"
-          options={["Nome A-Z", "Nome Z-A", "Status Ativo", "Status Finalizado"]}
-        />
-        <FilterDropdown
-          label="Situação"
-          options={["Todos", "Ativos", "Finalizados"]}
-        />
-        <BtnExport onClick={handleExportar} />
-      </ButtonsContainer>
+      
+      <MainBox> 
+        <ButtonsContainer>
+          <BtnNovoCliente onClick={handleNovoCliente} />
+          <SearchBar
+            placeholder="Buscar cliente..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <FilterDropdown
+            label="Ordenar"
+            options={["Nome A-Z", "Nome Z-A", "Status Ativo", "Status Finalizado", "Data"]}
+            onSelect={handleOrdenar}
+          />
+          <FilterDropdown
+            label="Situação"
+            options={["Todos", "Ativos", "Finalizados"]}
+            onSelect={handleFiltrar}
+          />
+          <BtnExport onClick={handleExportar} />
+        </ButtonsContainer>
 
-      <TableContainer
-        data={currentItems}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+        <TableContainer
+          data={currentItems}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
 
-      <PaginationContainer
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={totalItems}
-      >
-        <BtnSwitchPages 
-          direction="prev" 
-          onClick={handlePrevPage}
-          disabled={currentPage === 1}
-        />
-        <BtnSwitchPages 
-          direction="next" 
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages}
-        />
-      </PaginationContainer>
+        <PaginationContainer
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+        >
+          <BtnSwitchPages 
+            direction="prev" 
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+          />
+          <BtnSwitchPages 
+            direction="next" 
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          />
+        </PaginationContainer>
       </MainBox>
+
       <ClienteModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleSubmitCliente}
+        cliente={selectedCliente}
+        mode={modalMode}
       />
-            <ExportModal
+      
+      <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         onExport={handleExportSubmit}
       />
-         <CalendarModal
+      
+      <CalendarModal
         isOpen={isCalendarModalOpen}
         onClose={() => setIsCalendarModalOpen(false)}
         onSelectDate={handleSelectDate}
       />
-  </>
+
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        onConfirm={handleSuccessConfirm}
+        message="Deseja avançar?"
+      />
+    </>
   );
 }
 
