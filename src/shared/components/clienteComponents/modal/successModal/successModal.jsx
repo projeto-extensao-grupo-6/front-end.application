@@ -11,35 +11,38 @@ function SuccessModal({ isOpen, onClose, onConfirm, message }) {
       onClick={onClose}
     >
       <div 
-        className="w-[553px] h-[204px] bg-white rounded-lg border border-gray-200 shadow-2xl p-6 flex flex-col justify-between"
+        className="w-[553px] h-[204px] bg-white rounded-lg border
+         border-gray-200 shadow-2xl p-6 flex flex-col justify-between"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-end gap-4 text-start p-2" >
           <FontAwesomeIcon 
             icon={faCircleCheck} 
             className="text-green-500 text-5xl"
           />
-          <div className="flex flex-col">
+          <div className="flex flex-col ">
             <h2 className="text-xl font-bold text-gray-800 mb-1">
-              Criado com sucesso
+                 Cliente cadastrado com sucesso!
             </h2>
             <p className="text-sm text-gray-600">
-              {message || "Deseja avançar?"}
+              {message || "Ação realizada com sucesso."}
             </p>
           </div>
         </div>
 
-        <div className="flex gap-3 justify-start">
+        <div className="flex gap-3 justify-end">
           <button 
             type="button" 
-            className="px-6 py-2 bg-gray-100 text-gray-800 border border-gray-300 rounded-md font-semibold text-sm hover:bg-gray-200 transition-colors"
+            className="px-6 py-2 bg-gray-100 text-gray-800 border
+            border-gray-300 rounded-md font-semibold text-sm hover:bg-gray-200 transition-colors"
             onClick={onClose}
           >
             Cancelar
           </button>
           <button 
             type="button" 
-            className="px-6 py-2 bg-blue-500 text-white rounded-md font-semibold text-sm hover:bg-blue-600 transition-colors"
+            className="px-6 py-2 bg-blue-500 text-white rounded-md font-semibold
+            text-sm hover:bg-blue-600 transition-colors"
             onClick={onConfirm}
           >
             Aceitar

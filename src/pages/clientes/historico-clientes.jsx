@@ -323,16 +323,18 @@ function HistoricoClientes() {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
-          <FilterDropdown
-            label="Ordenar"
-            options={["Nome A-Z", "Nome Z-A", "Status Ativo", "Status Finalizado", "Data"]}
-            onSelect={handleOrdenar}
-          />
-          <FilterDropdown
-            label="Situação"
-            options={["Todos", "Ativos", "Finalizados"]}
-            onSelect={handleFiltrar}
-          />
+     <FilterDropdown
+          label="Ordenar"
+          options={["Mais Recente", "Mais Antigo"]}
+          onSelect={handleOrdenar}
+          hasRadioOptions={true}
+        />
+        <FilterDropdown
+          label="Situação"
+          options={["Serviços Ativos", "Serviços Finalizados"]}
+          onSelect={handleFiltrar}
+          hasRadioOptions={true}
+        />
           <BtnExport onClick={handleExportar} />
         </ButtonsContainer>
 
@@ -384,7 +386,7 @@ function HistoricoClientes() {
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
         onConfirm={handleSuccessConfirm}
-        message="Deseja avançar?"
+        message="O cliente foi adicionado ao histórico do sistema, deseja vincular ou criar um novo agendamento para ele?"
       />
     </>
   );
