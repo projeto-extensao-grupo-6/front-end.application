@@ -31,10 +31,11 @@ const NovoProdutoModal = ({ isOpen, onClose }) => {
     };
 
     return (
-        // Overlay com Escurecimento Suave (CORRIGIDO: Sem Blur, apenas opacidade)
-        // bg-black/50 cria o fundo escuro e semi-transparente, como no protótipo.
+        // Overlay com Backdrop Blur (Desfoque de Fundo) e fundo quase transparente
+        // O desfoque faz o trabalho de ofuscar o conteúdo por trás, dando ênfase ao modal.
         <div 
-            className="fixed inset-0 bg-black/100 flex items-center justify-center z-50 p-4"
+            // backdrop-blur-sm aplica o desfoque. bg-black/5 é quase transparente, mas ajuda a sutilmente escurecer.
+            className="fixed inset-0 bg-black/5 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={onClose} 
         >
             {/* Conteúdo do Modal (com sombra forte para dar ênfase) */}
