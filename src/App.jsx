@@ -11,6 +11,8 @@ import Estoque from './pages/estoque/estoque.jsx';
 import Pedidos from './pages/pedidos/pedidos.jsx';
 import Agendamentos from './pages/agendamentos/agendamentos.jsx';
 import Acesso from './pages/acesso/acesso.jsx';
+import ServicosPage from "./pages/servicos/servicos.jsx";
+import ProdutosPage from "./pages/pedidos/pedidos.jsx";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
       <Route path="/pedidos" element={<Pedidos />} />
       <Route path="/agendamentos" element={<Agendamentos />} />
       <Route path="/acesso" element={<Acesso />} />
+      <Route path="/servicos" element={<ServicosPage />} />
+      <Route path="/pedidos" element={<ProdutosPage />} />
     </Routes>
   );
 }
