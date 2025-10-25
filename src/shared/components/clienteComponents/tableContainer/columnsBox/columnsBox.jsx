@@ -1,14 +1,13 @@
 import React from "react";
-import "./columnsBox.css";
 
 function ColumnsBox() {
   return (
-    <div className="columns-box">
-      <span className="column-header">Nome</span>
-      <span className="column-header">Contato</span>
-      <span className="column-header">Email</span>
-      <span className="column-header">Prestação de Serviço</span>
-      <span className="column-header">Ações</span>
+    <div className="w-full h-[50px] min-h-[50px] flex items-center justify-between bg-gray-50 border-b border-gray-200 px-4 box-border">
+      <span className="flex-1 font-roboto font-semibold text-sm leading-5 text-gray-800 text-center">Nome</span>
+      <span className="flex-1 font-roboto font-semibold text-sm leading-5 text-gray-800 text-center">Contato</span>
+      <span className="flex-1 font-roboto font-semibold text-sm leading-5 text-gray-800 text-center">Email</span>
+      <span className="flex-1 font-roboto font-semibold text-sm leading-5 text-gray-800 text-center">Prestação de Serviço</span>
+      <span className="flex-1 font-roboto font-semibold text-sm leading-5 text-gray-800 text-center">Ações</span>
     </div>
   );
 }

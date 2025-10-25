@@ -1,12 +1,11 @@
 import React from "react";
 import ClienteCard from "./clienteCard/clienteCard";
-import "./tableData.css";
 
 function TableData({ data, onEdit, onDelete }) {
   return (
-    <div className="table-data">
+    <div className="w-full h-[calc(100%-50px)] flex-1 overflow-y-auto box-border">
       {data.length === 0 ? (
-        <p style={{ padding: "20px", textAlign: "center", color: "#9CA3AF" }}>
+        <p className="p-5 text-center text-gray-400">
           Nenhum registro encontrado.
         </p>
       ) : (
