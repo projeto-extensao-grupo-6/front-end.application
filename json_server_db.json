@@ -2,20 +2,12 @@
   "clientes": [
     {
       "nome": "Ana Silva",
-      "telefone": "(11) 91234-5678",
       "email": "ana.silva@email.com",
       "endereco": "Rua das Flores, 12",
       "cidade": "São Paulo",
       "uf": "SP",
-      "cep": "04884311",
-      "numero": "",
-      "possuiServico": true,
       "status": "Ativo",
       "contato": "(11) 91234-5678",
-      "servicosPrestados": [
-        "Reparo de Vazamento",
-        "Limpeza de Caixa d'Água"
-      ],
       "id": "1",
       "historicoServicos": [
         {
@@ -41,7 +33,7 @@
     {
       "id": "2",
       "nome": "Lucas Pereira",
-      "contato": "(11) 92109-8765",
+      "contato": "11921098765",
       "email": "lucas.pereira@email.com",
       "status": "Ativo",
       "endereco": "Rua Oscar Freire, 300",
@@ -142,19 +134,12 @@
     },
     {
       "nome": "Ricardo Gome",
-      "telefone": "(11) 97654-3210",
       "email": "ricardo.gomes@email.com",
       "endereco": "Av. Brasil, 500",
       "cidade": "São Paulo",
       "uf": "SP",
-      "cep": "",
-      "numero": "",
-      "possuiServico": false,
       "status": "Inativo",
       "contato": "(11) 97654-3210",
-      "servicosPrestados": [
-        "Limpeza Pós-Obra"
-      ],
       "id": "6",
       "historicoServicos": [
         {
@@ -233,8 +218,8 @@
     },
     {
       "id": "10",
-      "nome": "Patrícia Souza",
-      "contato": "(21) 98765-8765",
+      "nome": "Patrícia Souzaa",
+      "contato": "21987658768",
       "email": "patricia.souza@email.com",
       "status": "Ativo",
       "endereco": "Rua das Acácias, 88",
@@ -253,20 +238,78 @@
       ]
     },
     {
-      "nome": "Nicolly",
-      "telefone": "11954145257",
-      "email": "nicollysantos6@gmail.com",
-      "endereco": "Rua Francisco ",
-      "cidade": "",
-      "uf": "",
-      "cep": "048843443",
-      "numero": "1111",
-      "possuiServico": false,
-      "status": "Finalizado",
-      "contato": "11954145257",
-      "servicosPrestados": [],
-      "id": "2f4d",
-      "historicoServicos": []
+      "id": "11",
+      "nome": "Jão Gomes da Silva",
+      "contato": "11952028012",
+      "email": "Joao@gmail.com",
+      "endereco": "rua bnarbosa",
+      "status": "Inativo",
+      "historicoServicos": [
+        {
+          "id": "temp-1761545974903",
+          "servico": "Carpinagem",
+          "valor": 120,
+          "dataOrcamento": "2025-10-27",
+          "dataServico": "2025-10-30",
+          "formaPagamento": "Pix",
+          "desconto": 5,
+          "funcionario": "Maria Souza"
+        }
+      ],
+      "cidade": "Rio de Janeiro",
+      "uf": "RJ",
+      "servicoAtivoId": null
+    },
+    {
+      "id": "12",
+      "nome": "Eros Nicolino da Rocha",
+      "contato": "21987658111",
+      "email": "patricia.souza@email.com",
+      "endereco": "Rua das Acácias, 88",
+      "status": "Inativo",
+      "historicoServicos": [
+        {
+          "id": "temp-1761546697475",
+          "servico": "Te Amar",
+          "valor": 0,
+          "dataOrcamento": "2025-10-27",
+          "dataServico": "3000-01-01",
+          "formaPagamento": "Pix",
+          "desconto": 100,
+          "funcionario": "Eros Nicolino da Rocha"
+        }
+      ],
+      "cidade": "São Paulo",
+      "uf": "SP"
+    }
+  ],
+  "funcionarios": [
+    {
+      "id": "1",
+      "nome": "João Silva",
+      "telefone": "(99) 99999-9999",
+      "funcao": "Gerente",
+      "escala": "6x1 - 7h00 às 14h00",
+      "contrato": "CLT",
+      "status": "Ativo"
+    },
+    {
+      "id": "2",
+      "nome": "Maria Souza",
+      "telefone": "(88) 88888-8888",
+      "funcao": "Auxiliar",
+      "escala": "5x2 - 8h00 às 17h00",
+      "contrato": "PJ",
+      "status": "Pausado"
+    },
+    {
+      "id": "3",
+      "nome": "Eros Nicolino da Rocha",
+      "telefone": "(11) 95202-7011",
+      "funcao": "Atendente",
+      "escala": "5x2",
+      "contrato": "Fixo",
+      "status": "Ativo"
     }
   ]
 }

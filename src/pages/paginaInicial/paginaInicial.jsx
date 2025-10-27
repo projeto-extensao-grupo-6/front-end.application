@@ -18,7 +18,6 @@ export default function PaginaInicial() {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // 🔧 Detecta a altura do header dinamicamente
   useEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
@@ -26,7 +25,6 @@ export default function PaginaInicial() {
       }
     };
 
-    // Atualiza altura inicialmente e ao redimensionar
     updateHeight();
     window.addEventListener("resize", updateHeight);
 
@@ -66,7 +64,7 @@ export default function PaginaInicial() {
       {/* Conteúdo principal com padding dinâmico */}
       <main
         className="flex flex-col items-center justify-start px-6 sm:px-8 md:px-10 pb-12 gap-10 transition-all duration-300"
-        style={{ paddingTop: `${headerHeight + 20}px` }} // 20px de folga visual
+        style={{ paddingTop: `${headerHeight + 20}px` }}
       >
         {/* Título */}
         <div className="text-center mb-4 px-2">
