@@ -118,9 +118,9 @@ export default function Funcionarios() {
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="h-80px" />
 
-        <main className="flex-1 p-8 pt-24">
+        <main className="flex-1 p-8">
           <div className="mx-auto">
-            <div className="mb-10 text-center pb-6">
+            <div className="mb-10 text-center pb-7">
               <h1 className="text-3xl font-bold text-gray-800">Controle de funcionário</h1>
               <p className="text-gray-500 text-lg">
                 Visualize todos os funcionários de sua empresa

@@ -254,8 +254,8 @@ export default function Clientes() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="h-20px" />
-        <main className="flex-1 p-8 pt-24">
-          <div className="mx-auto text-center pb-6">
+        <main className="flex-1 p-8">
+          <div className="mx-auto text-center">
             <h1 className="text-3xl font-bold text-gray-800">Clientes</h1>
             <p className="text-gray-500 text-lg">
               Visualize todos os clientes de sua empresa
