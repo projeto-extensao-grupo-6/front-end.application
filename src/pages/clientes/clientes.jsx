@@ -27,8 +27,6 @@ import {
   KeyboardArrowUp,
   VisibilityOutlined,
 } from "@mui/icons-material";
-
-// Importar o Modal
 import ClienteFormModal from "../../shared/components/clienteComponents/ClienteFormModal";
 
 const API_URL = "http://localhost:3000/clientes";
@@ -384,7 +382,6 @@ export default function Clientes() {
                               tabIndex={-1}
                               selected={isItemSelected}
                             >
-                              {/* --- MUDANÇA AQUI --- */}
                               <TableCell padding="checkbox" sx={{ py: 0 }}>
                                 <Checkbox
                                   color="primary"
@@ -394,22 +391,18 @@ export default function Clientes() {
                                   }}
                                 />
                               </TableCell>
-                              {/* --- MUDANÇA AQUI --- */}
                               <TableCell 
                                 id={`client-checkbox-${c.id}`} 
                                 sx={{ color: '#424242', py: 1 }}
                               >
                                 {c.nome}
                               </TableCell>
-                              {/* --- MUDANÇA AQUI --- */}
                               <TableCell sx={{ color: '#424242', py: 1 }}> 
                                 {formatPhone(c.contato)}
                               </TableCell>
-                              {/* --- MUDANÇA AQUI --- */}
                               <TableCell sx={{ color: '#424242', py: 1 }}>
                                 {c.email}
                               </TableCell>
-                              {/* --- MUDANÇA AQUI --- */}
                               <TableCell sx={{ py: 1 }}>
                                 <div className="flex items-center gap-1">
                                   <Chip
@@ -440,7 +433,6 @@ export default function Clientes() {
                                   </Button>
                                 </div>
                               </TableCell>
-                              {/* --- MUDANÇA AQUI --- */}
                               <TableCell sx={{ py: 1 }}>
                                 <div className="flex items-center gap-1">
                                   <IconButton
@@ -565,7 +557,6 @@ export default function Clientes() {
           </div>
         </main>
 
-        {/* O Modal é renderizado aqui */}
         <ClienteFormModal
           open={openForm}
           onClose={() => setOpenForm(false)}

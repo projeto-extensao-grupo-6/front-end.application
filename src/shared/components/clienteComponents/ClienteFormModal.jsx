@@ -15,7 +15,7 @@ import {
   Box,
   Stack,
   Grid,
-  MenuItem, // Importado para caixas de seleção
+  MenuItem, 
 } from "@mui/material";
 import {
   PersonOutline,
@@ -37,7 +37,6 @@ import {
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
 
-// --- MÁSCARA DE TELEFONE (sem alteração) ---
 const TextMaskAdapter = React.forwardRef(function TextMaskAdapter(
   props,
   ref
@@ -62,7 +61,6 @@ TextMaskAdapter.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-// --- ESTADO INICIAL (simplificado) ---
 const getClienteInicial = () => ({
   nome: "",
   contato: "",
@@ -85,7 +83,6 @@ const getNovoServico = () => ({
   funcionario: "N/A",
 });
 
-// --- URL DO SEU JSON-SERVER ---
 const API_BASE_URL = "http://localhost:3000";
 
 export default function ClienteFormModal({
@@ -98,10 +95,8 @@ export default function ClienteFormModal({
   const [clienteData, setClienteData] = useState(getClienteInicial());
   const [historico, setHistorico] = useState([]);
   
-  // --- NOVO ESTADO PARA FUNCIONÁRIOS ---
   const [funcionarios, setFuncionarios] = useState([]);
 
-  // --- EFEITO PARA CARREGAR FUNCIONÁRIOS QUANDO O MODAL ABRE ---
   useEffect(() => {
     if (open) {
       const fetchFuncionarios = async () => {
@@ -117,12 +112,10 @@ export default function ClienteFormModal({
       
       fetchFuncionarios();
     } else {
-      // Limpa a lista quando o modal fecha
       setFuncionarios([]); 
     }
-  }, [open]); // Dependência [open]
+  }, [open]); 
 
-  // --- EFEITO PARA SINCRONIZAR ESTADO INICIAL ---
   useEffect(() => {
     if (modoEdicao && clienteInicial) {
       setClienteData({
@@ -141,9 +134,7 @@ export default function ClienteFormModal({
     setClienteData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // --- LÓGICA DO SWITCH (SIMPLIFICADA) ---
   const handleSwitchChange = (e) => {
-    // Apenas atualiza o status
     setClienteData((prev) => ({
       ...prev,
       status: e.target.checked ? "Ativo" : "Inativo",
@@ -172,13 +163,12 @@ export default function ClienteFormModal({
     setHistorico(novoHistorico);
   };
 
-  // --- LÓGICA DE SUBMISSÃO (SIMPLIFICADA) ---
   const handleSubmit = (e) => {
     e.preventDefault();
     const dadosCompletos = {
       ...clienteData,
       contato: clienteData.contato.replace(/\D/g, ""),
-      historicoServicos: historico, // Sempre envia o histórico
+      historicoServicos: historico,
     };
     onSubmit(dadosCompletos);
     handleClose();
@@ -192,7 +182,6 @@ export default function ClienteFormModal({
     }, 300);
   };
 
-  // --- OPÇÕES DE PAGAMENTO (CONFORME SOLICITADO) ---
   const opcoesPagamento = [
     { value: "N/A", label: "N/A" },
     { value: "Debito", label: "Débito" },
@@ -226,7 +215,6 @@ export default function ClienteFormModal({
       <form onSubmit={handleSubmit}>
         <DialogContent dividers sx={{ p: 3, bgcolor: "grey.50" }}>
           <Stack spacing={3}>
-            {/* SEÇÃO 1: DADOS DO CLIENTE */}
             <Box bgcolor="white" p={3} borderRadius={2} border={1} borderColor="grey.200">
               <Stack spacing={3}>
                 <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
@@ -234,7 +222,7 @@ export default function ClienteFormModal({
                     required
                     label="Nome do cliente"
                     name="nome"
-                    placeholder="Ex: Tiago Mendes" // <-- PLACEHOLDER
+                    placeholder="Ex: Tiago Mendes" 
                     value={clienteData.nome}
                     onChange={handleChange}
                     InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutline fontSize="small" /></InputAdornment> }}
