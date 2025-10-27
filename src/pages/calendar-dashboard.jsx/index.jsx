@@ -71,7 +71,7 @@ const CalendarDashboard = () => {
     <>
       <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex-1 pt-20">
         <div className="h-screen flex">
           {/* Left Sidebar */}
           <div

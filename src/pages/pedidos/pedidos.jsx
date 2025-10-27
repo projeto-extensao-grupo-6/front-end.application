@@ -16,7 +16,7 @@ const FilterModal = ({ activeTab, filters, setFilters, onClose, onApply }) => {
     const primaryFilterKey = isPedidos ? 'paymentFilter' : 'etapaFilter';
 
     return (
-        <div className="fixed inset-0 z-[9999] grid place-items-center bg-black/30 px-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="fixed inset-0 z-9999 grid place-items-center bg-black/30 px-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             <div className="w-full max-w-lg bg-white rounded-xl shadow-lg p-6">
                 <div className="flex justify-between items-center mb-4 border-b pb-3">
                     <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -109,10 +109,10 @@ export default function Pedidos() {
             <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             <div className="flex-1 flex flex-col min-h-screen">
                 <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-                <div className="h-[80px]" />
+                <div className="h-20" />
 
                 <main className="flex-1 p-8">
-                    <section className="max-w-6xl mx-auto mb-8 text-center">
+                    <section className="mx-auto pb-6 text-center">
                         <h1 className="text-[32px] leading-tight font-bold text-[#0F172A]">
                             Pedidos e Serviços
                         </h1>
@@ -121,7 +121,7 @@ export default function Pedidos() {
                         </p>
                     </section>
 
-                    <section className="max-w-6xl mx-auto">
+                    <section className="mx-auto">
                         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
                             <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                                 <button
