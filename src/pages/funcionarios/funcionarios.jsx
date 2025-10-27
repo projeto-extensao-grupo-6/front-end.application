@@ -1,229 +1,185 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
 import {
-  Button,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Checkbox,
-  IconButton,
-  Chip,
-  Box,
-  Typography,
-} from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
+  Info,
+  CalendarDays,
+  TrendingUp,
+  Clock,
+  SlidersHorizontal,
+  ExternalLink,
+} from "lucide-react";
+import Kpis from "../../shared/components/kpis/kpis";
 
-import data from "./funcionariosData.json";
-import FuncionarioForm from "../../shared/components/modalFuncionarios/FuncionarioForm";
-import DeleteFuncionario from "../../shared/components/modalFuncionarios/DeleteFuncionario";
-
-export default function Funcionarios() {
+export default function PaginaInicial() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const headerRef = useRef(null);
+
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  const [funcionarios, setFuncionarios] = useState([]);
-  const [busca, setBusca] = useState("");
-  const [pagina, setPagina] = useState(1);
-  const limitePorPagina = 6;
-
-  const [openForm, setOpenForm] = useState(false);
-  const [modoEdicao, setModoEdicao] = useState(false);
-  const [funcionarioSelecionado, setFuncionarioSelecionado] = useState(null);
-
-  const [openDelete, setOpenDelete] = useState(false);
-  const [funcionarioParaDeletar, setFuncionarioParaDeletar] = useState(null);
-
   useEffect(() => {
-    setFuncionarios(data);
+    const updateHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      }
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+
+    return () => window.removeEventListener("resize", updateHeight);
   }, []);
 
-  const funcionariosFiltrados = funcionarios.filter((f) =>
-    f.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  const kpiData = [
+    {
+      title: "Total de Itens em Estoque abaixo do ideal",
+      value: "0.00",
+      icon: Info,
+      caption: "0 novos alertas hoje"
+    },
+    {
+      title: "Agendamentos de Hoje",
+      value: "0",
+      icon: CalendarDays,
+      caption: "0 serviços nas próximas 3 horas"
+    },
+    {
+      title: "Taxa de ocupação de serviços da semana",
+      value: "00%",
+      icon: TrendingUp,
+      caption: "0% da capacidade utilizada"
+    },
+    {
+      title: "Agendamentos semanais ativos",
+      value: "00",
+      icon: Clock,
+      caption: "+0 novos"
+    },
+  ];
 
-  const indexUltimo = pagina * limitePorPagina;
-  const indexPrimeiro = indexUltimo - limitePorPagina;
-  const funcionariosPagina = funcionariosFiltrados.slice(indexPrimeiro, indexUltimo);
-  const totalPaginas = Math.ceil(funcionariosFiltrados.length / limitePorPagina);
+  const produtos = [
+    { nome: "Produto A", estoque: 5, status: "Crítico" },
+    { nome: "Produto B", estoque: 10, status: "Atenção" },
+    { nome: "Produto C", estoque: 12, status: "Atenção" },
+  ];
 
-  const abrirModalCriar = () => {
-    setModoEdicao(false);
-    setFuncionarioSelecionado(null);
-    setOpenForm(true);
-  };
-
-  const abrirModalEditar = (funcionario) => {
-    setModoEdicao(true);
-    setFuncionarioSelecionado(funcionario);
-    setOpenForm(true);
-  };
-
-  const abrirModalDeletar = (funcionario) => {
-    setFuncionarioParaDeletar(funcionario);
-    setOpenDelete(true);
-  };
-
-  const atualizarFuncionarios = (novoFunc) => {
-    if (modoEdicao && funcionarioSelecionado) {
-      const atualizados = funcionarios.map((f) =>
-        f.id === funcionarioSelecionado.id ? { ...f, ...novoFunc } : f
-      );
-      setFuncionarios(atualizados);
-    } else {
-      setFuncionarios((prev) => [
-        ...prev,
-        { ...novoFunc, id: prev.length + 1 },
-      ]);
-    }
-  };
-
-  const deletarFuncionario = (id) => {
-    setFuncionarios((prev) => prev.filter((f) => f.id !== id));
-  };
+  const agendamentos = [
+    { cliente: "Nome cliente", tipo: "Tipo Instalação", horario: "15:00", dia: "Hoje" },
+    { cliente: "Nome cliente", tipo: "Tipo Instalação", horario: "15:00", dia: "Hoje" },
+    { cliente: "Nome cliente", tipo: "Tipo Instalação", horario: "15:00", dia: "Hoje" },
+  ];
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] font-[Inter]">
+      {/* Header com ref para medir altura */}
+      <div ref={headerRef}>
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-        <div className="h-[80px]" />
-
-        <main className="flex-1 p-8">
-          <div className="max-w-[1800px] mx-auto">
-            <div className="mb-10 text-center">
-              <h1 className="text-3xl font-bold text-gray-800">Controle de funcionário</h1>
-              <p className="text-gray-500 text-lg">
-                Visualize todos os funcionários de sua empresa
-              </p>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-                <Button
-                  variant="contained"
-                  sx={{ backgroundColor: "#007EA7", "&:hover": { backgroundColor: "#00698A" } }}
-                  onClick={abrirModalCriar}
-                >
-                  Novo Funcionário
-                </Button>
-                <TextField
-                  size="small"
-                  placeholder="Busque por nome..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="w-full sm:w-80"
-                />
-              </div>
-
-              <TableContainer component={Paper} elevation={0}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell padding="checkbox">
-                        <Checkbox />
-                      </TableCell>
-                      <TableCell>Nome</TableCell>
-                      <TableCell>Telefone</TableCell>
-                      <TableCell>Função</TableCell>
-                      <TableCell>Escala</TableCell>
-                      <TableCell>Contrato</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Ações</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {funcionariosPagina.map((f) => (
-                      <TableRow key={f.id}>
-                        <TableCell padding="checkbox">
-                          <Checkbox />
-                        </TableCell>
-                        <TableCell>{f.nome}</TableCell>
-                        <TableCell>{f.telefone}</TableCell>
-                        <TableCell>{f.funcao}</TableCell>
-                        <TableCell>{f.escala}</TableCell>
-                        <TableCell>{f.contrato}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={f.status}
-                            color={
-                              f.status === "Ativo"
-                                ? "success"
-                                : f.status === "Pausado"
-                                ? "error"
-                                : "default"
-                            }
-                            variant="outlined"
-                            className="!font-medium"
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <IconButton size="small" onClick={() => abrirModalEditar(f)}>
-                              <Edit fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => abrirModalDeletar(f)}>
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              <div className="flex justify-between items-center mt-4 text-sm text-gray-600">
-                <span>
-                  Mostrando {indexPrimeiro + 1} a{" "}
-                  {Math.min(indexUltimo, funcionariosFiltrados.length)} de{" "}
-                  {funcionariosFiltrados.length} resultados
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
-                    disabled={pagina === 1}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setPagina((prev) => Math.min(prev + 1, totalPaginas))}
-                    disabled={pagina === totalPaginas}
-                  >
-                    Próximo
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
+        <div className="h-[40px] sm:h-[45px] md:h-[50px]" />
       </div>
 
-      <FuncionarioForm
-        open={openForm}
-        setOpen={setOpenForm}
-        modoEdicao={modoEdicao}
-        funcionario={funcionarioSelecionado}
-        salvarFuncionario={atualizarFuncionarios}
-      />
+      {/* Sidebar */}
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <DeleteFuncionario
-        open={openDelete}
-        setOpen={setOpenDelete}
-        funcionario={funcionarioParaDeletar}
-        deletarFuncionario={deletarFuncionario}
-      />
+      {/* Conteúdo principal */}
+      <main
+        className="flex flex-col items-center justify-start px-6 sm:px-8 md:px-10 pb-12 gap-10 transition-all duration-300"
+        style={{ paddingTop: `${headerHeight + 20}px` }}
+      >
+        {/* Título */}
+        <div className="text-center mb-4 px-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-2">
+            Painel de Controle
+          </h1>
+          <p className="text-gray-500 text-sm sm:text-base">
+            Visualize todas as informações importantes em um só lugar
+          </p>
+        </div>
+
+        {/* KPIs */}
+        <div className="w-full max-w-[1600px]">
+          <Kpis stats={kpiData} />
+        </div>
+
+        {/* Seções lado a lado */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-[1600px] mx-auto px-2">
+          {/* Alertas de Estoque */}
+          <section className="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
+            <div className="bg-[#003d6b] text-white py-4 px-6 text-center font-semibold text-lg tracking-wide">
+              Alertas de Estoque
+            </div>
+            <div className="divide-y divide-gray-100">
+              {produtos.map((produto, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col md:flex-row items-center justify-between px-6 py-6"
+                >
+                  <div className="text-center md:text-left">
+                    <p className="font-semibold text-gray-800 text-base">
+                      {produto.nome}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Estoque baixo: {produto.estoque} unidades
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 mt-4 md:mt-0">
+                    <span
+                      className={`text-xs font-medium px-4 py-2 rounded-md ${
+                        produto.status === "Crítico"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
+                      {produto.status}
+                    </span>
+                    <button
+                      className="border border-gray-300 p-2 rounded-md hover:bg-gray-50 transition"
+                      aria-label="Configurar estoque"
+                    >
+                      <SlidersHorizontal className="w-4 h-4 text-gray-700" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Próximos Agendamentos */}
+          <section className="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
+            <div className="bg-[#003d6b] text-white py-4 px-6 text-center font-semibold text-lg tracking-wide">
+              Próximos Agendamentos
+            </div>
+            <div className="divide-y divide-gray-100">
+              {agendamentos.map((ag, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col md:flex-row items-center justify-between px-6 py-6"
+                >
+                  <div className="text-center md:text-left">
+                    <p className="font-semibold text-gray-800 text-base">
+                      {ag.cliente}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {ag.tipo} - {ag.horario}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 mt-4 md:mt-0">
+                    <span className="bg-gray-100 text-gray-700 text-xs font-medium px-4 py-2 rounded-md">
+                      {ag.dia}
+                    </span>
+                    <button
+                      className="border border-gray-300 p-2 rounded-md hover:bg-gray-50 transition"
+                      aria-label="Ver detalhes do agendamento"
+                    >
+                      <ExternalLink className="w-4 h-4 text-gray-700" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </main>
     </div>
   );
 }

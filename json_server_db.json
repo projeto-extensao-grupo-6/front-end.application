@@ -1,53 +1,315 @@
 {
-  "solicitacoes": [
+  "clientes": [
     {
-      "id": "71b7",
-      "nome": "viniv",
-      "email": "vini@gmail.com",
-      "cpf": "111.111.111-11",
-      "celular": "(11) 11111-1111"
+      "nome": "Ana Silva",
+      "email": "ana.silva@email.com",
+      "endereco": "Rua das Flores, 12",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "status": "Ativo",
+      "contato": "(11) 91234-5678",
+      "id": "1",
+      "historicoServicos": [
+        {
+          "servico": "Reparo de Vazamento",
+          "dataOrcamento": "20/02/2024",
+          "dataServico": "22/02/2024",
+          "valor": "180.00",
+          "formaPagamento": "Dinheiro",
+          "funcionario": "Pedro Costa",
+          "desconto": "0"
+        },
+        {
+          "servico": "Limpeza de Caixa d'Água",
+          "dataOrcamento": "15/03/2024",
+          "dataServico": "16/03/2024",
+          "valor": "120.00",
+          "formaPagamento": "Cartão",
+          "funcionario": "Maria Lima",
+          "desconto": "5"
+        }
+      ]
     },
     {
-      "id": "28cd",
-      "nome": "1",
-      "email": "1@1",
-      "cpf": "111.111.111-11",
-      "telefone": "(11) 11111-1111"
+      "id": "2",
+      "nome": "Lucas Pereira",
+      "contato": "11921098765",
+      "email": "lucas.pereira@email.com",
+      "status": "Ativo",
+      "endereco": "Rua Oscar Freire, 300",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "historicoServicos": [
+        {
+          "servico": "Poda de Árvores",
+          "dataOrcamento": "18/06/2024",
+          "dataServico": "20/06/2024",
+          "valor": "320.00",
+          "formaPagamento": "Dinheiro",
+          "funcionario": "João Almeida",
+          "desconto": "0"
+        },
+        {
+          "servico": "Jardinagem",
+          "dataOrcamento": "10/07/2024",
+          "dataServico": "12/07/2024",
+          "valor": "150.00",
+          "formaPagamento": "Pix",
+          "funcionario": "Carlos Souza",
+          "desconto": "10"
+        }
+      ]
     },
     {
-      "id": "4700",
-      "nome": "alex",
-      "email": "alex@leovidros.com",
-      "cpf": "127.327.362-18",
-      "telefone": "(21) 36125-6382"
+      "id": "3",
+      "nome": "Mariana Costa",
+      "contato": "(21) 98765-4321",
+      "email": "mariana.costa@email.com",
+      "status": "Inativo",
+      "endereco": "Av. Atlântica, 150",
+      "cidade": "Rio de Janeiro",
+      "uf": "RJ",
+      "historicoServicos": [
+        {
+          "servico": "Instalação de Ar-Condicionado",
+          "dataOrcamento": "05/05/2024",
+          "dataServico": "07/05/2024",
+          "valor": "500.00",
+          "formaPagamento": "Cartão",
+          "funcionario": "Felipe Rocha",
+          "desconto": "0"
+        }
+      ]
     },
     {
-      "id": "5a71",
-      "nome": "vini",
-      "email": "vinicius.santos@sptech.school",
-      "cpf": "123.762.136-82",
-      "telefone": "(21) 73762-6218"
+      "id": "4",
+      "nome": "Pedro Alves",
+      "contato": "(11) 93456-7890",
+      "email": "pedro.alves@email.com",
+      "status": "Ativo",
+      "endereco": "Rua Augusta, 200",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "historicoServicos": [
+        {
+          "servico": "Troca de Fiação",
+          "dataOrcamento": "12/01/2024",
+          "dataServico": "15/01/2024",
+          "valor": "250.00",
+          "formaPagamento": "Dinheiro",
+          "funcionario": "Rafael Lima",
+          "desconto": "0"
+        },
+        {
+          "servico": "Reparo de Tomada",
+          "dataOrcamento": "20/02/2024",
+          "dataServico": "22/02/2024",
+          "valor": "80.00",
+          "formaPagamento": "Pix",
+          "funcionario": "Rafael Lima",
+          "desconto": "0"
+        }
+      ]
     },
     {
-      "id": "4ca7",
-      "nome": "alex barreira",
-      "email": "vinicius.santos@sptech.school",
-      "cpf": "545.678.789-09",
-      "telefone": "(11) 98882-7232"
+      "id": "5",
+      "nome": "Juliana Fernandes",
+      "contato": "(21) 91234-5678",
+      "email": "juliana.fernandes@email.com",
+      "status": "Ativo",
+      "endereco": "Rua do Carmo, 45",
+      "cidade": "Rio de Janeiro",
+      "uf": "RJ",
+      "historicoServicos": [
+        {
+          "servico": "Pintura Residencial",
+          "dataOrcamento": "01/03/2024",
+          "dataServico": "05/03/2024",
+          "valor": "800.00",
+          "formaPagamento": "Cartão",
+          "funcionario": "Marcos Vinicius",
+          "desconto": "5"
+        }
+      ]
     },
     {
-      "id": "786b",
-      "nome": "Alex Barreira",
-      "email": "vinicius.santos@sptech.school",
-      "cpf": "121.324.343-53",
-      "telefone": "(55) 11989-3843"
+      "nome": "Ricardo Gome",
+      "email": "ricardo.gomes@email.com",
+      "endereco": "Av. Brasil, 500",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "status": "Inativo",
+      "contato": "(11) 97654-3210",
+      "id": "6",
+      "historicoServicos": [
+        {
+          "servico": "Limpeza Pós-Obra",
+          "dataOrcamento": "10/04/2024",
+          "dataServico": "12/04/2024",
+          "valor": "300.00",
+          "formaPagamento": "Dinheiro",
+          "funcionario": "Paula Mendes",
+          "desconto": "0"
+        }
+      ]
     },
     {
-      "id": "a8c7",
-      "nome": "Alex santos",
-      "email": "vinicius.santos@sptech.school",
-      "cpf": "212.123.312-13",
-      "telefone": "(11) 58912-2222"
+      "id": "7",
+      "nome": "Lucas Pereira",
+      "contato": "(11) 92109-8765",
+      "email": "lucas.pereira@email.com",
+      "status": "Ativo",
+      "endereco": "Rua Oscar Freire, 300",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "historicoServicos": [
+        {
+          "servico": "Poda de Árvores",
+          "dataOrcamento": "18/06/2024",
+          "dataServico": "20/06/2024",
+          "valor": "320.00",
+          "formaPagamento": "Dinheiro",
+          "funcionario": "João Almeida",
+          "desconto": "0"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "nome": "Fernanda Rocha",
+      "contato": "(21) 98765-1234",
+      "email": "fernanda.rocha@email.com",
+      "status": "Ativo",
+      "endereco": "Rua das Laranjeiras, 77",
+      "cidade": "Rio de Janeiro",
+      "uf": "RJ",
+      "historicoServicos": [
+        {
+          "servico": "Manutenção de Jardim",
+          "dataOrcamento": "25/07/2024",
+          "dataServico": "27/07/2024",
+          "valor": "200.00",
+          "formaPagamento": "Pix",
+          "funcionario": "Carlos Souza",
+          "desconto": "5"
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "nome": "Tiago Mendes",
+      "contato": "(11) 91234-4321",
+      "email": "tiago.mendes@email.com",
+      "status": "Ativo",
+      "endereco": "Av. Ibirapuera, 600",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "historicoServicos": [
+        {
+          "servico": "Instalação de Tomadas",
+          "dataOrcamento": "10/08/2024",
+          "dataServico": "12/08/2024",
+          "valor": "120.00",
+          "formaPagamento": "Cartão",
+          "funcionario": "Rafael Lima",
+          "desconto": "0"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "nome": "Patrícia Souzaa",
+      "contato": "21987658768",
+      "email": "patricia.souza@email.com",
+      "status": "Ativo",
+      "endereco": "Rua das Acácias, 88",
+      "cidade": "Rio de Janeiro",
+      "uf": "RJ",
+      "historicoServicos": [
+        {
+          "servico": "Reparo Hidráulico",
+          "dataOrcamento": "05/09/2024",
+          "dataServico": "07/09/2024",
+          "valor": "400.00",
+          "formaPagamento": "Dinheiro",
+          "funcionario": "Pedro Costa",
+          "desconto": "10"
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "nome": "Jão Gomes da Silva",
+      "contato": "11952028012",
+      "email": "Joao@gmail.com",
+      "endereco": "rua bnarbosa",
+      "status": "Inativo",
+      "historicoServicos": [
+        {
+          "id": "temp-1761545974903",
+          "servico": "Carpinagem",
+          "valor": 120,
+          "dataOrcamento": "2025-10-27",
+          "dataServico": "2025-10-30",
+          "formaPagamento": "Pix",
+          "desconto": 5,
+          "funcionario": "Maria Souza"
+        }
+      ],
+      "cidade": "Rio de Janeiro",
+      "uf": "RJ",
+      "servicoAtivoId": null
+    },
+    {
+      "id": "12",
+      "nome": "Eros Nicolino da Rocha",
+      "contato": "21987658111",
+      "email": "patricia.souza@email.com",
+      "endereco": "Rua das Acácias, 88",
+      "status": "Inativo",
+      "historicoServicos": [
+        {
+          "id": "temp-1761546697475",
+          "servico": "Te Amar",
+          "valor": 0,
+          "dataOrcamento": "2025-10-27",
+          "dataServico": "3000-01-01",
+          "formaPagamento": "Pix",
+          "desconto": 100,
+          "funcionario": "Eros Nicolino da Rocha"
+        }
+      ],
+      "cidade": "São Paulo",
+      "uf": "SP"
+    }
+  ],
+  "funcionarios": [
+    {
+      "id": "1",
+      "nome": "João Silva",
+      "telefone": "(99) 99999-9999",
+      "funcao": "Gerente",
+      "escala": "6x1 - 7h00 às 14h00",
+      "contrato": "CLT",
+      "status": "Ativo"
+    },
+    {
+      "id": "2",
+      "nome": "Maria Souza",
+      "telefone": "(88) 88888-8888",
+      "funcao": "Auxiliar",
+      "escala": "5x2 - 8h00 às 17h00",
+      "contrato": "PJ",
+      "status": "Pausado"
+    },
+    {
+      "id": "3",
+      "nome": "Eros Nicolino da Rocha",
+      "telefone": "(11) 95202-7011",
+      "funcao": "Atendente",
+      "escala": "5x2",
+      "contrato": "Fixo",
+      "status": "Ativo"
     }
   ]
 }
