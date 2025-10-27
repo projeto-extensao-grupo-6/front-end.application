@@ -244,6 +244,7 @@ export default function ClienteFormModal({
                     required
                     label="Telefone"
                     name="contato"
+                    placeholder="Ex: (11) 91234-5678"
                     value={clienteData.contato}
                     onChange={handleChange}
                     InputProps={{
@@ -259,7 +260,7 @@ export default function ClienteFormModal({
                   label="Email"
                   name="email"
                   type="email"
-                  placeholder="Ex: tiago.mendes@email.com" // <-- PLACEHOLDER
+                  placeholder="Ex: tiago.mendes@email.com" 
                   value={clienteData.email}
                   onChange={handleChange}
                   InputProps={{ startAdornment: <InputAdornment position="start"><EmailOutlined fontSize="small" /></InputAdornment> }}
@@ -269,7 +270,7 @@ export default function ClienteFormModal({
                   fullWidth
                   label="Endereço"
                   name="endereco"
-                  placeholder="Ex: Rua das Flores, 123" // <-- PLACEHOLDER
+                  placeholder="Ex: Rua das Flores, 123" 
                   value={clienteData.endereco}
                   onChange={handleChange}
                   InputProps={{ startAdornment: <InputAdornment position="start"><HomeOutlined fontSize="small" /></InputAdornment> }}
@@ -279,7 +280,7 @@ export default function ClienteFormModal({
                   <TextField
                     label="Cidade"
                     name="cidade"
-                    placeholder="Ex: São Paulo" // <-- PLACEHOLDER
+                    placeholder="Ex: São Paulo"
                     value={clienteData.cidade}
                     onChange={handleChange}
                     InputProps={{ startAdornment: <InputAdornment position="start"><BusinessOutlined fontSize="small" /></InputAdornment> }}
@@ -287,7 +288,7 @@ export default function ClienteFormModal({
                   <TextField
                     label="UF"
                     name="uf"
-                    placeholder="Ex: SP" // <-- PLACEHOLDER
+                    placeholder="Ex: SP" 
                     value={clienteData.uf}
                     onChange={handleChange}
                     InputProps={{ startAdornment: <InputAdornment position="start"><MapOutlined fontSize="small" /></InputAdornment> }}
@@ -301,8 +302,6 @@ export default function ClienteFormModal({
               </Stack>
             </Box>
 
-{/* SEÇÃO 2: HISTÓRICO DE SERVIÇOS (AGORA CONDICIONAL) */}
-            {/* Só mostra esta seção se o status NÃO for 'Ativo' */}
             {clienteData.status !== "Ativo" && (
               <Box>
                 <Typography variant="h6" mb={2}>
@@ -384,10 +383,9 @@ export default function ClienteFormModal({
                           />
                         </Grid>
 
-                        {/* --- CAMPO DE PAGAMENTO (SELECT) --- */}
                         <Grid item xs={12} sm={4}>
                           <TextField
-                            select // <-- MUDANÇA AQUI
+                            select 
                             fullWidth
                             label="Forma de Pagamento"
                             value={hist.formaPagamento || "N/A"}
@@ -461,10 +459,9 @@ export default function ClienteFormModal({
                           />
                         </Grid>
 
-                        {/* --- CAMPO FUNCIONÁRIO (SELECT) --- */}
                         <Grid item xs={12}>
                           <TextField
-                            select // <-- MUDANÇA AQUI
+                            select 
                             fullWidth
                             label="Funcionário"
                             value={hist.funcionario || "N/A"}
@@ -484,7 +481,6 @@ export default function ClienteFormModal({
                             }}
                           >
                             <MenuItem value="N/A">N/A</MenuItem>
-                            {/* Carrega os funcionários buscados da API */}
                             {funcionarios.map((func) => (
                               <MenuItem key={func.id} value={func.nome}>
                                 {func.nome}
@@ -509,7 +505,6 @@ export default function ClienteFormModal({
                 </Stack>
               </Box>
             )}
-            {/* Fim da condição */}
             
           </Stack>
         </DialogContent>
