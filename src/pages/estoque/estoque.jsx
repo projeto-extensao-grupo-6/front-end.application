@@ -11,8 +11,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Plus, // Ícone para Novo Item
-  ArrowRightLeft, // Ícone para Movimento
+  Plus, 
+  ArrowRightLeft, 
 } from "lucide-react";
 
 import NovoProdutoModal from "../../shared/components/modalEstoque/NovoProdutoModal";
@@ -21,7 +21,7 @@ import ExportarModal from "../../shared/components/modalEstoque/ExportarModal";
 import EstoqueItemRow from "../../shared/components/estoque/EstoqueItemRow";
 import CalendarDropdown from "../../shared/components/estoque/CalendarDropdown";
 import FilterDropdown from "../../shared/components/estoque/FilterDropdown";
-import EntradaSaidaEstoque from "../../shared/components/modalEstoque/EntradaSaidaEstoque"; // Importa o novo modal
+import EntradaSaidaEstoque from "../../shared/components/modalEstoque/EntradaSaidaEstoque"; 
 
 const API_URL = "http://localhost:3000/estoque";
 const FUNCIONARIOS_API_URL = "http://localhost:3000/funcionarios";
@@ -36,7 +36,7 @@ export default function Estoque() {
   const [funcionarios, setFuncionarios] = useState([]);
 
   const [isNovoItemModalOpen, setIsNovoItemModalOpen] = useState(false);
-  const [isEntradaSaidaModalOpen, setIsEntradaSaidaModalOpen] = useState(false); // Estado para o novo modal
+  const [isEntradaSaidaModalOpen, setIsEntradaSaidaModalOpen] = useState(false); 
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -47,7 +47,7 @@ export default function Estoque() {
   const [selectedFilterDate, setSelectedFilterDate] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
-  const [selectedItems, setSelectedItems] = useState([]); // Agora guarda IDs
+  const [selectedItems, setSelectedItems] = useState([]);
 
   const formatCurrency = (value) => {
     if (typeof value !== "number") {
@@ -102,7 +102,7 @@ export default function Estoque() {
         ...itemData.detalhes,
         valorCompra: parseCurrency(itemData.detalhes.valorCompra),
         valorVenda: parseCurrency(itemData.detalhes.valorVenda),
-        movimentos: itemData.detalhes.movimentos || [] // Garante que movimentos exista
+        movimentos: itemData.detalhes.movimentos || [] 
       } : null
     };
 
@@ -135,13 +135,13 @@ export default function Estoque() {
         : itemToUpdate.quantidade - movementData.quantidade;
 
       const newMovement = {
-        id: `mov-${Date.now()}-${Math.random().toString(16).slice(2)}`, // ID único simples
+        id: `mov-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         ...movementData
       };
 
       const updatedItem = {
         ...itemToUpdate,
-        quantidade: Math.max(0, newQuantity), // Garante que não fique negativo
+        quantidade: Math.max(0, newQuantity),
         detalhes: {
           ...(itemToUpdate.detalhes || {}),
           movimentos: [
@@ -159,19 +159,17 @@ export default function Estoque() {
         });
       } catch (error) {
         console.error(`Erro ao atualizar item ${itemId}:`, error);
-        throw error; // Re-lança para parar o Promise.all se um falhar
+        throw error; 
       }
     });
 
     try {
       await Promise.all(updates);
-      await fetchEstoque(); // Rebusca tudo após sucesso
-      setIsEntradaSaidaModalOpen(false); // Fecha o modal
-      setSelectedItems([]); // Limpa a seleção
-      // Poderia adicionar um modal de sucesso específico para movimento aqui
+      await fetchEstoque(); 
+      setIsEntradaSaidaModalOpen(false); 
+      setSelectedItems([]); 
     } catch (error) {
       console.error("Falha ao salvar um ou mais movimentos:", error);
-      // Informar o usuário sobre a falha
     }
   };
 
@@ -197,14 +195,14 @@ export default function Estoque() {
     setIsNovoItemModalOpen(true);
   };
 
-  const openEntradaSaidaModal = () => setIsEntradaSaidaModalOpen(true); // Abre o novo modal
-  const closeEntradaSaidaModal = () => setIsEntradaSaidaModalOpen(false); // Fecha o novo modal
+  const openEntradaSaidaModal = () => setIsEntradaSaidaModalOpen(true); 
+  const closeEntradaSaidaModal = () => setIsEntradaSaidaModalOpen(false); 
 
   const openExportModal = () => setIsExportModalOpen(true);
   const closeExportModal = () => setIsExportModalOpen(false);
 
   const handleSaveSuccess = () => {
-    setIsNovoItemModalOpen(false); // Fecha o modal de Novo/Editar
+    setIsNovoItemModalOpen(false);
     setIsSuccessModalOpen(true);
     setTimeout(() => {
       setIsSuccessModalOpen(false);
@@ -363,7 +361,7 @@ export default function Estoque() {
                   </button>
                   <button
                     onClick={openEntradaSaidaModal}
-                    disabled={selectedItems.length === 0} // Desabilita se nada selecionado
+                    disabled={selectedItems.length === 0} 
                     className="bg-blue-600 text-white font-medium py-2.5 px-5 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center whitespace-nowrap gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ArrowRightLeft className="w-4 h-4"/> Registrar Movimento
@@ -432,7 +430,6 @@ export default function Estoque() {
               </div>
 
               <div className="overflow-x-auto">
-                {/* CABEÇALHO ALINHADO */}
                 <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-[48px] rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
                   <div className="py-3 w-[5%] pl-4 pr-1">
                     <input type="checkbox"
@@ -517,14 +514,13 @@ export default function Estoque() {
         item={editingItem}
       />
 
-      {/* NOVO MODAL */}
       <EntradaSaidaEstoque
         isOpen={isEntradaSaidaModalOpen}
         onClose={closeEntradaSaidaModal}
         onSave={handleSaveMovement}
-        itemIds={selectedItems} // Passa os IDs selecionados
-        estoque={estoque} // Passa o estoque para buscar nomes/unidades
-        funcionarios={funcionarios} // Passa a lista de funcionários
+        itemIds={selectedItems}
+        estoque={estoque} 
+        funcionarios={funcionarios} 
       />
 
       <SucessoModal
