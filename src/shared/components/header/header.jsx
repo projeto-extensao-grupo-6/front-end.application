@@ -11,17 +11,17 @@ import {
   ListItemText,
   Box,
   Typography,
-  Divider // Usaremos para uma separação sutil
+  Divider 
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   ExpandMore,
-  SettingsOutlined, // Ícone de Configurações (contorno)
-  LogoutOutlined,  // Ícone de Sair (contorno)
-  AccountCircleOutlined // Ícone de Perfil (contorno)
+  SettingsOutlined, 
+  LogoutOutlined,  
+  AccountCircleOutlined 
 } from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
-import UserImg from "../../../assets/User.png"; // Certifique-se que este caminho está correto
+import UserImg from "../../../assets/User.png"; 
 
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -30,7 +30,6 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
   const handleProfileClose = () => setAnchorEl(null);
 
-  // --- Estilos Comuns para Itens de Menu ---
   const menuItemStyle = {
     paddingY: '10px',
     paddingX: '16px',
@@ -38,19 +37,18 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
     borderRadius: '8px',
     transition: 'background-color 0.2s ease-in-out',
     '&:hover': {
-        // Um azul levemente mais claro ou um cinza sutil sobre o azul
-        backgroundColor: 'rgba(255, 255, 255, 0.08)' // Ou experimente '#004b8d'
+        backgroundColor: 'rgba(255, 255, 255, 0.08)' 
     }
   };
 
   const iconStyle = {
-    minWidth: '40px', // Mais espaço para o ícone
-    color: 'rgba(255, 255, 255, 0.8)' // Cor suave para ícones
+    minWidth: '40px', 
+    color: 'rgba(255, 255, 255, 0.8)'
   };
 
   const textStyle = {
-      fontSize: '0.9rem', // Tamanho de fonte ligeiramente menor
-      fontWeight: 500 // Peso médio
+      fontSize: '0.9rem', 
+      fontWeight: 500
   };
 
   return (
@@ -86,7 +84,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
 
         {/* Usuário */}
         <div
-          className="flex items-center gap-1 sm:gap-2 cursor-pointer group" // Adicionado 'group' para hover state
+          className="flex items-center gap-1 sm:gap-2 cursor-pointer group"
           onClick={handleProfileClick}
         >
           <div className="hidden sm:block text-right mr-1">
@@ -104,7 +102,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           />
         </div>
 
-        {/* Menu suspenso - Versão Criativa */}
+        {/* Menu suspenso */}
         <Menu
           anchorEl={anchorEl}
           open={open}
@@ -116,12 +114,12 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             sx: {
               bgcolor: "#003d6b",
               color: "white",
-              borderRadius: '16px', // Mais arredondado
-              minWidth: 260,       // Pouco mais largo
-              marginTop: '12px',    // Mais espaço
-              border: '1px solid rgba(255, 255, 255, 0.1)', // Borda sutil
-              boxShadow: "0 8px 25px rgba(0,0,0,0.4)", // Sombra mais pronunciada
-              overflow: 'hidden', // Esconde a seta se sair das bordas
+              borderRadius: '16px', 
+              minWidth: 260,    
+              marginTop: '12px',   
+              border: '1px solid rgba(255, 255, 255, 0.1)', 
+              boxShadow: "0 8px 25px rgba(0,0,0,0.4)", 
+              overflow: 'hidden', 
             },
           }}
         >
@@ -129,7 +127,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           <Box className="flex items-center px-4 py-5 gap-3">
              <Avatar
                src={UserImg}
-               className="!w-12 !h-12 border-2 border-white" // Tamanho ligeiramente menor que antes
+               className="!w-12 !h-12 border-2 border-white"
              />
              <div>
                  <Typography variant="subtitle1" className="font-semibold leading-tight">
@@ -144,7 +142,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginX: '8px' }} />
 
           {/* Itens de Menu */}
-          <Box sx={{ paddingY: '8px' }}> {/* Adiciona padding vertical ao redor dos itens */}
+          <Box sx={{ paddingY: '8px' }}> 
               <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
                 <ListItemIcon sx={iconStyle}>
                   <AccountCircleOutlined fontSize="small" />
