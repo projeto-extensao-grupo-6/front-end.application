@@ -3,16 +3,8 @@ import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import { useNavigate } from 'react-router-dom';
-
 
 export default function ApprovalPendingModal({ open, onClose }) {
-  const navigate = useNavigate();
-
-  const handleClose = () => {
-    onClose();
-    navigate('/Login');
-  };
 
   return (
     <Modal

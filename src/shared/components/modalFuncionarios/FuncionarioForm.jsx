@@ -106,7 +106,7 @@ export default function FuncionarioForm({ open, setOpen, modoEdicao, funcionario
         <TextField
           fullWidth
           label="Telefone"
-          placeholder="Ex: (11) 91234-5678"
+          placeholder="Ex: (11) 12345-6789"
           margin="dense"
           value={novoFuncionario.telefone}
           onChange={() => {}}

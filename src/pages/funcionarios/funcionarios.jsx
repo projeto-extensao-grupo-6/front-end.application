@@ -14,14 +14,13 @@ import {
   Checkbox,
   IconButton,
   Chip,
-  Box,
-  Typography,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 
-import data from "./funcionariosData.json";
 import FuncionarioForm from "../../shared/components/modalFuncionarios/FuncionarioForm";
 import DeleteFuncionario from "../../shared/components/modalFuncionarios/DeleteFuncionario";
+
+const API_URL = "http://localhost:3000/funcionarios";
 
 export default function Funcionarios() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -39,9 +38,19 @@ export default function Funcionarios() {
   const [openDelete, setOpenDelete] = useState(false);
   const [funcionarioParaDeletar, setFuncionarioParaDeletar] = useState(null);
 
+  const fetchFuncionarios = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setFuncionarios(data);
+    } catch (error) {
+      console.error("Erro ao buscar funcionários:", error);
+    }
+  };
+
   useEffect(() => {
-    setFuncionarios(data);
-  }, []);
+    fetchFuncionarios();
+  }, []); 
 
   const funcionariosFiltrados = funcionarios.filter((f) =>
     f.nome.toLowerCase().includes(busca.toLowerCase())
@@ -69,22 +78,37 @@ export default function Funcionarios() {
     setOpenDelete(true);
   };
 
-  const atualizarFuncionarios = (novoFunc) => {
-    if (modoEdicao && funcionarioSelecionado) {
-      const atualizados = funcionarios.map((f) =>
-        f.id === funcionarioSelecionado.id ? { ...f, ...novoFunc } : f
-      );
-      setFuncionarios(atualizados);
-    } else {
-      setFuncionarios((prev) => [
-        ...prev,
-        { ...novoFunc, id: prev.length + 1 },
-      ]);
+  const atualizarFuncionarios = async (novoFunc) => {
+    try {
+      if (modoEdicao && funcionarioSelecionado) {
+        const funcAtualizado = { ...funcionarioSelecionado, ...novoFunc };
+        await fetch(`${API_URL}/${funcionarioSelecionado.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(funcAtualizado),
+        });
+      } else {
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(novoFunc),
+        });
+      }
+      fetchFuncionarios();
+    } catch (error) {
+      console.error("Erro ao salvar funcionário:", error);
     }
   };
 
-  const deletarFuncionario = (id) => {
-    setFuncionarios((prev) => prev.filter((f) => f.id !== id));
+  const deletarFuncionario = async (id) => {
+    try {
+      await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+      });
+      setFuncionarios((prev) => prev.filter((f) => f.id !== id));
+    } catch (error) {
+      console.error("Erro ao deletar funcionário:", error);
+    }
   };
 
   return (

@@ -6,12 +6,22 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Divider,
   Fade,
+  ListItemIcon,
+  ListItemText,
+  Box,
+  Typography,
+  Divider 
 } from "@mui/material";
-import { Menu as MenuIcon, ExpandMore } from "@mui/icons-material";
+import {
+  Menu as MenuIcon,
+  ExpandMore,
+  SettingsOutlined, 
+  LogoutOutlined, 
+  AccountCircleOutlined 
+} from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
-import UserImg from "../../../assets/User.png";
+import UserImg from "../../../assets/User.png"; 
 
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
