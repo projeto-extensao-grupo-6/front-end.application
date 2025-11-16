@@ -68,7 +68,7 @@ function Cadastro() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/solicitacoes", {
+      const response = await fetch("http://localhost:8080/api/solicitacoes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome, email, cpf, telefone }),

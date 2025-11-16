@@ -53,12 +53,9 @@ const CalendarDashboard = () => {
     const newTask = {
       id: Date.now(),
       ...taskData,
-      date: taskData.eventDate, // PADRONIZADO
-      startTime: taskData.eventTime,
-      endTime: addMinutesToTime(
-        taskData.eventTime,
-        parseInt(taskData.duration || "240")
-      ),
+      date: taskData.eventDate,
+      startTime: taskData.startTime,
+      endTime: taskData.endTime,
       createdAt: new Date().toISOString(),
       color: taskData.color,
     };

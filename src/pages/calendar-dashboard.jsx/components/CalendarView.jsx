@@ -14,6 +14,8 @@ import {
 import { ptBR } from "date-fns/locale";
 import Icon from "../../../shared/components/AppIcon";
 import Button from "../../../shared/components/buttons/button.component";
+import { useEffect } from "react";
+import { coresAgendamentos } from "../../../shared/components/Enum/CalendarView";
 
 // Função auxiliar para adicionar minutos (mantida da sua implementação original)
 function addMinutesToTime(time, minutes) {
@@ -31,6 +33,32 @@ const CalendarView = ({
   onEventCreate,
   events,
 }) => {
+  const [calendarEvents, setCalendarEvents] = useState(events || []);
+
+  const carregarDados = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/solicitacoes");
+      const data = await response.json();
+
+      const eventosTratados = data.map((item) => ({
+        id: item.id,
+        title: item.cliente,
+        date: item.data,
+        startTime: item.inicioAgendamento,
+        endTime: item.fimAgendamento,
+        backgroundColor: coresAgendamentos[item.tipoAgendamento],
+      }));
+
+      setCalendarEvents(eventosTratados);
+    } catch (error) {
+      console.log("Erro ao buscar eventos, usando mock:", error);
+    }
+  };
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
   const [viewType, setViewType] = useState("week");
   // Centraliza o estado para a data de navegação
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
@@ -55,8 +83,7 @@ const CalendarView = ({
   // --- Funções Auxiliares ---
 
   const getEventsForDay = (day) => {
-    return events?.filter((event) => {
-      // Ajuste na lógica de filtro para garantir comparação de datas corretas
+    return calendarEvents?.filter((event) => {
       const eventDate = new Date(event?.date + "T00:00:00");
       return (
         eventDate.getFullYear() === day.getFullYear() &&
@@ -265,11 +292,29 @@ const DayView = ({
   handleTimeSlotClick,
 }) => {
   const dayEvents = getEventsForDay(currentDay);
+  const SLOT_HEIGHT_PX = 60;
+  // Defina a hora de início do seu calendário (baseado no seu loop for)
+  const CALENDAR_START_HOUR = 6;
+  const CALENDAR_START_MINUTES = CALENDAR_START_HOUR * 60;
 
+  /**
+   * Converte uma string 'HH:mm' para o total de minutos desde a meia-noite.
+   */
+  const getMinutesFromMidnight = (timeStr) => {
+    if (!timeStr || !timeStr.includes(":")) return 0;
+    try {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      return hours * 60 + minutes;
+    } catch (e) {
+      console.error("Erro ao parsear time:", timeStr, e);
+      return 0;
+    }
+  };
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
-      {/* Header do Dia */}
+      {/* Header do Dia (sem alterações) */}
       <div className="grid grid-cols-[100px_1fr] border border-hairline rounded-t-modern overflow-hidden bg-muted">
+        {/* ... (código do header do dia igual) ... */}
         <div className="p-2 border-r border-hairline">
           <div className="text-xs font-medium text-text-secondary text-center">
             Horário
@@ -292,43 +337,74 @@ const DayView = ({
       {/* Slots de Tempo */}
       <div className="flex-1 overflow-y-auto border-x border-b border-hairline rounded-b-modern">
         <div className="grid grid-cols-[100px_1fr] min-h-full">
-          {timeSlots?.map((time) => {
-            const timeHour = parseInt(time?.split(":")?.[0]);
-            const slotEvents = dayEvents?.filter((event) => {
-              const eventHour = parseInt(event?.startTime?.split(":")?.[0]);
-              return eventHour === timeHour;
-            });
+          {/* Coluna de Horários (Labels) */}
+          <div className="flex flex-col">
+            {timeSlots?.map((time) => (
+              <div
+                key={time}
+                className="border-r border-b border-hairline p-2 bg-muted/50 h-[60px]" // h-[60px] = SLOT_HEIGHT_PX
+              >
+                <div className="text-xs text-text-secondary">{time}</div>
+              </div>
+            ))}
+          </div>
 
-            return (
-              <React.Fragment key={time}>
-                {/* Time label */}
-                <div className="border-r border-b border-hairline p-2 bg-muted/50 h-[60px]">
-                  <div className="text-xs text-text-secondary">{time}</div>
-                </div>
+          {/* Coluna do Dia (Grid + Eventos) */}
+          <div className="relative">
+            {" "}
+            {/* O container PAI precisa ser relative */}
+            {/* 1. Renderiza as linhas do grid (fundo) */}
+            {timeSlots?.map((time) => (
+              <div
+                key={time}
+                className="border-b border-hairline h-[60px] hover:bg-muted/20 cursor-pointer transition-micro"
+                onClick={() => handleTimeSlotClick(currentDay, time)}
+              >
+                {/* Apenas a linha, o evento não mora mais aqui */}
+              </div>
+            ))}
+            {/* 2. Renderiza os eventos por cima do grid */}
+            <div className="absolute inset-0 p-1">
+              {" "}
+              {/* Overlay para os eventos */}
+              {dayEvents?.map((event) => {
+                const eventStartMinutes = getMinutesFromMidnight(
+                  event.startTime
+                );
+                const eventEndMinutes = getMinutesFromMidnight(event.endTime);
 
-                {/* Coluna do Dia */}
-                <div
-                  className="border-b border-hairline p-3 min-h-[60px] hover:bg-muted/20 cursor-pointer transition-micro relative"
-                  onClick={() => handleTimeSlotClick(currentDay, time)}
-                >
-                  <div className="gap-3 flex flex-col">
-                    {slotEvents?.map((event) => (
-                      <div
-                        key={event?.id}
-                        className="inset-x-1 top-1 bottom-1 pb-2 rounded-modern text-xs font-medium text-black shadow-soft overflow-hidden px-2 py-1"
-                        style={{ backgroundColor: event?.backgroundColor }}
-                      >
-                        <div className="truncate">{event?.title}</div>
-                        <div className="text-xs opacity-75">
-                          {event?.startTime} - {event?.endTime}
-                        </div>
-                      </div>
-                    ))}
+                // Ignora eventos que terminam antes do início do calendário
+                if (eventEndMinutes <= CALENDAR_START_MINUTES) return null;
+
+                const minutesFromGridTop = Math.max(
+                  0,
+                  eventStartMinutes - CALENDAR_START_MINUTES
+                );
+                const durationInMinutes = eventEndMinutes - eventStartMinutes;
+
+                // (minutos / 60 minutos_por_slot) * altura_do_slot
+                const top = (minutesFromGridTop / 60) * SLOT_HEIGHT_PX;
+                const height = (durationInMinutes / 60) * SLOT_HEIGHT_PX;
+
+                return (
+                  <div
+                    key={event.id}
+                    className="absolute left-1 right-1 p-2 rounded-modern text-xs font-medium text-black shadow-soft overflow-hidden"
+                    style={{
+                      backgroundColor: event.backgroundColor,
+                      top: `${top}px`,
+                      height: `${height}px`,
+                    }}
+                  >
+                    <div className="truncate font-semibold">{event.title}</div>
+                    <div className="text-xs opacity-75">
+                      {event.startTime} - {event.endTime}
+                    </div>
                   </div>
-                </div>
-              </React.Fragment>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -428,84 +504,146 @@ const WeekView = ({
   getEventsForDay,
   handleTimeSlotClick,
   handleDateClick,
-}) => (
-  <div className="flex-1 overflow-hidden flex flex-col">
-    <div className="grid grid-cols-8 border border-hairline rounded-t-modern overflow-hidden">
-      {/* Time column header */}
-      <div className="bg-muted border-r border-hairline p-2">
-        <div className="text-xs font-medium text-text-secondary text-center">
-          Horário
-        </div>
-      </div>
+}) => {
+  // Defina a altura do slot (baseada no seu h-[60px])
+  const SLOT_HEIGHT_PX = 60;
+  // Defina a hora de início do seu calendário (baseado no seu loop for)
+  const CALENDAR_START_HOUR = 6;
+  const CALENDAR_START_MINUTES = CALENDAR_START_HOUR * 60;
 
-      {/* Day headers */}
-      {weekDays?.map((day) => (
-        <div
-          key={day?.toISOString()}
-          className={`bg-muted border-r border-hairline p-2 text-center cursor-pointer hover:bg-muted/80 transition-micro ${
-            isToday(day) ? "bg-primary/10" : ""
-          }`}
-          onClick={() => handleDateClick(day)}
-        >
-          <div className="text-xs font-medium text-text-secondary">
-            {format(day, "EEE", { locale: ptBR })}
+  /**
+   * Converte uma string 'HH:mm' para o total de minutos desde a meia-noite.
+   */
+  const getMinutesFromMidnight = (timeStr) => {
+    if (!timeStr || !timeStr.includes(":")) return 0;
+    try {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      return hours * 60 + minutes;
+    } catch (e) {
+      console.error("Erro ao parsear time:", timeStr, e);
+      return 0;
+    }
+  };
+
+  return (
+    <div className="flex-1 overflow-hidden flex flex-col">
+      {/* Header da Semana (sem alterações) */}
+      <div className="grid grid-cols-8 border border-hairline rounded-t-modern overflow-hidden">
+        {/* ... (código do header da semana igual) ... */}
+        <div className="bg-muted border-r border-hairline p-2">
+          <div className="text-xs font-medium text-text-secondary text-center">
+            Horário
           </div>
+        </div>
+        {weekDays?.map((day) => (
           <div
-            className={`text-sm font-semibold mt-1 ${
-              isToday(day) ? "text-primary" : "text-text-primary"
+            key={day?.toISOString()}
+            className={`bg-muted border-r border-hairline p-2 text-center cursor-pointer hover:bg-muted/80 transition-micro ${
+              isToday(day) ? "bg-primary/10" : ""
             }`}
+            onClick={() => handleDateClick(day)}
           >
-            {format(day, "d")}
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* Time slots */}
-    <div className="flex-1 overflow-y-auto border-x border-b border-hairline rounded-b-modern">
-      <div className="grid grid-cols-8">
-        {timeSlots?.map((time) => (
-          <React.Fragment key={time}>
-            {/* Time label */}
-            <div className="border-r border-b border-hairline p-2 bg-muted/50 h-[60px]">
-              <div className="text-xs text-text-secondary">{time}</div>
+            <div className="text-xs font-medium text-text-secondary">
+              {format(day, "EEE", { locale: ptBR })}
             </div>
-
-            {/* Day columns */}
-            {weekDays?.map((day) => {
-              const dayEvents = getEventsForDay(day);
-              const timeHour = parseInt(time?.split(":")?.[0]);
-              const slotEvents = dayEvents?.filter((event) => {
-                const eventHour = parseInt(event?.startTime?.split(":")?.[0]);
-                return eventHour === timeHour;
-              });
-
-              return (
-                <div
-                  key={`${day?.toISOString()}-${time}`}
-                  className="border-r border-b border-hairline p-3 min-h-[60px] hover:bg-muted/20 cursor-pointer transition-micro relative"
-                  onClick={() => handleTimeSlotClick(day, time)}
-                >
-                  <div className="gap-3 flex flex-col">
-                    {slotEvents?.map((event) => (
-                      <div
-                        key={event?.id}
-                        className="inset-x-1 top-1 bottom-1 pb-2 rounded-modern text-xs font-medium text-black shadow-soft overflow-hidden px-2 py-1"
-                        style={{ backgroundColor: event?.backgroundColor}}
-                      >
-                        <div className="truncate">{event?.clientName}</div>
-                        <div className="text-xs opacity-75">
-                          {event?.startTime} - {event?.endTime}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </React.Fragment>
+            <div
+              className={`text-sm font-semibold mt-1 ${
+                isToday(day) ? "text-primary" : "text-text-primary"
+              }`}
+            >
+              {format(day, "d")}
+            </div>
+          </div>
         ))}
       </div>
+
+      {/* Slots de Tempo */}
+      <div className="flex-1 overflow-y-auto border-x border-b border-hairline rounded-b-modern">
+        <div className="grid grid-cols-8 min-h-full">
+          {/* Coluna de Horários (Labels) */}
+          <div className="flex flex-col">
+            {timeSlots?.map((time) => (
+              <div
+                key={time}
+                className="border-r border-b border-hairline p-2 bg-muted/50 h-[60px]" // h-[60px] = SLOT_HEIGHT_PX
+              >
+                <div className="text-xs text-text-secondary">{time}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Colunas dos Dias (Grid + Eventos) */}
+          {weekDays?.map((day) => {
+            const dayEvents = getEventsForDay(day);
+
+            return (
+              <div
+                key={day.toISOString()}
+                className="relative border-r border-hairline" // PAI de cada dia é relative
+              >
+                {/* 1. Renderiza as linhas do grid para este dia */}
+                {timeSlots?.map((time) => (
+                  <div
+                    key={time}
+                    className="border-b border-hairline h-[60px] hover:bg-muted/20 cursor-pointer transition-micro"
+                    onClick={() => handleTimeSlotClick(day, time)}
+                  >
+                    {/* Apenas a linha */}
+                  </div>
+                ))}
+
+                {/* 2. Renderiza os eventos por cima do grid deste dia */}
+                <div className="absolute inset-0 p-1">
+                  {" "}
+                  {/* Overlay para os eventos */}
+                  {dayEvents?.map((event) => {
+                    const eventStartMinutes = getMinutesFromMidnight(
+                      event.startTime
+                    );
+                    const eventEndMinutes = getMinutesFromMidnight(
+                      event.endTime
+                    );
+
+                    if (eventEndMinutes <= CALENDAR_START_MINUTES) return null;
+
+                    const minutesFromGridTop = Math.max(
+                      0,
+                      eventStartMinutes - CALENDAR_START_MINUTES
+                    );
+                    const durationInMinutes =
+                      eventEndMinutes - eventStartMinutes;
+
+                    const top = (minutesFromGridTop / 60) * SLOT_HEIGHT_PX;
+                    const height = (durationInMinutes / 60) * SLOT_HEIGHT_PX;
+
+                    return (
+                      <div
+                        key={event.id}
+                        className="absolute left-1 right-1 p-2 rounded-modern text-xs font-medium text-black shadow-soft overflow-hidden"
+                        style={{
+                          backgroundColor: event.backgroundColor,
+                          top: `${top}px`,
+                          height: `${height}px`,
+                        }}
+                      >
+                        {/* CORREÇÃO: Seu código antigo usava event.clientName, 
+                        mas a API mapeia para event.title 
+                      */}
+                        <div className="truncate font-semibold">
+                          {event.title}
+                        </div>
+                        <div className="text-xs opacity-75">
+                          {event.startTime} - {event.endTime}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
