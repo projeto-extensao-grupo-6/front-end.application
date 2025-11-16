@@ -1,10 +1,6 @@
 const API_BASE_URL = "http://localhost:3000/api";
 
-<<<<<<< HEAD
-const agendamentosService = {
-=======
 export const agendamentosService = {
->>>>>>> 70ab83d (integrations)
   create: async (agendamento) => {
     try {
       const response = await fetch(`${API_BASE_URL}/agendamentos`, {
