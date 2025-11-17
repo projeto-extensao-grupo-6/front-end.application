@@ -23,7 +23,11 @@ import {
 import Logo from "../../../assets/logo/logo.png";
 import UserImg from "../../../assets/User.png";
 
+import { useNavigate } from "react-router-dom";
+
 export default function Header({ toggleSidebar, sidebarOpen }) {
+  const navigate = useNavigate();
+
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -37,7 +41,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
     borderRadius: '8px',
     transition: 'background-color 0.2s ease-in-out',
     '&:hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.08)'
+      backgroundColor: 'rgba(255, 255, 255, 0.08)'
     }
   };
 
@@ -47,8 +51,8 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
   };
 
   const textStyle = {
-      fontSize: '0.9rem',
-      fontWeight: 500
+    fontSize: '0.9rem',
+    fontWeight: 500
   };
 
   return (
@@ -71,9 +75,8 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           <IconButton
             color="inherit"
             onClick={toggleSidebar}
-            className={`transition-transform duration-300 mr-2 ${
-              sidebarOpen ? "rotate-90" : "rotate-0"
-            }`}
+            className={`transition-transform duration-300 mr-2 ${sidebarOpen ? "rotate-90" : "rotate-0"
+              }`}
           >
             <MenuIcon fontSize="medium" />
           </IconButton>
@@ -98,9 +101,8 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border-2 border-white group-hover:border-gray-300 transition-colors"
           />
           <ExpandMore
-            className={`text-white transition-transform duration-300 group-hover:text-gray-300 ${
-              open ? "rotate-180" : "rotate-0"
-            } hidden sm:block`}
+            className={`text-white transition-transform duration-300 group-hover:text-gray-300 ${open ? "rotate-180" : "rotate-0"
+              } hidden sm:block`}
           />
         </div>
 
@@ -127,46 +129,45 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
         >
           {/* Seção de Perfil Destacada */}
           <Box className="flex items-center px-4 py-5 gap-3">
-             <Avatar
-               src={UserImg}
-               className="w-12 h-12 border-2 border-white"
-             />
-             <div>
-                 <Typography variant="subtitle1" className="font-semibold leading-tight">
-                   Julio Cesar
-                 </Typography>
-                 <Typography variant="body2" className="text-gray-300 leading-tight">
-                   julio.cesar@gmail.com
-                 </Typography>
-             </div>
+            <Avatar
+              src={UserImg}
+              className="w-12 h-12 border-2 border-white"
+            />
+            <div>
+              <Typography variant="subtitle1" className="font-semibold leading-tight">
+                Julio Cesar
+              </Typography>
+              <Typography variant="body2" className="text-gray-300 leading-tight">
+                julio.cesar@gmail.com
+              </Typography>
+            </div>
           </Box>
 
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginX: '8px' }} />
 
           {/* Itens de Menu */}
           <Box sx={{ paddingY: '8px' }}>
-              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
-                <ListItemIcon sx={iconStyle}>
-                  <AccountCircleOutlined fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Meu Perfil" primaryTypographyProps={textStyle} />
-              </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleProfileClose();
+                navigate("/perfil");
+              }}
+              sx={menuItemStyle}
+            >
+              <ListItemIcon sx={iconStyle}>
+                <AccountCircleOutlined fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Meu Perfil" primaryTypographyProps={textStyle} />
+            </MenuItem>
 
-              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
-                <ListItemIcon sx={iconStyle}>
-                  <SettingsOutlined fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Configurações" primaryTypographyProps={textStyle} />
-              </MenuItem>
+            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginY: '8px', marginX: '8px' }} />
 
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginY: '8px', marginX: '8px' }} />
-
-              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
-                <ListItemIcon sx={iconStyle}>
-                  <LogoutOutlined fontSize="small" />
-                </ListItemIcon>
-                 <ListItemText primary="Sair" primaryTypographyProps={textStyle}/>
-              </MenuItem>
+            <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
+              <ListItemIcon sx={iconStyle}>
+                <LogoutOutlined fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Sair" primaryTypographyProps={textStyle} />
+            </MenuItem>
           </Box>
         </Menu>
       </Toolbar>

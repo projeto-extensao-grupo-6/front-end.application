@@ -344,10 +344,10 @@ export default function Clientes() {
                           }}
                         />
                       </TableCell>
-                      <TableCell>ㅤㅤㅤNome</TableCell>
-                      <TableCell>ㅤㅤContato</TableCell>
-                      <TableCell>ㅤㅤㅤㅤEmail</TableCell>
-                      <TableCell>­­ㅤ­Prestação de serviço</TableCell>
+                      <TableCell>Nome</TableCell>
+                      <TableCell>Contato</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>­­­Prestação de serviço</TableCell>
                       <TableCell>ㅤ­­­­­­­­­­­­Ações</TableCell>
                     </TableRow>­­
                   </TableHead>
