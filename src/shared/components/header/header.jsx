@@ -21,11 +21,14 @@ import {
   AccountCircleOutlined
 } from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
+import { useNavigate } from "react-router-dom";
 import UserImg from "../../../assets/User.png";
 
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const navigate = useNavigate();
+  
 
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
   const handleProfileClose = () => setAnchorEl(null);
@@ -165,7 +168,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
                 <ListItemIcon sx={iconStyle}>
                   <LogoutOutlined fontSize="small" />
                 </ListItemIcon>
-                 <ListItemText primary="Sair" primaryTypographyProps={textStyle}/>
+                 <ListItemText onClick={() => navigate("/")} primary="Sair" primaryTypographyProps={textStyle}/>
               </MenuItem>
           </Box>
         </Menu>

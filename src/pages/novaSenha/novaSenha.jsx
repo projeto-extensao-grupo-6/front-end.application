@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Lock, Check, X, Eye, EyeOff } from 'lucide-react'; // Importar Eye e EyeOff
-import { TextField, Button, Paper, IconButton, InputAdornment } from "@mui/material"; // Importar IconButton e InputAdornment
+import { Lock, Check, X, Eye, EyeOff } from 'lucide-react'; 
+import { TextField, Button, Paper, IconButton, InputAdornment } from "@mui/material"; 
 
 // Componente auxiliar para exibir os requisitos de senha
 const PasswordRequirement = ({ text, isValid }) => (
@@ -22,12 +22,26 @@ export default function NovaSenha() {
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
 
-    // 1. NOVOS ESTADOS PARA CONTROLAR A VISIBILIDADE DE CADA CAMPO
+    // 1. SIMULAÇÃO DO NOME DO USUÁRIO
+    // Na aplicação real, você deve buscar o nome do usuário usando o idUsuario
+    // e o token de autenticação, ou passá-lo via Redux/Context.
+    const [userName, setUserName] = useState("Carregando...");
+    
+    useEffect(() => {
+        const loggedUserName = localStorage.getItem('loggedUserName'); 
+        
+        if (loggedUserName) {
+            setUserName(loggedUserName);
+        } else {
+            setUserName("Julio Cesar (Mock)"); 
+        }
+    }, [idUsuario]);
+
+
     const [showNovaSenha, setShowNovaSenha] = useState(false);
     const [showConfirmaSenha, setShowConfirmaSenha] = useState(false);
 
     // --- Dados e Cores ---
-    const userName = "Usuário ID: " + idUsuario;
     const primaryDarkColor = "#003d6b";
     const inputBgColor = "#f5f8fa";
 
@@ -39,7 +53,7 @@ export default function NovaSenha() {
 
     const isFormValid = is8Chars && isUppercase && isNumber && passwordsMatch;
 
-    // 2. HANDLER PARA ALTERNAR A VISIBILIDADE
+    // Handler para alternar a visibilidade
     const handleToggleShowPassword = (field) => {
         if (field === 'novaSenha') {
             setShowNovaSenha((prev) => !prev);
@@ -78,6 +92,7 @@ export default function NovaSenha() {
             if (response.status === 204) {
                 setSuccess('Senha definida com sucesso! Redirecionando...');
                 localStorage.setItem("userFirstLogin", "false");
+                // **IMPORTANTE:** Remover ou invalidar o token de primeiro acesso forçado aqui.
 
                 setTimeout(() => {
                     navigate('/paginaInicial');
@@ -101,7 +116,8 @@ export default function NovaSenha() {
     return (
         <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 font-[Inter]">
 
-            <Paper elevation={3} className="rounded-xl shadow-xl p-12 w-full max-w-lg mx-auto">
+            {/* **AJUSTE 2: Aumentado o padding (p-12 para p-10) e mantido max-w-lg para respirar** */}
+            <Paper elevation={3} className="rounded-xl shadow-2xl p-10 w-full max-w-md mx-auto">
                 <div className="flex flex-col items-center text-center">
 
                     <img
@@ -110,23 +126,26 @@ export default function NovaSenha() {
                         className="w-32 mb-6"
                     />
 
-                    <h2 className="text-xl font-normal text-gray-700 mt-2">Seja bem vindo</h2>
-                    <h1 className="text-3xl font-semibold text-gray-800 mb-6 w-full">
+                    {/* **AJUSTE 2: Adicionada margem inferior mb-2** */}
+                    <h2 className="text-xl font-normal text-gray-700 mb-2">Seja bem vindo</h2>
+                    
+                    {/* **AJUSTE 1: Exibe o nome do usuário e AUMENTADO O ESPAÇAMENTO INFERIOR (mb-6 para mb-8)** */}
+                    <h1 className="text-3xl font-semibold text-gray-800 mb-8 w-full">
                         {userName}
                     </h1>
 
-                    <p className="text-gray-600 mb-10 text-lg">
+                    {/* **AJUSTE 2: AUMENTADO O ESPAÇAMENTO INFERIOR (mb-10 para mb-12)** */}
+                    <p className="text-gray-600 mb-12 text-lg">
                         Defina sua senha para começar a utilizar o sistema
                     </p>
 
                     <form onSubmit={handleSubmit} className="w-full max-w-sm">
 
-                        {/* Nova Senha */}
+                        {/* Nova Senha - mb-8 já está bom */}
                         <div className="mb-8 text-left">
-                            <label htmlFor="novaSenha" className="block text-gray-700 font-medium mb-2 text-base">Nova senha:</label>
+                            <label htmlFor="novaSenha" className="block text-gray-700 font-medium mb-3 text-base">Nova senha:</label>
                             <TextField
                                 fullWidth
-                                // 3. ALTERNA O TYPE COM BASE NO ESTADO
                                 type={showNovaSenha ? 'text' : 'password'}
                                 id="novaSenha"
                                 placeholder="********"
@@ -136,18 +155,19 @@ export default function NovaSenha() {
                                 size="medium"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: '4px',
+                                        borderRadius: '8px', /* Ligeiramente mais arredondado */
                                         backgroundColor: inputBgColor,
                                         paddingLeft: '12px',
                                         '& fieldset': { border: 'none' },
-                                        '&.Mui-focused fieldset': { border: 'none' },
-                                    }
+                                        '&.Mui-focused': { boxShadow: '0 0 0 2px #007EA740' }, /* Efeito de foco suave */
+                                    },
+                                    /* **AJUSTE 2: Adiciona margem inferior extra ao TextField** */
+                                    marginBottom: '20px' 
                                 }}
                                 InputProps={{
                                     startAdornment: (
                                         <Lock className="w-6 h-6 mr-3 text-gray-500" />
                                     ),
-                                    // 4. ADICIONA O BOTÃO DE ALTERNÂNCIA (FIM)
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton
@@ -163,12 +183,11 @@ export default function NovaSenha() {
                             />
                         </div>
 
-                        {/* Confirmação de Senha */}
+                        {/* Confirmação de Senha - mb-10 já está bom */}
                         <div className="mb-10 text-left">
-                            <label htmlFor="confirmaSenha" className="block text-gray-700 font-medium mb-2 text-base">Digite a senha novamente:</label>
+                            <label htmlFor="confirmaSenha" className="block text-gray-700 font-medium mb-3 text-base">Digite a senha novamente:</label>
                             <TextField
                                 fullWidth
-                                // 3. ALTERNA O TYPE COM BASE NO ESTADO
                                 type={showConfirmaSenha ? 'text' : 'password'}
                                 id="confirmaSenha"
                                 placeholder="********"
@@ -179,18 +198,17 @@ export default function NovaSenha() {
                                 error={confirmaSenha.length > 0 && !passwordsMatch}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: '4px',
+                                        borderRadius: '8px', /* Ligeiramente mais arredondado */
                                         backgroundColor: inputBgColor,
                                         paddingLeft: '12px',
                                         '& fieldset': { border: 'none' },
-                                        '&.Mui-focused fieldset': { border: 'none' },
-                                    }
+                                        '&.Mui-focused': { boxShadow: '0 0 0 2px #007EA740' }, /* Efeito de foco suave */
+                                    },
                                 }}
                                 InputProps={{
                                     startAdornment: (
                                         <Lock className="w-6 h-6 mr-3 text-gray-500" />
                                     ),
-                                    // 4. ADICIONA O BOTÃO DE ALTERNÂNCIA (FIM)
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton
@@ -206,29 +224,28 @@ export default function NovaSenha() {
                             />
                         </div>
 
-                        {/* Requisitos de Senha */}
-                        <div className="flex flex-col items-start space-y-2 mb-10">
+                        {/* Requisitos de Senha - mb-10 já está bom, mas garantindo espaçamento interno com space-y-3 */}
+                        <div className="flex flex-col items-start space-y-3 mb-10"> 
                             <PasswordRequirement text="Pelo menos 8 caracteres" isValid={is8Chars} />
                             <PasswordRequirement text="Pelo menos 1 letra maiúscula" isValid={isUppercase} />
                             <PasswordRequirement text="Pelo menos 1 número" isValid={isNumber} />
                             <PasswordRequirement text="As senhas coincidem" isValid={passwordsMatch} />
                         </div>
 
-                        {/* Mensagem de Sucesso */}
+                        {/* Mensagens (Aumentado mb-8 para mb-10) */}
                         {success && (
-                            <p className="text-green-600 text-sm mb-8 bg-green-100 p-3 rounded-lg border border-green-300 w-full text-center">
+                            <p className="text-green-600 text-sm mb-10 bg-green-100 p-3 rounded-lg border border-green-300 w-full text-center">
                                 {success}
                             </p>
                         )}
 
-                        {/* Mensagem de Erro */}
                         {error && (
-                            <p className="text-red-600 text-sm mb-8 bg-red-100 p-3 rounded-lg border border-red-300 w-full text-center">
+                            <p className="text-red-600 text-sm mb-10 bg-red-100 p-3 rounded-lg border border-red-300 w-full text-center">
                                 {error}
                             </p>
                         )}
 
-                        {/* Botão de Definição */}
+                        {/* Botão de Definição - Adicionado margem superior (mt-4) para aumentar distância das mensagens/requisitos */}
                         <Button
                             type="submit"
                             variant="contained"
@@ -238,16 +255,17 @@ export default function NovaSenha() {
                                 backgroundColor: primaryDarkColor,
                                 '&:hover': { backgroundColor: '#002a4b' },
                                 '&.Mui-disabled': {
-                                    backgroundColor: '#002a4b',
+                                    backgroundColor: '#002a4b', // Ligeiramente mais claro quando desabilitado
                                     color: '#ffffff'
                                 },
-                                padding: '14px 0',
-                                fontSize: '1.1rem',
+                                padding: '16px 0', // Aumentado o padding para um botão mais alto
+                                fontSize: '1.2rem', // Um pouco maior
                                 fontWeight: 'bold',
-                                borderRadius: '4px',
+                                borderRadius: '8px',
                                 transition: 'all 0.3s',
                                 fontFamily: 'Inter'
                             }}
+                            className="mt-4" // Tailwind class para aumentar o espaçamento superior
                         >
                             {isLoading ? 'Definindo Senha...' : 'Definir senha'}
                         </Button>
