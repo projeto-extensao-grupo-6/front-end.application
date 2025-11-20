@@ -9,6 +9,7 @@ import Pedidos from '../pages/pedidos/pedidos.jsx';
 import Acesso from '../pages/acesso/acesso.jsx';
 import CalendarDashboard from '../pages/calendar-dashboard.jsx/index.jsx';
 import NovaSenha from '../pages/novaSenha/novaSenha.jsx';
+import Perfil from '../pages/perfil/perfil.jsx';
 
 export const routes = createBrowserRouter([
   { path: '/', element: <Login /> },
@@ -22,4 +23,5 @@ export const routes = createBrowserRouter([
   { path: '/pedidos', element: <Pedidos /> },
   { path: '/acesso', element: <Acesso /> },
   { path: '/agendamentos', element: <CalendarDashboard /> },
+  { path: '/perfil', element: <Perfil />}
 ]);
