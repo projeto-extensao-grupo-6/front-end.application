@@ -8,6 +8,7 @@ import Estoque from '../pages/estoque/estoque.jsx';
 import Pedidos from '../pages/pedidos/pedidos.jsx';
 import Acesso from '../pages/acesso/acesso.jsx';
 import CalendarDashboard from '../pages/calendar-dashboard.jsx/index.jsx';
+import NovaSenha from '../pages/novaSenha/novaSenha.jsx';
 import Perfil from '../pages/perfil/perfil.jsx';
 
 export const routes = createBrowserRouter([
@@ -15,6 +16,7 @@ export const routes = createBrowserRouter([
   { path: '/login', element: <Login /> },
   { path: '/cadastro', element: <Cadastro /> },
   { path: '/paginaInicial', element: <PaginaInicial /> },
+  { path: '/primeiroAcesso/:idUsuario', element: <NovaSenha/>},
   { path: '/funcionarios', element: <Funcionarios /> },
   { path: '/clientes', element: <Clientes /> },
   { path: '/estoque', element: <Estoque /> },

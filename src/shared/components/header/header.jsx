@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -21,6 +21,7 @@ import {
   AccountCircleOutlined
 } from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
+import { useNavigate } from "react-router-dom";
 import UserImg from "../../../assets/User.png";
 
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,25 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const navigate = useNavigate();
+
+  const [userName, setUserName] = useState("Carregando...");
+  const [userEmail, setUserEmail] = useState("carregando@leovidros.com");
+  
+  useEffect(() => {
+    const storedName = localStorage.getItem('loggedUserName');
+    const storedEmail = localStorage.getItem('loggedUserEmail');
+
+    if (storedName) {
+      setUserName(storedName);
+    } else {
+      setUserName("Usuário Léo Vidros"); 
+    }
+
+    if (storedEmail) {
+      setUserEmail(storedEmail);
+    }
+  }, []); 
 
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
   const handleProfileClose = () => setAnchorEl(null);
@@ -93,8 +113,8 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           onClick={handleProfileClick}
         >
           <div className="hidden sm:block text-right mr-1">
-            <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">Julio Cesar</p>
-            <p className="text-[11px] sm:text-xs text-gray-300">Cargo</p>
+            <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">{userName}</p>
+            <p className="text-[11px] sm:text-xs text-gray-300">Admin</p>
           </div>
           <Avatar
             src={UserImg}
@@ -129,18 +149,18 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
         >
           {/* Seção de Perfil Destacada */}
           <Box className="flex items-center px-4 py-5 gap-3">
-            <Avatar
-              src={UserImg}
-              className="w-12 h-12 border-2 border-white"
-            />
-            <div>
-              <Typography variant="subtitle1" className="font-semibold leading-tight">
-                Julio Cesar
-              </Typography>
-              <Typography variant="body2" className="text-gray-300 leading-tight">
-                julio.cesar@gmail.com
-              </Typography>
-            </div>
+             <Avatar
+               src={UserImg}
+               className="w-12 h-12 border-2 border-white"
+             />
+             <div>
+                 <Typography variant="subtitle1" className="font-semibold leading-tight">
+                   {userName}
+                 </Typography>
+                 <Typography variant="body2" className="text-gray-300 leading-tight">
+                   {userEmail}
+                 </Typography>
+             </div>
           </Box>
 
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginX: '8px' }} />
@@ -162,12 +182,12 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
 
             <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginY: '8px', marginX: '8px' }} />
 
-            <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
-              <ListItemIcon sx={iconStyle}>
-                <LogoutOutlined fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary="Sair" primaryTypographyProps={textStyle} />
-            </MenuItem>
+              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
+                <ListItemIcon sx={iconStyle}>
+                  <LogoutOutlined fontSize="small" />
+                </ListItemIcon>
+                 <ListItemText onClick={() => navigate("/")} primary="Sair" primaryTypographyProps={textStyle}/>
+              </MenuItem>
           </Box>
         </Menu>
       </Toolbar>
