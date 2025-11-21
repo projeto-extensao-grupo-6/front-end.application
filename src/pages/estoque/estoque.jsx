@@ -387,7 +387,7 @@ export default function Estoque() {
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-
+      
       <div className="flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="pt-20 lg:pt-80px" />
@@ -404,32 +404,7 @@ export default function Estoque() {
           </div>
 
           <div className="flex max-w-[1800px] mx-auto pt-10 flex-col gap-6">
-            {/* KPIs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-              {kpiData.map((stat, index) => (
-                <div
-                  key={index}
-                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
-                    <Package className="w-6 h-6 text-[#003d6b]" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                    {stat.caption && (
-                      <p className="mt-2 text-sm text-gray-600 flex items-center">
-                        {stat.captionColor === "green" && (
-                          <ArrowUp className="w-4 h-4 mr-1 text-green-500" />
-                        )}
-                        {stat.caption}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
+            
             {/* Tabela de Estoque */}
             <div className="flex flex-col gap-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
               {/* Barra de ações */}
