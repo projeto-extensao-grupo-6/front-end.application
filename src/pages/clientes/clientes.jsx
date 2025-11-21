@@ -28,8 +28,9 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 import ClienteFormModal from "../../shared/components/clienteComponents/ClienteFormModal";
+import axios from "axios";
 
-const API_URL = "http://localhost:3000/clientes";
+const API_URL = "http://localhost:3000/api/clientes";
 
 const formatCurrency = (value) => {
   if (value == null || isNaN(value)) return "R$ 0,00";
@@ -111,10 +112,8 @@ export default function Clientes() {
 
   const fetchClientes = async () => {
     try {
-      const response = await fetch(`${API_URL}?_sort=id&_order=desc`);
-      if (!response.ok) throw new Error("Erro ao buscar dados da API");
-      const data = await response.json();
-      setClientes(data);
+      const response = await axios.get(API_URL);
+      setClientes(response.data);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
     }
@@ -161,40 +160,26 @@ export default function Clientes() {
       try {
         const clienteAtualizado = { ...clienteSelecionado, ...dadosCliente };
 
-        const response = await fetch(`${API_URL}/${clienteSelecionado.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(clienteAtualizado),
-        });
-
-        if (!response.ok) throw new Error("Erro ao atualizar cliente");
+        const response = await axios.put(`${API_URL}/${clienteSelecionado.id}`, clienteAtualizado);
 
         setClientes((prev) =>
           prev.map((c) =>
             c.id === clienteSelecionado.id ? clienteAtualizado : c
           )
         );
+
       } catch (error) {
         console.error("Erro ao editar cliente (PUT):", error);
       }
     } else {
       try {
-        const maxIdExistente = clientes.reduce(
-          (maxId, c) => Math.max(c.id, maxId),
-          0
-        );
-        const novoClienteComId = { ...dadosCliente, id: maxIdExistente + 1 };
 
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(novoClienteComId),
-        });
+        const novoClienteComId = { ...dadosCliente};
 
-        if (!response.ok) throw new Error("Erro ao criar cliente");
-
-        const novoCliente = await response.json();
+        const response = await axios.post(API_URL, novoClienteComId);
+        const novoCliente = response.data;
         setClientes((prev) => [novoCliente, ...prev]);
+
       } catch (error) {
         console.error("Erro ao criar cliente (POST):", error);
       }
@@ -397,7 +382,7 @@ export default function Clientes() {
                                 {c.nome}
                               </TableCell>
                               <TableCell sx={{ color: '#424242', py: 1 }}>
-                                {formatPhone(c.contato)}
+                                {formatPhone(c.telefone)}
                               </TableCell>
                               <TableCell sx={{ color: '#424242', py: 1 }}>
                                 {c.email}
@@ -472,19 +457,19 @@ export default function Clientes() {
                                       <span className="font-semibold text-gray-900">
                                         Endereço:{" "}
                                         <span className="font-normal text-gray-600">
-                                          {c.endereco || "N/A"}
+                                          {c.enderecos[0].rua || "N/A"}
                                         </span>
                                       </span>
                                       <span className="font-semibold text-gray-900">
-                                        Cidade:{" "}
+                                        CEP:{" "}
                                         <span className="font-normal text-gray-600">
-                                          {c.cidade || "N/A"}
+                                          {c.enderecos[0].cep || "N/A"}
                                         </span>
                                       </span>
                                       <span className="font-semibold text-gray-900">
-                                        UF:{" "}
+                                        Bairro:{" "}
                                         <span className="font-normal text-gray-600">
-                                          {c.uf || "N/A"}
+                                          {c.enderecos[0].bairro || "N/A"}
                                         </span>
                                       </span>
                                     </div>
