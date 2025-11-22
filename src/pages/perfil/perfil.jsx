@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../service/api.js';
 import { User, MapPin, Lock, Save, Edit2, Camera, Eye, EyeOff } from 'lucide-react';
 import Sidebar from '../../shared/components/sidebar/sidebar';
 import Header from '../../shared/components/header/header';
@@ -52,32 +53,120 @@ export default function Perfil() {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const [formData, setFormData] = useState({
-        nome: "Julio Cesar da Silva",
-        cpf: "549.235.215-11",
-        cargo: "Gerente administrativo",
-        email: "Julio.cesar@gmail.com",
-        telefone: "11 95673-4356",
+        nome: "",
+        cpf: "",
+        cargo: "",
+        email: "",
+        telefone: "",
         senhaAtual: "",
         novaSenha: "",
         confirmarSenha: "",
-        cep: "01310-100",
-        rua: "Av. Paulista",
-        numero: "1578",
-        bairro: "Bela Vista",
-        cidade: "São Paulo",
-        estado: "SP"
+        rua: "",
+        cep: "",
+        bairro: "",
+        cidade: "",
+        numero: "",
+        estado: "",
+        pais: "",
+        complemento: ""
     });
+
+    useEffect(() => {
+        const userId = sessionStorage.getItem('userId');
+
+        if (!userId) {
+            console.error("ID do usuário não encontrado no sessionStorage. Faça o login.");
+            //window.location.href = '/login';
+            return;
+        }
+
+        api.get(`/usuarios/${userId}`)
+            .then(response => {
+                const data = response.data;
+
+                setFormData({
+                    nome: data.nome || "",
+                    cpf: data.cpf || "",
+                    email: data.email || "",
+                    telefone: data.telefone || "",
+                    cargo: data.cargo || "Cargo não informado",
+
+                    rua: data.endereco?.rua || "",
+                    cep: data.endereco?.cep || "",
+                    bairro: data.endereco?.bairro || "",
+                    cidade: data.endereco?.cidade || "",
+                    numero: data.endereco?.numero || "",
+                    estado: data.endereco?.uf || "",
+                    pais: data.endereco?.pais || "",
+                    complemento: data.endereco?.complemento || "",
+
+                    senhaAtual: data.senha || "",
+                    novaSenha: "",
+                    confirmarSenha: ""
+                });
+            })
+            .catch(error => {
+                console.error("Erro ao carregar perfil:", error);
+            });
+
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleSave = () => {
+        const userId = sessionStorage.getItem('userId');
+
+        if (!userId) {
+            console.error("Não é possível salvar: ID do usuário não encontrado.");
+            return;
+        }
+
+        const enderecoRequest = {
+            rua: formData.rua,
+            cep: formData.cep,
+            cidade: formData.cidade,
+            bairro: formData.bairro,
+            uf: formData.estado ? formData.estado.substring(0, 2) : "",
+            numero: formData.numero,
+            complemento: formData.complemento,
+            pais: formData.pais,
+        };
+
+        const usuarioRequest = {
+            nome: formData.nome,
+            email: formData.email,
+            cpf: formData.cpf,
+            telefone: formData.telefone,
+            endereco: enderecoRequest,
+            senha: formData.novaSenha ? formData.novaSenha : formData.senhaAtual
+        };
+
+        api.put(`/usuarios/${userId}`, usuarioRequest)
+            .then(response => {
+                console.log('Salvo com sucesso!', response.data);
+                setIsEditing(false);
+            })
+            .catch(error => {
+                console.error("Erro ao salvar:", error);
+            });
+    };
+
     const toggleEdit = () => {
         if (isEditing) {
-            console.log("Salvando dados:", formData);
+            handleSave();
+
+            if (isChangingPassword) {
+                console.log("Salvando senha:", {
+                    atual: formData.senhaAtual,
+                    nova: formData.novaSenha
+                });
+            }
+        } else {
+            setIsEditing(true);
         }
-        setIsEditing(!isEditing);
     };
 
     return (
@@ -112,8 +201,8 @@ export default function Perfil() {
                                             </button>
                                         </div>
                                         <div className='flex flex-col mb-10 py-6'>
-                                            <h3 className="text-xl font-semibold mb-1">Julio Cesar</h3>
-                                            <p className="text-sm text-gray-400">Gerente Administrativo</p>
+                                            <h3 className="text-xl font-semibold mb-1">{formData.nome}</h3>
+                                            <p className="text-sm text-gray-400">{formData.cargo}</p>
                                         </div>
                                     </div>
 
@@ -121,8 +210,8 @@ export default function Perfil() {
                                         <button
                                             onClick={() => { setActiveTab('personal'); setIsEditing(false); }}
                                             className={`w-full flex items-center gap-3 px-4 py-3 cursor-pointer rounded-lg transition-all ${activeTab === 'personal'
-                                                    ? 'bg-cyan-500/20 text-white border-l-4 border-cyan-400 shadow-lg'
-                                                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                                                ? 'bg-cyan-500/20 text-white border-l-4 border-cyan-400 shadow-lg'
+                                                : 'text-gray-300 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
                                             <User size={20} />
@@ -132,8 +221,8 @@ export default function Perfil() {
                                         <button
                                             onClick={() => { setActiveTab('address'); setIsEditing(false); }}
                                             className={`w-full flex items-center gap-3 px-4 py-3 cursor-pointer rounded-lg transition-all ${activeTab === 'address'
-                                                    ? 'bg-cyan-500/20 text-white border-l-4 border-cyan-400 shadow-lg'
-                                                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                                                ? 'bg-cyan-500/20 text-white border-l-4 border-cyan-400 shadow-lg'
+                                                : 'text-gray-300 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
                                             <MapPin size={20} />
@@ -262,7 +351,6 @@ export default function Perfil() {
                                                                         setIsChangingPassword(false);
                                                                         setFormData(prev => ({
                                                                             ...prev,
-                                                                            senhaAtual: "",
                                                                             novaSenha: "",
                                                                             confirmarSenha: ""
                                                                         }));
@@ -285,6 +373,16 @@ export default function Perfil() {
                                                 </div>
                                             ) : (
                                                 <div className="grid grid-cols-1 lg:grid-cols-6 gap-10 py-9">
+
+                                                    <InputField
+                                                        label="Rua (Logradouro)"
+                                                        name="rua"
+                                                        value={formData.rua}
+                                                        onChange={handleInputChange}
+                                                        disabled={!isEditing}
+                                                        className="lg:col-span-4 text-start"
+                                                    />
+
                                                     <InputField
                                                         label="CEP"
                                                         name="cep"
@@ -295,12 +393,21 @@ export default function Perfil() {
                                                     />
 
                                                     <InputField
-                                                        label="Rua / Logradouro"
-                                                        name="rua"
-                                                        value={formData.rua}
+                                                        label="Bairro"
+                                                        name="bairro"
+                                                        value={formData.bairro}
                                                         onChange={handleInputChange}
                                                         disabled={!isEditing}
-                                                        className="lg:col-span-4 text-start"
+                                                        className="lg:col-span-2 text-start"
+                                                    />
+
+                                                    <InputField
+                                                        label="Cidade"
+                                                        name="cidade"
+                                                        value={formData.cidade}
+                                                        onChange={handleInputChange}
+                                                        disabled={!isEditing}
+                                                        className="lg:col-span-2 text-start"
                                                     />
 
                                                     <InputField
@@ -313,30 +420,30 @@ export default function Perfil() {
                                                     />
 
                                                     <InputField
-                                                        label="Bairro"
-                                                        name="bairro"
-                                                        value={formData.bairro}
-                                                        onChange={handleInputChange}
-                                                        disabled={!isEditing}
-                                                        className="lg:col-span-4 text-start"
-                                                    />
-
-                                                    <InputField
-                                                        label="Cidade"
-                                                        name="cidade"
-                                                        value={formData.cidade}
-                                                        onChange={handleInputChange}
-                                                        disabled={!isEditing}
-                                                        className="lg:col-span-4 text-start"
-                                                    />
-
-                                                    <InputField
                                                         label="Estado"
                                                         name="estado"
                                                         value={formData.estado}
                                                         onChange={handleInputChange}
                                                         disabled={!isEditing}
                                                         className="lg:col-span-2 text-start"
+                                                    />
+
+                                                    <InputField
+                                                        label="Pais"
+                                                        name="pais"
+                                                        value={formData.pais}
+                                                        onChange={handleInputChange}
+                                                        disabled={!isEditing}
+                                                        className="lg:col-span-2 text-start"
+                                                    />
+
+                                                    <InputField
+                                                        label="Complemento"
+                                                        name="complemento"
+                                                        value={formData.complemento}
+                                                        onChange={handleInputChange}
+                                                        disabled={!isEditing}
+                                                        className="lg:col-span-4 text-start"
                                                     />
                                                 </div>
                                             )}
@@ -348,7 +455,7 @@ export default function Perfil() {
                                                         ? "bg-green-700 hover:bg-green-800"
                                                         : "bg-[#007EA7] hover:bg-[#006fa8]"
                                                         }`}
-                                                >   
+                                                >
                                                     {isEditing ? "Salvar Alterações" : "Editar Informações"}
                                                     {isEditing ? <Save size={20} /> : <Edit2 size={20} />}
                                                 </button>

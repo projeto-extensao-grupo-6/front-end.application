@@ -26,6 +26,8 @@
           body: JSON.stringify({ email, senha }),
         });
 
+      console.log(response)
+
         if (!response.ok) throw new Error("Email ou senha inválidos");
 
         const data = await response.json();

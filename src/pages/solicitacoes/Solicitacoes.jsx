@@ -4,7 +4,7 @@ import Sidebar from "../../shared/components/sidebar/sidebar";
 import { Search, Check, X, CheckCheck, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import ModalConfirmacao from "../../shared/components/modalAceiteOrRecusa/ModalAceiteOrRecusa";
 
-const API_URL = "http://localhost:3000/api/solicitacoes";
+const API_URL = "http://localhost:3000/api/solicitacoes"; 
 const ITENS_POR_PAGINA = 10;
 
 export default function Acesso() {
