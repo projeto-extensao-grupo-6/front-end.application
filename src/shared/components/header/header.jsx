@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -21,14 +22,13 @@ import {
   AccountCircleOutlined
 } from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
-import { useNavigate } from "react-router-dom";
 import UserImg from "../../../assets/User.png";
 
 export default function Header({ toggleSidebar, sidebarOpen }) {
-  const navigate = useNavigate();
-
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const navigate = useNavigate(); // Adicione esta linha
+
   const [userName, setUserName] = useState("Carregando...");
   const [userEmail, setUserEmail] = useState("carregando@leovidros.com");
   
@@ -178,11 +178,14 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
 
             <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginY: '8px', marginX: '8px' }} />
 
-              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
+              <MenuItem onClick={() => {
+                handleProfileClose();
+                navigate("/");
+              }} sx={menuItemStyle}>
                 <ListItemIcon sx={iconStyle}>
                   <LogoutOutlined fontSize="small" />
                 </ListItemIcon>
-                 <ListItemText onClick={() => navigate("/")} primary="Sair" primaryTypographyProps={textStyle}/>
+                 <ListItemText primary="Sair" primaryTypographyProps={textStyle}/>
               </MenuItem>
           </Box>
         </Menu>

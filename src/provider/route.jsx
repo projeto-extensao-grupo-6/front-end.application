@@ -6,7 +6,7 @@ import Funcionarios from '../pages/funcionarios/funcionarios.jsx';
 import Clientes from '../pages/clientes/clientes.jsx';
 import Estoque from '../pages/estoque/estoque.jsx';
 import Pedidos from '../pages/pedidos/pedidos.jsx';
-import Acesso from '../pages/acesso/acesso.jsx';
+import Solicitacoes from '../pages/solicitacoes/Solicitacoes.jsx';
 import CalendarDashboard from '../pages/calendar-dashboard.jsx/index.jsx';
 import NovaSenha from '../pages/novaSenha/novaSenha.jsx';
 import Perfil from '../pages/perfil/perfil.jsx';
@@ -21,7 +21,7 @@ export const routes = createBrowserRouter([
   { path: '/clientes', element: <Clientes /> },
   { path: '/estoque', element: <Estoque /> },
   { path: '/pedidos', element: <Pedidos /> },
-  { path: '/acesso', element: <Acesso /> },
+  { path: '/acesso', element: <Solicitacoes /> },
   { path: '/agendamentos', element: <CalendarDashboard /> },
-  { path: '/perfil', element: <Perfil />}
+  { path: '/perfil', element: <Perfil /> }
 ]);
