@@ -20,7 +20,7 @@ import { Edit, Delete } from "@mui/icons-material";
 import FuncionarioForm from "../../shared/components/modalFuncionarios/FuncionarioForm";
 import DeleteFuncionario from "../../shared/components/modalFuncionarios/DeleteFuncionario";
 
-const API_URL = "http://localhost:3000/funcionarios";
+const API_URL = "http://localhost:3001/funcionarios";
 
 export default function Funcionarios() {
   const [sidebarOpen, setSidebarOpen] = useState(false);

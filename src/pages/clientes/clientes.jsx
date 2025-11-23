@@ -30,7 +30,7 @@ import ClienteFormModal from "../../shared/components/clienteComponents/ClienteF
 import ClienteDetailsModal from "../../shared/components/clienteComponents/ClienteDetailsModal";
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/clientes";
+const API_URL = "http://localhost:3001/clientes";
 
 const formatCurrency = (value) => {
   if (value == null || isNaN(value)) return "R$ 0,00";
@@ -336,10 +336,10 @@ export default function Clientes() {
                           }}
                         />
                       </TableCell>
-                      <TableCell>ㅤㅤㅤNome</TableCell>
-                      <TableCell>ㅤㅤContato</TableCell>
-                      <TableCell>ㅤㅤㅤㅤEmail</TableCell>
-                      <TableCell>­­ㅤ­Prestação de serviço</TableCell>
+                      <TableCell>Nome</TableCell>
+                      <TableCell>Contato</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>­­­Prestação de serviço</TableCell>
                       <TableCell>ㅤ­­­­­­­­­­­­Ações</TableCell>
                     </TableRow>­­
                   </TableHead>

@@ -23,8 +23,8 @@ import CalendarDropdown from "../../shared/components/estoque/CalendarDropdown";
 import FilterDropdown from "../../shared/components/estoque/FilterDropdown";
 import EntradaSaidaEstoque from "../../shared/components/modalEstoque/EntradaSaidaEstoque";
 
-const API_URL = "http://localhost:3000/estoque";
-const FUNCIONARIOS_API_URL = "http://localhost:3000/funcionarios";
+const API_URL = "http://localhost:3001/estoque";
+const FUNCIONARIOS_API_URL = "http://localhost:3001/funcionarios";
 const ITENS_POR_PAGINA = 6;
 
 export default function Estoque() {

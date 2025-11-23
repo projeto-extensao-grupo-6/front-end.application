@@ -74,17 +74,17 @@ function Cadastro() {
         body: JSON.stringify({ nome, email, cpf, telefone }),
       });
 
-      const responseJsonServer = await fetch("http://localhost:8080/solicitacoes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, email, cpf, telefone }),
-      });
+      // const responseJsonServer = await fetch("http://localhost:8080/solicitacoes", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ nome, email, cpf, telefone }),
+      // });
 
       if (!response.ok) throw new Error("Erro ao cadastrar");
-      if (!responseJsonServer.ok) throw new Error("Erro ao cadastrar no json server");
+      // if (!responseJsonServer.ok) throw new Error("Erro ao cadastrar no json server");
 
       await response.json();
-      await responseJsonServer.json();
+      // await responseJsonServer.json();
 
       setModalOpen(true);
       setTimeout(() => {
