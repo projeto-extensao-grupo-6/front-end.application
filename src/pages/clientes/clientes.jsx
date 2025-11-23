@@ -16,7 +16,6 @@ import {
   Chip,
   Typography,
   MenuItem,
-  Collapse,
   Divider,
   Checkbox,
 } from "@mui/material";
@@ -28,6 +27,8 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 import ClienteFormModal from "../../shared/components/clienteComponents/ClienteFormModal";
+import ClienteDetailsModal from "../../shared/components/clienteComponents/ClienteDetailsModal";
+import axios from "axios";
 
 const API_URL = "http://localhost:3001/clientes";
 
@@ -108,13 +109,13 @@ export default function Clientes() {
   const [openRowId, setOpenRowId] = useState(null);
 
   const [selecionados, setSelecionados] = useState([]);
+  const [openDetails, setOpenDetails] = useState(false);
+  const [clienteDetalhes, setClienteDetalhes] = useState(null);
 
   const fetchClientes = async () => {
     try {
-      const response = await fetch(`${API_URL}?_sort=id&_order=desc`);
-      if (!response.ok) throw new Error("Erro ao buscar dados da API");
-      const data = await response.json();
-      setClientes(data);
+      const response = await axios.get(API_URL);
+      setClientes(response.data);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
     }
@@ -161,40 +162,26 @@ export default function Clientes() {
       try {
         const clienteAtualizado = { ...clienteSelecionado, ...dadosCliente };
 
-        const response = await fetch(`${API_URL}/${clienteSelecionado.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(clienteAtualizado),
-        });
-
-        if (!response.ok) throw new Error("Erro ao atualizar cliente");
+        const response = await axios.put(`${API_URL}/${clienteSelecionado.id}`, clienteAtualizado);
 
         setClientes((prev) =>
           prev.map((c) =>
             c.id === clienteSelecionado.id ? clienteAtualizado : c
           )
         );
+
       } catch (error) {
         console.error("Erro ao editar cliente (PUT):", error);
       }
     } else {
       try {
-        const maxIdExistente = clientes.reduce(
-          (maxId, c) => Math.max(c.id, maxId),
-          0
-        );
-        const novoClienteComId = { ...dadosCliente, id: maxIdExistente + 1 };
 
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(novoClienteComId),
-        });
+        const novoClienteComId = { ...dadosCliente};
 
-        if (!response.ok) throw new Error("Erro ao criar cliente");
-
-        const novoCliente = await response.json();
+        const response = await axios.post(API_URL, novoClienteComId);
+        const novoCliente = response.data;
         setClientes((prev) => [novoCliente, ...prev]);
+
       } catch (error) {
         console.error("Erro ao criar cliente (POST):", error);
       }
@@ -245,6 +232,11 @@ export default function Clientes() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes");
     XLSX.writeFile(workbook, nomeArquivo);
+  };
+
+  const abrirModalVisualizar = (cliente) => {
+    setClienteDetalhes(cliente);
+    setOpenDetails(true);
   };
 
 
@@ -397,7 +389,7 @@ export default function Clientes() {
                                 {c.nome}
                               </TableCell>
                               <TableCell sx={{ color: '#424242', py: 1 }}>
-                                {formatPhone(c.contato)}
+                                {formatPhone(c.telefone)}
                               </TableCell>
                               <TableCell sx={{ color: '#424242', py: 1 }}>
                                 {c.email}
@@ -416,22 +408,8 @@ export default function Clientes() {
                                     variant="outlined"
                                     size="small"
                                   />
-                                  <Button
-                                    size="small"
-                                    startIcon={<VisibilityOutlined />}
-                                    sx={{
-                                      color: '#424242',
-                                      textTransform: 'none',
-                                      '&:hover': {
-                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                                      }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    Visualizar
-                                  </Button>
-                                </div>
-                              </TableCell>
+                                  </div>
+                                      </TableCell>
                               <TableCell sx={{ py: 1 }}>
                                 <div className="flex items-center gap-1">
                                   <IconButton
@@ -443,76 +421,28 @@ export default function Clientes() {
                                   >
                                     <Edit fontSize="small" />
                                   </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setOpenRowId(openRowId === c.id ? null : c.id);
-                                    }}
-                                  >
-                                    {openRowId === c.id ? (
-                                      <KeyboardArrowUp />
-                                    ) : (
-                                      <KeyboardArrowDown />
-                                    )}
-                                  </IconButton>
-                                </div>
+                               <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abrirModalVisualizar(c);
+                                }}
+                              >
+                          
+                                <KeyboardArrowDown />
+                              </IconButton>
+                              </div>
+                                    <ClienteDetailsModal 
+                                  open={openDetails}
+                                  onClose={() => setOpenDetails(false)}
+                                  cliente={clienteDetalhes}
+                                />
                               </TableCell>
                             </TableRow>
 
                             <TableRow>
                               <TableCell colSpan={6} className="p-0">
-                                <Collapse
-                                  in={openRowId === c.id}
-                                  timeout="auto"
-                                  unmountOnExit
-                                >
-                                  <div className="m-4 p-6 bg-gray-50 rounded-lg border border-gray-200 flex flex-col items-center gap-6">
-                                    <div className="flex flex-col md:flex-row justify-around items-center text-center gap-3 mb-2 flex-wrap w-full">
-                                      <span className="font-semibold text-gray-900">
-                                        Endereço:{" "}
-                                        <span className="font-normal text-gray-600">
-                                          {c.endereco || "N/A"}
-                                        </span>
-                                      </span>
-                                      <span className="font-semibold text-gray-900">
-                                        Cidade:{" "}
-                                        <span className="font-normal text-gray-600">
-                                          {c.cidade || "N/A"}
-                                        </span>
-                                      </span>
-                                      <span className="font-semibold text-gray-900">
-                                        UF:{" "}
-                                        <span className="font-normal text-gray-600">
-                                          {c.uf || "N/A"}
-                                        </span>
-                                      </span>
-                                    </div>
-
-                                    <Divider className="w-11/12 mb-4" />
-
-                                    <div className="w-full max-w-[950px] flex flex-col items-center gap-6">
-                                      <h3 className="text-center text-lg font-semibold mb-3">
-                                        Histórico de Serviços
-                                      </h3>
-
-                                      {hasHistory ? (
-                                        <div className="w-full flex flex-col items-center gap-6 pr-1">
-                                          {c.historicoServicos.map((hist) => (
-                                            <HistoryCard
-                                              hist={hist}
-                                              key={hist.id || Math.random()}
-                                            />
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <p className="text-center w-full">
-                                          Nenhum histórico de serviço encontrado.
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </Collapse>
+                               
                               </TableCell>
                             </TableRow>
                           </React.Fragment>
