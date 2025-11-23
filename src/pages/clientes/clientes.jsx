@@ -16,7 +16,6 @@ import {
   Chip,
   Typography,
   MenuItem,
-  Collapse,
   Divider,
   Checkbox,
 } from "@mui/material";
@@ -28,6 +27,7 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 import ClienteFormModal from "../../shared/components/clienteComponents/ClienteFormModal";
+import ClienteDetailsModal from "../../shared/components/clienteComponents/ClienteDetailsModal";
 import axios from "axios";
 
 const API_URL = "http://localhost:3000/api/clientes";
@@ -109,6 +109,8 @@ export default function Clientes() {
   const [openRowId, setOpenRowId] = useState(null);
 
   const [selecionados, setSelecionados] = useState([]);
+  const [openDetails, setOpenDetails] = useState(false);
+  const [clienteDetalhes, setClienteDetalhes] = useState(null);
 
   const fetchClientes = async () => {
     try {
@@ -230,6 +232,11 @@ export default function Clientes() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes");
     XLSX.writeFile(workbook, nomeArquivo);
+  };
+
+  const abrirModalVisualizar = (cliente) => {
+    setClienteDetalhes(cliente);
+    setOpenDetails(true);
   };
 
 
@@ -401,22 +408,8 @@ export default function Clientes() {
                                     variant="outlined"
                                     size="small"
                                   />
-                                  <Button
-                                    size="small"
-                                    startIcon={<VisibilityOutlined />}
-                                    sx={{
-                                      color: '#424242',
-                                      textTransform: 'none',
-                                      '&:hover': {
-                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                                      }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    Visualizar
-                                  </Button>
-                                </div>
-                              </TableCell>
+                                  </div>
+                                      </TableCell>
                               <TableCell sx={{ py: 1 }}>
                                 <div className="flex items-center gap-1">
                                   <IconButton
@@ -428,76 +421,28 @@ export default function Clientes() {
                                   >
                                     <Edit fontSize="small" />
                                   </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setOpenRowId(openRowId === c.id ? null : c.id);
-                                    }}
-                                  >
-                                    {openRowId === c.id ? (
-                                      <KeyboardArrowUp />
-                                    ) : (
-                                      <KeyboardArrowDown />
-                                    )}
-                                  </IconButton>
-                                </div>
+                               <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abrirModalVisualizar(c);
+                                }}
+                              >
+                          
+                                <KeyboardArrowDown />
+                              </IconButton>
+                              </div>
+                                    <ClienteDetailsModal 
+                                  open={openDetails}
+                                  onClose={() => setOpenDetails(false)}
+                                  cliente={clienteDetalhes}
+                                />
                               </TableCell>
                             </TableRow>
 
                             <TableRow>
                               <TableCell colSpan={6} className="p-0">
-                                <Collapse
-                                  in={openRowId === c.id}
-                                  timeout="auto"
-                                  unmountOnExit
-                                >
-                                  <div className="m-4 p-6 bg-gray-50 rounded-lg border border-gray-200 flex flex-col items-center gap-6">
-                                    <div className="flex flex-col md:flex-row justify-around items-center text-center gap-3 mb-2 flex-wrap w-full">
-                                      <span className="font-semibold text-gray-900">
-                                        Endereço:{" "}
-                                        <span className="font-normal text-gray-600">
-                                          {c.enderecos[0].rua || "N/A"}
-                                        </span>
-                                      </span>
-                                      <span className="font-semibold text-gray-900">
-                                        CEP:{" "}
-                                        <span className="font-normal text-gray-600">
-                                          {c.enderecos[0].cep || "N/A"}
-                                        </span>
-                                      </span>
-                                      <span className="font-semibold text-gray-900">
-                                        Bairro:{" "}
-                                        <span className="font-normal text-gray-600">
-                                          {c.enderecos[0].bairro || "N/A"}
-                                        </span>
-                                      </span>
-                                    </div>
-
-                                    <Divider className="w-11/12 mb-4" />
-
-                                    <div className="w-full max-w-[950px] flex flex-col items-center gap-6">
-                                      <h3 className="text-center text-lg font-semibold mb-3">
-                                        Histórico de Serviços
-                                      </h3>
-
-                                      {hasHistory ? (
-                                        <div className="w-full flex flex-col items-center gap-6 pr-1">
-                                          {c.historicoServicos.map((hist) => (
-                                            <HistoryCard
-                                              hist={hist}
-                                              key={hist.id || Math.random()}
-                                            />
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <p className="text-center w-full">
-                                          Nenhum histórico de serviço encontrado.
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </Collapse>
+                               
                               </TableCell>
                             </TableRow>
                           </React.Fragment>
