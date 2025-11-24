@@ -325,35 +325,35 @@ export default function Clientes() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-auto">
-                <TableContainer component={Paper} elevation={0} className="w-full">
-                  <Table stickyHeader size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell padding="checkbox" className="w-12">
-                          <Checkbox
-                            color="primary"
-                            indeterminate={
-                              selecionados.length > 0 &&
-                              selecionados.length < clientesFiltrados.length
-                            }
-                            checked={
-                              clientesFiltrados.length > 0 &&
-                              selecionados.length === clientesFiltrados.length
-                            }
-                            onChange={handleSelectAllClick}
-                            inputProps={{
-                              "aria-label": "select all filtered clients",
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="min-w-[120px]">Nome</TableCell>
-                        <TableCell className="min-w-[120px]">Contato</TableCell>
-                        <TableCell className="min-w-[150px] hidden sm:table-cell">Email</TableCell>
-                        <TableCell className="min-w-[120px]">Status</TableCell>
-                        <TableCell className="min-w-[100px]">Ações</TableCell>
-                      </TableRow>
-                    </TableHead>
+            <div className="flex-1 overflow-y-auto">
+              <TableContainer component={Paper} elevation={0} className="min-w-[1300px]">
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          color="primary"
+                          indeterminate={
+                            selecionados.length > 0 &&
+                            selecionados.length < clientesFiltrados.length
+                          }
+                          checked={
+                            clientesFiltrados.length > 0 &&
+                            selecionados.length === clientesFiltrados.length
+                          }
+                          onChange={handleSelectAllClick}
+                          inputProps={{
+                            "aria-label": "select all filtered clients",
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>Nome</TableCell>
+                      <TableCell>Contato</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>­­­Prestação de serviço</TableCell>
+                      <TableCell>ㅤ­­­­­­­­­­­­Ações</TableCell>
+                    </TableRow>­­
+                  </TableHead>
 
                     <TableBody>
                       {clientesPagina.length === 0 ? (
