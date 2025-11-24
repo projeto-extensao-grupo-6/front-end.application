@@ -222,7 +222,7 @@ export default function Acesso() {
                 Visualize todas as solicitações de acessos de sua empresa
               </p>
             </div>
-
+            <br />
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
 
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">

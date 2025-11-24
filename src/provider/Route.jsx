@@ -8,7 +8,7 @@ import Clientes from '../pages/clientes/clientes.jsx';
 import Estoque from '../pages/estoque/estoque.jsx';
 import ProdutoDetalhe from '../pages/estoque/ProdutoDetalhe.jsx';
 import Pedidos from '../pages/pedidos/pedidos.jsx';
-import Acesso from '../pages/acesso/acesso.jsx';
+import Solicitacoes from '../pages/solicitacoes/Solicitacoes.jsx';
 import CalendarDashboard from '../pages/calendar-dashboard.jsx/index.jsx';
 
 export const routes = createBrowserRouter([
@@ -20,7 +20,7 @@ export const routes = createBrowserRouter([
   { path: '/clientes', element: <ProtectedRoute><Clientes /></ProtectedRoute> },
   { path: '/estoque', element: <ProtectedRoute><Estoque /></ProtectedRoute> },
   { path: '/pedidos', element: <ProtectedRoute><Pedidos /></ProtectedRoute> },
-  { path: '/acesso', element: <ProtectedRoute><Acesso /></ProtectedRoute> },
+  { path: '/acesso', element: <ProtectedRoute><Solicitacoes /></ProtectedRoute> },
   { path: '/agendamentos', element: <ProtectedRoute><CalendarDashboard /></ProtectedRoute> },
   { path: '/estoque/:id', element: <ProtectedRoute><ProdutoDetalhe /></ProtectedRoute> }, 
 ]);
