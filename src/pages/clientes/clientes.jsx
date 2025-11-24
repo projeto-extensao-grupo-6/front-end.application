@@ -16,7 +16,6 @@ import {
   Chip,
   Typography,
   MenuItem,
-  Collapse,
   Divider,
   Checkbox,
 } from "@mui/material";
@@ -28,6 +27,7 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 import ClienteFormModal from "../../shared/components/clienteComponents/ClienteFormModal";
+import ClienteDetailsModal from "../../shared/components/clienteComponents/ClienteDetailsModal";
 import Api from "../../axios/Api";
 
 const formatCurrency = (value) => {
@@ -115,6 +115,8 @@ export default function Clientes() {
   const [openRowId, setOpenRowId] = useState(null);
 
   const [selecionados, setSelecionados] = useState([]);
+  const [openDetails, setOpenDetails] = useState(false);
+  const [clienteDetalhes, setClienteDetalhes] = useState(null);
 
   const fetchClientes = async () => {
     try {
@@ -179,21 +181,20 @@ export default function Clientes() {
             c.id === clienteSelecionado.id ? clienteAtualizado : c
           )
         );
+
       } catch (error) {
         console.error("Erro ao editar cliente (PUT):", error);
       }
     } else {
       try {
-        const maxIdExistente = clientes.reduce(
-          (maxId, c) => Math.max(c.id, maxId),
-          0
-        );
-        const novoClienteComId = { ...dadosCliente, id: maxIdExistente + 1 };
+
+        const novoClienteComId = { ...dadosCliente};
 
         const response = await Api.post("/clientes", novoClienteComId);
 
         const novoCliente = response.data;
         setClientes((prev) => [novoCliente, ...prev]);
+
       } catch (error) {
         console.error("Erro ao criar cliente (POST):", error);
       }
@@ -248,6 +249,12 @@ export default function Clientes() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes");
     XLSX.writeFile(workbook, nomeArquivo);
   };
+
+  const abrirModalVisualizar = (cliente) => {
+    setClienteDetalhes(cliente);
+    setOpenDetails(true);
+  };
+
 
   return (
     <div className="flex bg-gray-50 min-h-screen">

@@ -3,8 +3,6 @@
         if(!str) return null;
         return str.replace(/\D/g, '')
     }
-    
-
    }
 
    const FormatUtils = {
