@@ -40,9 +40,12 @@ export default function Funcionarios() {
   const fetchFuncionarios = async () => {
     try {
       const response = await Api.get("/funcionarios");
-      setFuncionarios(response.data);
+      // Garantindo que sempre seja um array
+      const data = Array.isArray(response.data) ? response.data : [];
+      setFuncionarios(data);
     } catch (error) {
       console.error("Erro ao buscar funcionários:", error);
+      setFuncionarios([]);
     }
   };
 
@@ -50,9 +53,9 @@ export default function Funcionarios() {
     fetchFuncionarios();
   }, []); 
 
-  const funcionariosFiltrados = funcionarios.filter((f) =>
-    f.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  const funcionariosFiltrados = Array.isArray(funcionarios) ? funcionarios.filter((f) =>
+    f.nome && f.nome.toLowerCase().includes(busca.toLowerCase())
+  ) : [];
 
   const indexUltimo = pagina * limitePorPagina;
   const indexPrimeiro = indexUltimo - limitePorPagina;
@@ -159,18 +162,12 @@ export default function Funcionarios() {
                         <TableCell>{f.nome}</TableCell>
                         <TableCell>{f.telefone}</TableCell>
                         <TableCell>{f.funcao}</TableCell>
-                        <TableCell>{f.escala}</TableCell>
+                        <TableCell>{f.escala || "N/A"}</TableCell>
                         <TableCell>{f.contrato}</TableCell>
                         <TableCell>
                           <Chip
-                            label={f.status}
-                            color={
-                              f.status === "Ativo"
-                                ? "success"
-                                : f.status === "Pausado"
-                                ? "error"
-                                : "default"
-                            }
+                            label={f.ativo ? "Ativo" : "Inativo"}
+                            color={f.ativo ? "success" : "error"}
                             variant="outlined"
                             className="font-medium!"
                             size="small"

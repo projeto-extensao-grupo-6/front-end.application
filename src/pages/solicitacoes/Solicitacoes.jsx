@@ -5,7 +5,6 @@ import { Search, Check, X, CheckCheck, XCircle, ChevronLeft, ChevronRight } from
 import ModalConfirmacao from "../../shared/components/modalAceiteOrRecusa/ModalAceiteOrRecusa";
 import Api from "../../axios/Api";
 
-const API_URL = "http://localhost:3000/api/solicitacoes";
 const ITENS_POR_PAGINA = 10;
 
 export default function Acesso() {
@@ -46,7 +45,9 @@ export default function Acesso() {
       }
   
       const response = await Api.get(url);
-      setSolicitacoes(response.data);
+      // Garantindo que sempre seja um array
+      const data = Array.isArray(response.data) ? response.data : [];
+      setSolicitacoes(data);
     } catch (error) {
       console.error("Erro ao buscar solicitações:", error);
       setSolicitacoes([]);

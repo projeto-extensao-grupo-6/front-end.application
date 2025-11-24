@@ -55,6 +55,14 @@ const formatPhone = (phoneStr) => {
   return phoneStr;
 };
 
+// Função para obter o primeiro endereço do cliente
+const getPrimaryAddress = (cliente) => {
+  if (!cliente.enderecos || !Array.isArray(cliente.enderecos) || cliente.enderecos.length === 0) {
+    return { rua: "N/A", cidade: "N/A", uf: "N/A" };
+  }
+  return cliente.enderecos[0];
+};
+
 const InfoItem = ({ label, value }) => (
   <div className="text-left">
     <span className="block text-gray-500 font-medium uppercase text-xs mb-1">
@@ -111,9 +119,12 @@ export default function Clientes() {
   const fetchClientes = async () => {
     try {
       const response = await Api.get("/clientes");
-      setClientes(response.data);
+      // Garantindo que sempre seja um array
+      const data = Array.isArray(response.data) ? response.data : [];
+      setClientes(data);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
+      setClientes([]);
     }
   };
 
@@ -122,16 +133,19 @@ export default function Clientes() {
   }, []);
 
   const clientesFiltrados = useMemo(() => {
-    let filtered = clientes.filter((c) =>
-      c.nome.toLowerCase().includes(busca.toLowerCase())
+    // Garantindo que clientes seja sempre um array antes de usar filter
+    const clientesArray = Array.isArray(clientes) ? clientes : [];
+    
+    let filtered = clientesArray.filter((c) =>
+      c.nome && c.nome.toLowerCase().includes(busca.toLowerCase())
     );
     if (situacao !== "Todos") filtered = filtered.filter((c) => c.status === situacao);
 
     return filtered.sort((a, b) => {
       if (ordenar === "recentes") return b.id - a.id;
       if (ordenar === "antigos") return a.id - b.id;
-      if (ordenar === "az") return a.nome.localeCompare(b.nome);
-      if (ordenar === "za") return b.nome.localeCompare(a.nome);
+      if (ordenar === "az") return a.nome && b.nome ? a.nome.localeCompare(b.nome) : 0;
+      if (ordenar === "za") return a.nome && b.nome ? b.nome.localeCompare(a.nome) : 0;
       return 0;
     });
   }, [clientes, busca, situacao, ordenar]);
@@ -215,16 +229,19 @@ export default function Clientes() {
     const dataToExport = clientes.filter((c) => selecionados.includes(c.id));
     const nomeArquivo = `clientes_selecionados_${selecionados.length}.xlsx`;
 
-    const simplifiedData = dataToExport.map((c) => ({
-      Nome: c.nome,
-      Contato: c.contato,
-      Email: c.email,
-      Status: c.status,
-      Endereco: c.endereco,
-      Cidade: c.cidade,
-      UF: c.uf,
-      Serviços_Registrados: c.historicoServicos ? c.historicoServicos.length : 0,
-    }));
+    const simplifiedData = dataToExport.map((c) => {
+      const enderecoPrimario = getPrimaryAddress(c);
+      return {
+        Nome: c.nome,
+        Telefone: c.telefone,
+        Email: c.email,
+        Status: c.status,
+        Endereco: enderecoPrimario.rua,
+        Cidade: enderecoPrimario.cidade,
+        UF: enderecoPrimario.uf,
+        Serviços_Registrados: c.historicoServicos ? c.historicoServicos.length : 0,
+      };
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(simplifiedData);
     const workbook = XLSX.utils.book_new();
@@ -330,7 +347,7 @@ export default function Clientes() {
                         />
                       </TableCell>
                       <TableCell>ㅤㅤㅤNome</TableCell>
-                      <TableCell>ㅤㅤContato</TableCell>
+                      <TableCell>ㅤㅤ Contato</TableCell>
                       <TableCell>ㅤㅤㅤㅤEmail</TableCell>
                       <TableCell>­­ㅤ­Prestação de serviço</TableCell>
                       <TableCell>ㅤ­­­­­­­­­­­­Ações</TableCell>
@@ -382,7 +399,7 @@ export default function Clientes() {
                                 {c.nome}
                               </TableCell>
                               <TableCell sx={{ color: '#424242', py: 1 }}>
-                                {formatPhone(c.contato)}
+                                {formatPhone(c.telefone)}
                               </TableCell>
                               <TableCell sx={{ color: '#424242', py: 1 }}>
                                 {c.email}
@@ -457,19 +474,19 @@ export default function Clientes() {
                                       <span className="font-semibold text-gray-900">
                                         Endereço:{" "}
                                         <span className="font-normal text-gray-600">
-                                          {c.endereco || "N/A"}
+                                          {getPrimaryAddress(c).rua}
                                         </span>
                                       </span>
                                       <span className="font-semibold text-gray-900">
                                         Cidade:{" "}
                                         <span className="font-normal text-gray-600">
-                                          {c.cidade || "N/A"}
+                                          {getPrimaryAddress(c).cidade}
                                         </span>
                                       </span>
                                       <span className="font-semibold text-gray-900">
                                         UF:{" "}
                                         <span className="font-normal text-gray-600">
-                                          {c.uf || "N/A"}
+                                          {getPrimaryAddress(c).uf}
                                         </span>
                                       </span>
                                     </div>
