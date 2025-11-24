@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -26,6 +27,25 @@ import UserImg from "../../../assets/User.png";
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const navigate = useNavigate(); // Adicione esta linha
+
+  const [userName, setUserName] = useState("Carregando...");
+  const [userEmail, setUserEmail] = useState("carregando@leovidros.com");
+  
+  useEffect(() => {
+    const storedName = localStorage.getItem('loggedUserName');
+    const storedEmail = localStorage.getItem('loggedUserEmail');
+
+    if (storedName) {
+      setUserName(storedName);
+    } else {
+      setUserName("Usuário Léo Vidros"); 
+    }
+
+    if (storedEmail) {
+      setUserEmail(storedEmail);
+    }
+  }, []); 
 
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
   const handleProfileClose = () => setAnchorEl(null);
@@ -37,7 +57,7 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
     borderRadius: '8px',
     transition: 'background-color 0.2s ease-in-out',
     '&:hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.08)'
+      backgroundColor: 'rgba(255, 255, 255, 0.08)'
     }
   };
 
@@ -47,8 +67,8 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
   };
 
   const textStyle = {
-      fontSize: '0.9rem',
-      fontWeight: 500
+    fontSize: '0.9rem',
+    fontWeight: 500
   };
 
   return (
@@ -71,9 +91,8 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           <IconButton
             color="inherit"
             onClick={toggleSidebar}
-            className={`transition-transform duration-300 mr-2 ${
-              sidebarOpen ? "rotate-90" : "rotate-0"
-            }`}
+            className={`transition-transform duration-300 mr-2 ${sidebarOpen ? "rotate-90" : "rotate-0"
+              }`}
           >
             <MenuIcon fontSize="medium" />
           </IconButton>
@@ -90,17 +109,16 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           onClick={handleProfileClick}
         >
           <div className="hidden sm:block text-right mr-1">
-            <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">Julio Cesar</p>
-            <p className="text-[11px] sm:text-xs text-gray-300">Cargo</p>
+            <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">{userName}</p>
+            <p className="text-[11px] sm:text-xs text-gray-300">Admin</p>
           </div>
           <Avatar
             src={UserImg}
             className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border-2 border-white group-hover:border-gray-300 transition-colors"
           />
           <ExpandMore
-            className={`text-white transition-transform duration-300 group-hover:text-gray-300 ${
-              open ? "rotate-180" : "rotate-0"
-            } hidden sm:block`}
+            className={`text-white transition-transform duration-300 group-hover:text-gray-300 ${open ? "rotate-180" : "rotate-0"
+              } hidden sm:block`}
           />
         </div>
 
@@ -133,10 +151,10 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
              />
              <div>
                  <Typography variant="subtitle1" className="font-semibold leading-tight">
-                   Julio Cesar
+                   {userName}
                  </Typography>
                  <Typography variant="body2" className="text-gray-300 leading-tight">
-                   julio.cesar@gmail.com
+                   {userEmail}
                  </Typography>
              </div>
           </Box>
@@ -145,23 +163,25 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
 
           {/* Itens de Menu */}
           <Box sx={{ paddingY: '8px' }}>
-              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
-                <ListItemIcon sx={iconStyle}>
-                  <AccountCircleOutlined fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Meu Perfil" primaryTypographyProps={textStyle} />
-              </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleProfileClose();
+                navigate("/perfil");
+              }}
+              sx={menuItemStyle}
+            >
+              <ListItemIcon sx={iconStyle}>
+                <AccountCircleOutlined fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Meu Perfil" primaryTypographyProps={textStyle} />
+            </MenuItem>
 
-              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
-                <ListItemIcon sx={iconStyle}>
-                  <SettingsOutlined fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Configurações" primaryTypographyProps={textStyle} />
-              </MenuItem>
+            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginY: '8px', marginX: '8px' }} />
 
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', marginY: '8px', marginX: '8px' }} />
-
-              <MenuItem onClick={handleProfileClose} sx={menuItemStyle}>
+              <MenuItem onClick={() => {
+                handleProfileClose();
+                navigate("/");
+              }} sx={menuItemStyle}>
                 <ListItemIcon sx={iconStyle}>
                   <LogoutOutlined fontSize="small" />
                 </ListItemIcon>
