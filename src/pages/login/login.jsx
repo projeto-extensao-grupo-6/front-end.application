@@ -47,16 +47,23 @@
           : "/paginaInicial";
 
       setTimeout(() => {
-          setModalOpen(false);
-          navigate(redirectPath);
-        }, 1000);
+        setModalOpen(false);
         
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+        // Verificar se é primeiro login para redirecionar para nova senha
+        if (data.firstLogin === true || data.firstLogin === "true") {
+          navigate(`/primeiroAcesso/${data.id}`);
+        } else {
+          navigate("/paginaInicial");
+        }
+      }, 2000);
+  
+    } catch (error) {
+      setError(error.response?.data?.message || "Email ou senha inválidos");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
     const variants = {
       initial: { opacity: 0, x: 20 },
