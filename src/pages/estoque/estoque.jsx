@@ -19,6 +19,7 @@ import EstoqueItemRow from "../../shared/components/modalEstoque/EstoqueItemRow"
 import CalendarDropdown from "../../shared/components/estoque/CalendarDropdown";
 import FilterDropdown from "../../shared/components/estoque/FilterDropdown";
 import EntradaSaidaEstoque from "../../shared/components/modalEstoque/EntradaSaidaEstoque";
+import InativarProdutoModal from "../../shared/components/modalEstoque/InativarProdutoModal";
 
 const ITENS_POR_PAGINA = 6;
 
@@ -45,6 +46,9 @@ export default function Estoque() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [expandedItemId, setExpandedItemId] = useState(null);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedEstoqueId, setSelectedEstoqueId] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -163,9 +167,12 @@ export default function Estoque() {
       });
     }
 
-    const tipoFilters = activeFilters.tipo || [];
-    if (tipoFilters.length > 0) {
-      items = items.filter((item) => tipoFilters.includes(item.produto.tipo));
+    const statusFilters = activeFilters.tipo || [];
+    if (statusFilters.length > 0) {
+      items = items.filter((item) => {
+        const statusProduto = item.produto?.ativo ? "Ativo" : "Inativo";
+        return statusFilters.includes(statusProduto);
+      });
     }
 
     return items;
@@ -290,27 +297,33 @@ const handleSaveItem = useCallback(async (itemData) => {
     }
   }, [estoque, fetchEstoque]);
 
-  const handleDeleteItem = useCallback(async (estoqueId) => {
-    if (!window.confirm("Tem certeza que deseja inativar este produto?")) {
-      return;
-    }
-  
+  const confirmarInativacao = useCallback(async () => {
     try {
-      const response = await Api.put(`/produtos/stand-by/${estoqueId}`, {
+      await Api.put(`/produtos/stand-by/${selectedEstoqueId}`, {
         status: false
       });
   
       setEstoque((prev) =>
         prev.map((item) =>
-          item.id === estoqueId ? { ...item, status: false } : item
+          item.id === selectedEstoqueId ? { ...item, status: false } : item
         )
       );
+  
+      setModalOpen(false);
+  
+      navigate(0);
   
     } catch (error) {
       console.error("Erro ao inativar item:", error);
       alert("Erro ao inativar item. Tente novamente.");
     }
-  }, []);  
+  }, [selectedEstoqueId, navigate]);
+  
+
+  const handleDeleteItem = useCallback((estoqueId) => {
+    setSelectedEstoqueId(estoqueId);
+    setModalOpen(true);
+  }, []);
   
   const openNewItemModal = useCallback(() => {
     setEditingItem(null);
@@ -642,6 +655,12 @@ const handleSaveItem = useCallback(async (itemData) => {
         onSave={handleSaveMovement}
         itemIds={selectedItems}
         estoque={estoque}
+      />
+      
+      <InativarProdutoModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={confirmarInativacao}
       />
 
       <SucessoModal isOpen={isSuccessModalOpen} onClose={closeSuccessModal} />
