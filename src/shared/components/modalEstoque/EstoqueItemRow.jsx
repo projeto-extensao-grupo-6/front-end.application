@@ -22,6 +22,7 @@ const EstoqueItemRow = ({
   const descricao = produto.descricao || "—";
   const preco = produto.preco || "R$ 0,00";
   const quantidade = produto.quantidade ?? 0;
+  const ativo = produto.ativo;
 
   if (!produtoId) {
     console.error(" EstoqueItemRow: produto.id está undefined!", item);
@@ -64,9 +65,14 @@ const EstoqueItemRow = ({
         {quantidade}
       </div>
 
+      <div className={`py-3 w-[15%] text-center ${ativo === true ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}`}>
+        {ativo === true ? "Ativo" : "Inativo"} 
+      </div>
+
       <div className={`py-3 w-[15%] text-center ${situacaoClasse}`}>
         {item.situacao}
       </div>
+
 
       <div className="py-3 w-[15%] text-right pr-4 flex justify-end gap-2">
        

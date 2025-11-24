@@ -8,8 +8,8 @@ const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange }) =>
       options: ["Disponível", "Abaixo do normal", "Fora de estoque"],
     },
     tipo: {
-      title: "Tipo de Produto",
-      options: ["Vidros", "Ferragens", "Acessórios", "Ferramentas", "EPIS"],
+      title: "Status do Produto",
+      options: ["Ativo", "Inativo"],
     },
   };
 

@@ -28,7 +28,6 @@ export default function Estoque() {
   const [estoque, setEstoque] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [funcionarios, setFuncionarios] = useState([]);
   
   const [isNovoItemModalOpen, setIsNovoItemModalOpen] = useState(false);
   const [isEntradaSaidaModalOpen, setIsEntradaSaidaModalOpen] = useState(false);
@@ -123,31 +122,16 @@ export default function Estoque() {
       setLoading(false);
     }
   }, [mapEstoqueFromApi]);
-  
 
-  const fetchFuncionarios = useCallback(async () => {
-    try {
-      const response = await Api.get("/funcionarios");
-      const data = response.data;
-  
-      setFuncionarios(data || []);
-  
-    } catch (error) {
-      console.error("Erro ao buscar funcionários:", error);
-      setFuncionarios([]);
-    }
-  }, []);
   
   useEffect(() => {
     fetchEstoque();
-    fetchFuncionarios();
-  }, [fetchEstoque, fetchFuncionarios]);
+  }, [fetchEstoque]);
 
   
   const filteredEstoque = useMemo(() => {
     let items = estoque;
 
-    // Filtro de busca
     if (busca.trim()) {
       const buscaLower = busca.toLowerCase();
       items = items.filter(
@@ -158,13 +142,10 @@ export default function Estoque() {
       );
     }
 
-    // Filtro de data (se necessário implementar com movimentos futuros)
     if (selectedFilterDate) {
-      // TODO: Implementar quando tiver endpoint de movimentos
       console.log("Filtro de data selecionado:", selectedFilterDate);
     }
 
-    // Filtro de situação
     const situacaoFilters = activeFilters.situacao || [];
     if (situacaoFilters.length > 0) {
       items = items.filter((item) => {
@@ -182,7 +163,6 @@ export default function Estoque() {
       });
     }
 
-    // Filtro de tipo (baseado em atributos)
     const tipoFilters = activeFilters.tipo || [];
     if (tipoFilters.length > 0) {
       items = items.filter((item) => tipoFilters.includes(item.produto.tipo));
@@ -191,7 +171,6 @@ export default function Estoque() {
     return items;
   }, [estoque, busca, selectedFilterDate, activeFilters]);
 
-  // ==================== PAGINAÇÃO (OTIMIZADA) ====================
   
   const paginationData = useMemo(() => {
     const totalPaginas = Math.ceil(filteredEstoque.length / ITENS_POR_PAGINA);
@@ -207,8 +186,6 @@ export default function Estoque() {
       total: filteredEstoque.length
     };
   }, [filteredEstoque, pagina]);
-
-  // ==================== EFFECT PARA FOCUS EM ITEM ====================
   
   useEffect(() => {
     if (focusItemId && filteredEstoque.length > 0 && focusItemId !== expandedItemId) {
@@ -223,7 +200,6 @@ export default function Estoque() {
           setPagina(targetPage);
         }
         
-        // Scroll suave para o item
         setTimeout(() => {
           const element = document.getElementById(`item-${focusItemId}`);
           if (element) {
@@ -234,14 +210,8 @@ export default function Estoque() {
     }
   }, [focusItemId, filteredEstoque, expandedItemId, pagina]);
 
-  // ==================== HANDLERS DE CRUD ====================
-  
-  // Substitua o handleSaveItem existente por este:
-
 const handleSaveItem = useCallback(async (itemData) => {
   try {
-    // Se o itemData já é um objeto de resposta da API (tem estrutura de estoque)
-    // apenas recarrega a lista
     if (itemData && itemData.id && itemData.produto) {
       await fetchEstoque();
       setIsNovoItemModalOpen(false);
@@ -253,7 +223,6 @@ const handleSaveItem = useCallback(async (itemData) => {
       return;
     }
 
-    // Caso contrário, trata como edição (legacy, se ainda necessário)
     const itemPayload = {
       ...itemData,
       preco: parseCurrency(itemData.preco),
@@ -322,20 +291,26 @@ const handleSaveItem = useCallback(async (itemData) => {
   }, [estoque, fetchEstoque]);
 
   const handleDeleteItem = useCallback(async (estoqueId) => {
-    if (!window.confirm("Tem certeza que deseja deletar este item?")) {
+    if (!window.confirm("Tem certeza que deseja inativar este produto?")) {
       return;
     }
-    
+  
     try {
-      await Api.delete(`/estoques/${estoqueId}`);
-      
-      setEstoque((prev) => prev.filter((item) => item.id !== estoqueId));
-      
+      const response = await Api.put(`/produtos/stand-by/${estoqueId}`, {
+        status: false
+      });
+  
+      setEstoque((prev) =>
+        prev.map((item) =>
+          item.id === estoqueId ? { ...item, status: false } : item
+        )
+      );
+  
     } catch (error) {
-      console.error("Erro ao deletar item:", error);
-      alert("Erro ao deletar item. Tente novamente.");
+      console.error("Erro ao inativar item:", error);
+      alert("Erro ao inativar item. Tente novamente.");
     }
-  }, []);
+  }, []);  
   
   const openNewItemModal = useCallback(() => {
     setEditingItem(null);
@@ -576,8 +551,9 @@ const handleSaveItem = useCallback(async (itemData) => {
                   <div className="py-3 w-[25%] px-4">Descrição</div>
                   <div className="py-3 w-[10%] text-center">Preço</div>
                   <div className="py-3 w-[15%] text-center">Quantidade em estoque</div>
+                  <div className="py-3 w-[15%] text-center">Status</div>
                   <div className="py-3 w-[15%] text-center">Situação</div>
-                  <div className="py-3 w-[15%] text-right pr-4">Ações</div>
+                  <div className="py-3 w-[15%] text-right pr-8">Ações</div>
                 </div>
 
                 {/* Linhas da tabela */}
@@ -666,7 +642,6 @@ const handleSaveItem = useCallback(async (itemData) => {
         onSave={handleSaveMovement}
         itemIds={selectedItems}
         estoque={estoque}
-        funcionarios={funcionarios}
       />
 
       <SucessoModal isOpen={isSuccessModalOpen} onClose={closeSuccessModal} />
