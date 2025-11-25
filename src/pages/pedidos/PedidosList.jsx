@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaBoxOpen, FaEdit, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
 import { FaBoxOpen, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from 'react-icons/fa';
 import Api from "../../axios/Api";
 
