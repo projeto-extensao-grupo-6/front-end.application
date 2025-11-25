@@ -11,6 +11,11 @@ import Sidebar from "../../shared/components/sidebar/sidebar";
 import { color } from "framer-motion";
 
 const CalendarDashboard = () => {
+  // Função para carregar tarefas do sessionStorage
+  const loadTasks = () => {
+    return JSON.parse(sessionStorage.getItem("tasks") || "[]");
+  };
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -19,7 +24,7 @@ const CalendarDashboard = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
   const [tasks, setTasks] = useState(() => {
-    return JSON.parse(localStorage.getItem("tasks") || "[]");
+    return loadTasks();
   });
 
   const handleDateSelect = (date) => {
@@ -64,7 +69,7 @@ const CalendarDashboard = () => {
     };
     const updatedTasks = [...tasks, newTask];
     setTasks(updatedTasks);
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    sessionStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
 
   return (

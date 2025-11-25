@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Lock, Check, X, Eye, EyeOff } from 'lucide-react'; 
-import { TextField, Button, Paper, IconButton, InputAdornment } from "@mui/material"; 
+import { TextField, Button, Paper, IconButton, InputAdornment } from "@mui/material";
+import Api from "../../axios/Api"; // Usar a mesma instância da API
 
 // Componente auxiliar para exibir os requisitos de senha
 const PasswordRequirement = ({ text, isValid }) => (
@@ -22,18 +23,16 @@ export default function NovaSenha() {
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
 
-    // 1. SIMULAÇÃO DO NOME DO USUÁRIO
-    // Na aplicação real, você deve buscar o nome do usuário usando o idUsuario
-    // e o token de autenticação, ou passá-lo via Redux/Context.
+    // Padronizar com as chaves usadas no login
     const [userName, setUserName] = useState("Carregando...");
     
     useEffect(() => {
-        const loggedUserName = localStorage.getItem('loggedUserName'); 
+        const loggedUserName = sessionStorage.getItem('nome'); 
         
         if (loggedUserName) {
             setUserName(loggedUserName);
         } else {
-            setUserName("Julio Cesar (Mock)"); 
+            setUserName("Usuário"); 
         }
     }, [idUsuario]);
 
@@ -76,37 +75,30 @@ export default function NovaSenha() {
         setIsLoading(true);
 
         try {
-            // CHAMADA REAL PARA O BACK-END SPRING
-            const response = await fetch("http://localhost:3000/api/usuarios/definir-senha", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem('userToken')}`
-                },
-                body: JSON.stringify({
-                    idUsuario: parseInt(idUsuario),
-                    novaSenha: novaSenha
-                })
+            // Usar a mesma instância da API e chave de token do login
+            const response = await Api.put("/auth/definir-senha", {
+                idUsuario: parseInt(idUsuario),
+                novaSenha: novaSenha
             });
 
-            if (response.status === 204) {
+            if (response.status === 200 || response.status === 204) {
                 setSuccess('Senha definida com sucesso! Redirecionando...');
-                localStorage.setItem("userFirstLogin", "false");
-                // **IMPORTANTE:** Remover ou invalidar o token de primeiro acesso forçado aqui.
+                // Padronizar com a chave 'firstLogin' do login
+                localStorage.setItem("firstLogin", "false");
 
                 setTimeout(() => {
                     navigate('/paginaInicial');
                 }, 1500);
 
             } else {
-                const errorData = await response.json();
+                const errorData = response.data;
                 const errorMessage = errorData.message || 'Erro ao definir a senha. Tente novamente.';
                 setError(errorMessage);
             }
 
         } catch (err) {
             console.error("Erro na API:", err);
-            setError('Falha na comunicação com o servidor. Verifique sua conexão.');
+            setError(err.response?.data?.message || 'Falha na comunicação com o servidor. Verifique sua conexão.');
         } finally {
             setIsLoading(false);
         }

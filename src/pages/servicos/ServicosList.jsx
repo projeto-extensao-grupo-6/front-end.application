@@ -70,11 +70,11 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         setLoading(true);
         try {
             const [servicosRes, clientesRes] = await Promise.all([
-                fetch(API_SERVICOS_URL),
-                fetch(API_CLIENTES_URL)
+                Api.get("/servicos"),
+                Api.get("/clientes")
             ]);
-            const servicosData = await servicosRes.json();
-            const clientesData = await clientesRes.json();
+            const servicosData = servicosRes.data;
+            const clientesData = clientesRes.data;
 
             const sortedServicos = servicosData.sort((a, b) => {
                 const idAisNum = /^\d+$/.test(a.id);

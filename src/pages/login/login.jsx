@@ -1,4 +1,4 @@
-  import React, { useState } from "react";
+import React, { useState } from "react";
   import { motion, AnimatePresence } from "framer-motion";
   import AccountCircle from "@mui/icons-material/AccountCircle";
   import LockIcon from "@mui/icons-material/Lock";
@@ -34,11 +34,12 @@
         const { id, token, firstLogin, nome, email: userEmail} = data;
         console.log("Login OK:", data);
 
-        localStorage.setItem("userToken", token); 
-        localStorage.setItem("userId", id);
-        localStorage.setItem("userFirstLogin", String(firstLogin));
-        localStorage.setItem("loggedUserName", nome);
-        localStorage.setItem("loggedUserEmail", userEmail);
+        sessionStorage.setItem("accessToken", token); 
+        sessionStorage.setItem("userId", id);
+        sessionStorage.setItem("userFirstLogin", String(firstLogin));
+        sessionStorage.setItem("loggedUserName", nome);
+        sessionStorage.setItem("loggedUserEmail", userEmail);
+        sessionStorage.setItem("nome", nome); // Para compatibilidade com novaSenha.jsx
 
         setModalOpen(true);
 
@@ -47,16 +48,23 @@
           : "/paginaInicial";
 
       setTimeout(() => {
-          setModalOpen(false);
-          navigate(redirectPath);
-        }, 1000);
+        setModalOpen(false);
         
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+        // Verificar se é primeiro login para redirecionar para nova senha
+        if (data.firstLogin === true || data.firstLogin === "true") {
+          navigate(`/primeiroAcesso/${data.id}`);
+        } else {
+          navigate("/paginaInicial");
+        }
+      }, 2000);
+  
+    } catch (error) {
+      setError(error.response?.data?.message || "Email ou senha inválidos");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
     const variants = {
       initial: { opacity: 0, x: 20 },

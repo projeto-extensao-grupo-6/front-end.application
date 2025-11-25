@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FaBoxOpen, FaEdit, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
+import { FaBoxOpen, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from 'react-icons/fa';
+import Api from "../../axios/Api";
 
 const API_PEDIDOS_URL = "http://localhost:3000/pedidos";
-const ITEMS_PER_PAGE = 5; // Ajustado para caber melhor na tela, pode voltar para 3 se preferir
+const ITEMS_PER_PAGE = 5;
 
 const NOVO_FORM_PEDIDO = () => ({
     produtosDesc: "",

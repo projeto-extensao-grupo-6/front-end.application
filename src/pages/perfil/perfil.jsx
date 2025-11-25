@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../service/api.js';
+import Api from '../../axios/Api';
 import { User, MapPin, Lock, Save, Edit2, Camera, Eye, EyeOff } from 'lucide-react';
 import Sidebar from '../../shared/components/sidebar/sidebar';
 import Header from '../../shared/components/header/header';
@@ -72,15 +72,15 @@ export default function Perfil() {
     });
 
     useEffect(() => {
-        const userId = sessionStorage.getItem('userId');
+        const userId = localStorage.getItem('userId'); // Volta para localStorage
 
         if (!userId) {
-            console.error("ID do usuário não encontrado no sessionStorage. Faça o login.");
+            console.error("ID do usuário não encontrado no localStorage. Faça o login.");
             //window.location.href = '/login';
             return;
         }
 
-        api.get(`/usuarios/${userId}`)
+        Api.get(`/usuarios/${userId}`)
             .then(response => {
                 const data = response.data;
 
@@ -117,7 +117,7 @@ export default function Perfil() {
     };
 
     const handleSave = () => {
-        const userId = sessionStorage.getItem('userId');
+        const userId = sessionStorage.getItem('userId'); // Volta para sessionStorage
 
         if (!userId) {
             console.error("Não é possível salvar: ID do usuário não encontrado.");
@@ -144,7 +144,7 @@ export default function Perfil() {
             senha: formData.novaSenha ? formData.novaSenha : formData.senhaAtual
         };
 
-        api.put(`/usuarios/${userId}`, usuarioRequest)
+        Api.put(`/usuarios/${userId}`, usuarioRequest)
             .then(response => {
                 console.log('Salvo com sucesso!', response.data);
                 setIsEditing(false);

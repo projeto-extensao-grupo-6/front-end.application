@@ -36,6 +36,7 @@ import {
 
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
+import Api from "../../../axios/Api";
 
 const TextMaskAdapter = React.forwardRef(function TextMaskAdapter(
   props,
@@ -83,8 +84,6 @@ const getNovoServico = () => ({
   funcionario: "N/A",
 });
 
-const API_BASE_URL = "http://localhost:3000/api/clientes";
-
 export default function ClienteFormModal({
   open,
   onClose,
@@ -101,12 +100,10 @@ export default function ClienteFormModal({
     if (open) {
       const fetchFuncionarios = async () => {
         try {
-          const response = await fetch(`${API_BASE_URL}/funcionarios`);
-          if (!response.ok) throw new Error("Erro ao buscar funcionários");
-          const data = await response.json();
-          setFuncionarios(data);
+          const response = await Api.get("/funcionarios");
+          setFuncionarios(response.data);
         } catch (error) {
-          console.error("Falha ao carregar funcionários:", error);
+          console.error("Erro ao buscar funcionários:", error);
         }
       };
       
