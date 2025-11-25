@@ -474,28 +474,7 @@ const handleSaveItem = useCallback(async (itemData) => {
 
                   {/* Filtros */}
                   <div className="flex gap-2 w-auto whitespace-nowrap">
-                    {/* Calendário */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                        className="flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors cursor-pointer"
-                      >
-                        <CalendarDays className="w-4 h-4" />
-                        {selectedFilterDate
-                          ? selectedFilterDate.toLocaleDateString("pt-BR")
-                          : "Data"}
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform ${
-                            isCalendarOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                      <CalendarDropdown
-                        isOpen={isCalendarOpen}
-                        onClose={() => setIsCalendarOpen(false)}
-                        onDateSelect={handleDateFilterChange}
-                      />
-                    </div>
+                   
 
                     {/* Filtros avançados */}
                     <div className="relative">
@@ -524,13 +503,13 @@ const handleSaveItem = useCallback(async (itemData) => {
                     </div>
 
                     {/* Exportar */}
-                    <button
+                    {/* <button
                       onClick={openExportModal}
                       className="flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                     >
                       <Download className="w-4 h-4" />
                       Exportar
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>
@@ -555,11 +534,11 @@ const handleSaveItem = useCallback(async (itemData) => {
                     />
                   </div>
                   <div className="py-3 w-[15%] pl-2 pr-1">Nome</div>
-                  <div className="py-3 w-[25%] px-4">Descrição</div>
                   <div className="py-3 w-[10%] text-center">Preço</div>
-                  <div className="py-3 w-[15%] text-center">Quantidade em estoque</div>
-                  <div className="py-3 w-[15%] text-center">Status</div>
-                  <div className="py-3 w-[15%] text-center">Situação</div>
+                  <div className="py-3 w-[15%] px-4">Unidade de Medida</div>
+                  <div className="py-3 w-[20%] text-center">Quantidade em estoque</div>
+                  <div className="py-3 w-[10%] text-center">Status</div>
+                  <div className="py-3 w-[10%] text-center">Situação</div>
                   <div className="py-3 w-[15%] text-right pr-8">Ações</div>
                 </div>
 

@@ -17,9 +17,9 @@ const EstoqueItemRow = ({
       : "text-green-600 font-semibold";
 
   const produto = item.produto || {};
+  const unidadeMedida = produto.unidademedida || "—";
   const produtoId = produto.id;
   const nome = produto.nome || "Sem nome";
-  const descricao = produto.descricao || "—";
   const preco = produto.preco || "R$ 0,00";
   const quantidade = produto.quantidade ?? 0;
   const ativo = produto.ativo;
@@ -49,27 +49,25 @@ const EstoqueItemRow = ({
       >
         {nome}
       </div>
-
-      <div 
-        className="py-3 w-[25%] px-4 text-gray-600 truncate"
-        title={descricao !== "—" ? descricao : ""}
-      >
-        {descricao}
-      </div>
-
       <div className="py-3 w-[10%] text-center text-gray-700 font-medium">
         {preco}
       </div>
 
-      <div className="py-3 w-[15%] text-center font-semibold text-gray-800">
+      <div 
+        className="py-3 w-[15%] px-4 text-gray-600 truncate">
+        {unidadeMedida}
+      </div>
+
+
+      <div className="py-3 w-[20%] text-center font-semibold text-gray-800">
         {quantidade}
       </div>
 
-      <div className={`py-3 w-[15%] text-center ${ativo === true ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}`}>
+      <div className={`py-3 w-[10%] text-center ${ativo === true ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}`}>
         {ativo === true ? "Ativo" : "Inativo"} 
       </div>
 
-      <div className={`py-3 w-[15%] text-center ${situacaoClasse}`}>
+      <div className={`py-3 w-[10%] text-center ${situacaoClasse}`}>
         {item.situacao}
       </div>
 
