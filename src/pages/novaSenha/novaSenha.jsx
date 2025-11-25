@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Lock, Check, X, Eye, EyeOff } from 'lucide-react'; 
 import { TextField, Button, Paper, IconButton, InputAdornment } from "@mui/material";
-import Api from "../../axios/Api"; // Usar a mesma instância da API
+import Api from "../../axios/Api"; 
 
-// Componente auxiliar para exibir os requisitos de senha
 const PasswordRequirement = ({ text, isValid }) => (
     <div className={`flex items-center gap-2 text-base transition-colors duration-200 font-[Inter] ${
         isValid ? 'text-green-700' : 'text-gray-700'
@@ -23,7 +22,6 @@ export default function NovaSenha() {
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
 
-    // Padronizar com as chaves usadas no login
     const [userName, setUserName] = useState("Carregando...");
     
     useEffect(() => {
@@ -75,15 +73,13 @@ export default function NovaSenha() {
         setIsLoading(true);
 
         try {
-            // Usar a mesma instância da API e chave de token do login
-            const response = await Api.put("/auth/definir-senha", {
+            const response = await Api.put("/usuarios/definir-senha", {
                 idUsuario: parseInt(idUsuario),
                 novaSenha: novaSenha
             });
 
             if (response.status === 200 || response.status === 204) {
                 setSuccess('Senha definida com sucesso! Redirecionando...');
-                // Padronizar com a chave 'firstLogin' do login
                 localStorage.setItem("firstLogin", "false");
 
                 setTimeout(() => {
@@ -104,11 +100,8 @@ export default function NovaSenha() {
         }
     };
 
-    // --- Estrutura Visual da Página ---
     return (
         <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 font-[Inter]">
-
-            {/* **AJUSTE 2: Aumentado o padding (p-12 para p-10) e mantido max-w-lg para respirar** */}
             <Paper elevation={3} className="rounded-xl shadow-2xl p-10 w-full max-w-md mx-auto">
                 <div className="flex flex-col items-center text-center">
 
@@ -118,22 +111,17 @@ export default function NovaSenha() {
                         className="w-32 mb-6"
                     />
 
-                    {/* **AJUSTE 2: Adicionada margem inferior mb-2** */}
                     <h2 className="text-xl font-normal text-gray-700 mb-2">Seja bem vindo</h2>
                     
-                    {/* **AJUSTE 1: Exibe o nome do usuário e AUMENTADO O ESPAÇAMENTO INFERIOR (mb-6 para mb-8)** */}
                     <h1 className="text-3xl font-semibold text-gray-800 mb-8 w-full">
                         {userName}
                     </h1>
-
-                    {/* **AJUSTE 2: AUMENTADO O ESPAÇAMENTO INFERIOR (mb-10 para mb-12)** */}
                     <p className="text-gray-600 mb-12 text-lg">
                         Defina sua senha para começar a utilizar o sistema
                     </p>
 
                     <form onSubmit={handleSubmit} className="w-full max-w-sm">
 
-                        {/* Nova Senha - mb-8 já está bom */}
                         <div className="mb-8 text-left">
                             <label htmlFor="novaSenha" className="block text-gray-700 font-medium mb-3 text-base">Nova senha:</label>
                             <TextField
@@ -147,13 +135,13 @@ export default function NovaSenha() {
                                 size="medium"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: '8px', /* Ligeiramente mais arredondado */
+                                        borderRadius: '8px', 
                                         backgroundColor: inputBgColor,
                                         paddingLeft: '12px',
                                         '& fieldset': { border: 'none' },
-                                        '&.Mui-focused': { boxShadow: '0 0 0 2px #007EA740' }, /* Efeito de foco suave */
+                                        '&.Mui-focused': { boxShadow: '0 0 0 2px #007EA740' }, 
                                     },
-                                    /* **AJUSTE 2: Adiciona margem inferior extra ao TextField** */
+                                   
                                     marginBottom: '20px' 
                                 }}
                                 InputProps={{
@@ -175,7 +163,6 @@ export default function NovaSenha() {
                             />
                         </div>
 
-                        {/* Confirmação de Senha - mb-10 já está bom */}
                         <div className="mb-10 text-left">
                             <label htmlFor="confirmaSenha" className="block text-gray-700 font-medium mb-3 text-base">Digite a senha novamente:</label>
                             <TextField
@@ -190,11 +177,11 @@ export default function NovaSenha() {
                                 error={confirmaSenha.length > 0 && !passwordsMatch}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: '8px', /* Ligeiramente mais arredondado */
+                                        borderRadius: '8px',
                                         backgroundColor: inputBgColor,
                                         paddingLeft: '12px',
                                         '& fieldset': { border: 'none' },
-                                        '&.Mui-focused': { boxShadow: '0 0 0 2px #007EA740' }, /* Efeito de foco suave */
+                                        '&.Mui-focused': { boxShadow: '0 0 0 2px #007EA740' },
                                     },
                                 }}
                                 InputProps={{
@@ -216,7 +203,6 @@ export default function NovaSenha() {
                             />
                         </div>
 
-                        {/* Requisitos de Senha - mb-10 já está bom, mas garantindo espaçamento interno com space-y-3 */}
                         <div className="flex flex-col items-start space-y-3 mb-10"> 
                             <PasswordRequirement text="Pelo menos 8 caracteres" isValid={is8Chars} />
                             <PasswordRequirement text="Pelo menos 1 letra maiúscula" isValid={isUppercase} />
@@ -224,7 +210,6 @@ export default function NovaSenha() {
                             <PasswordRequirement text="As senhas coincidem" isValid={passwordsMatch} />
                         </div>
 
-                        {/* Mensagens (Aumentado mb-8 para mb-10) */}
                         {success && (
                             <p className="text-green-600 text-sm mb-10 bg-green-100 p-3 rounded-lg border border-green-300 w-full text-center">
                                 {success}
@@ -237,7 +222,6 @@ export default function NovaSenha() {
                             </p>
                         )}
 
-                        {/* Botão de Definição - Adicionado margem superior (mt-4) para aumentar distância das mensagens/requisitos */}
                         <Button
                             type="submit"
                             variant="contained"
@@ -247,17 +231,17 @@ export default function NovaSenha() {
                                 backgroundColor: primaryDarkColor,
                                 '&:hover': { backgroundColor: '#002a4b' },
                                 '&.Mui-disabled': {
-                                    backgroundColor: '#002a4b', // Ligeiramente mais claro quando desabilitado
+                                    backgroundColor: '#002a4b', 
                                     color: '#ffffff'
                                 },
-                                padding: '16px 0', // Aumentado o padding para um botão mais alto
-                                fontSize: '1.2rem', // Um pouco maior
+                                padding: '16px 0', 
+                                fontSize: '1.2rem',
                                 fontWeight: 'bold',
                                 borderRadius: '8px',
                                 transition: 'all 0.3s',
                                 fontFamily: 'Inter'
                             }}
-                            className="mt-4" // Tailwind class para aumentar o espaçamento superior
+                            className="mt-4" 
                         >
                             {isLoading ? 'Definindo Senha...' : 'Definir senha'}
                         </Button>
