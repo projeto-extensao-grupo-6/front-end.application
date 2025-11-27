@@ -1,31 +1,112 @@
 import React, { useMemo, useState, useEffect } from "react";
-import "./servicos.css";
-import { FaWrench, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle, FaUser } from "react-icons/fa";
+import { FaWrench, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from "react-icons/fa";
+// import Api from "../../axios/Api"
 
-const API_SERVICOS_URL = "http://localhost:3000/servicos";
-const API_CLIENTES_URL = "http://localhost:3000/clientes";
+// const API_SERVICOS_URL = "http://localhost:3000/servicos";
+// const API_CLIENTES_URL = "http://localhost:3000/clientes";
 
-// Componente visual de Status
+// ===== DADOS MOCADOS =====
+const MOCK_CLIENTES = [
+    { id: "1", nome: "João Silva" },
+    { id: "2", nome: "Maria Santos" },
+    { id: "3", nome: "Carlos Oliveira" },
+    { id: "4", nome: "Ana Costa" },
+    { id: "5", nome: "Pedro Almeida" },
+];
+
+const MOCK_SERVICOS = [
+    {
+        id: "1",
+        clienteId: "1",
+        clienteNome: "João Silva",
+        data: "2025-11-20",
+        descricao: "Troca de óleo e filtros do motor",
+        status: "Ativo",
+        etapa: "Execução em andamento",
+        progresso: [3, 6]
+    },
+    {
+        id: "2",
+        clienteId: "2",
+        clienteNome: "Maria Santos",
+        data: "2025-11-15",
+        descricao: "Revisão completa de freios ABS",
+        status: "Finalizado",
+        etapa: "Concluído",
+        progresso: [6, 6]
+    },
+    {
+        id: "3",
+        clienteId: "3",
+        clienteNome: "Carlos Oliveira",
+        data: "2025-11-25",
+        descricao: "Alinhamento e balanceamento de rodas",
+        status: "Ativo",
+        etapa: "Aguardando orçamento",
+        progresso: [1, 6]
+    },
+    {
+        id: "4",
+        clienteId: "4",
+        clienteNome: "Ana Costa",
+        data: "2025-11-18",
+        descricao: "Reparo de sistema elétrico e bateria",
+        status: "Ativo",
+        etapa: "Aguardando peças",
+        progresso: [2, 6]
+    },
+    {
+        id: "5",
+        clienteId: "5",
+        clienteNome: "Pedro Almeida",
+        data: "2025-11-22",
+        descricao: "Troca de correia dentada e tensor",
+        status: "Ativo",
+        etapa: "Orçamento aprovado",
+        progresso: [2, 6]
+    },
+    {
+        id: "6",
+        clienteId: "1",
+        clienteNome: "João Silva",
+        data: "2025-11-10",
+        descricao: "Limpeza de bicos injetores",
+        status: "Finalizado",
+        etapa: "Concluído",
+        progresso: [6, 6]
+    },
+    {
+        id: "7",
+        clienteId: "2",
+        clienteNome: "Maria Santos",
+        data: "2025-11-26",
+        descricao: "Substituição de amortecedores dianteiros",
+        status: "Ativo",
+        etapa: "Execução em andamento",
+        progresso: [4, 6]
+    },
+];
+// ===== FIM DADOS MOCADOS =====
+
 function StatusPill({ status }) {
-    const map = { 
-        Ativo: "chip chip-blue", // Mudado para blue para combinar com o tema
-        Finalizado: "chip chip-green", 
-        "Aguardando": "chip chip-yellow"
+    const styles = { 
+        Ativo: "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
+        Finalizado: "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]", 
+        "Aguardando": "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]"
     };
-    return <span className={map[status] || "chip"}>{status}</span>;
+    return <span className={styles[status] || "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide"}>{status}</span>;
 }
 
-// Componente visual de Progresso
 function Progress({ value = 0, total = 6, dark = false }) {
     const pct = Math.min(100, Math.round((Number(value) / Number(total)) * 100));
     return (
         <div className="flex items-center gap-2 min-w-[140px]">
             <div className="h-2.5 w-full max-w-[120px] rounded-full bg-slate-200 overflow-hidden">
                 <div 
-                    className="h-full rounded-full transition-all duration-500" 
+                    className="h-full rounded-full transition-all duration-500"
                     style={{ 
                         width: `${pct}%`, 
-                        backgroundColor: dark ? "#475569" : "#007EA7" // Usa a cor do tema
+                        backgroundColor: dark ? "#475569" : "#007EA7"
                     }} 
                 />
             </div>
@@ -42,7 +123,7 @@ const formatServicoId = (id) => {
     return id;
 }
 
-const ITEMS_PER_PAGE = 5; // Aumentei um pouco para aproveitar o espaço
+const ITEMS_PER_PAGE = 5;
 const NOVO_FORM = () => ({
     clienteId: "",
     clienteNome: "",
@@ -68,15 +149,10 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
     const fetchData = async () => {
         setLoading(true);
-        try {
-            const [servicosRes, clientesRes] = await Promise.all([
-                Api.get("/servicos"),
-                Api.get("/clientes")
-            ]);
-            const servicosData = servicosRes.data;
-            const clientesData = clientesRes.data;
-
-            const sortedServicos = servicosData.sort((a, b) => {
+        
+        // ===== VERSÃO MOCADA =====
+        setTimeout(() => {
+            const sortedServicos = [...MOCK_SERVICOS].sort((a, b) => {
                 const idAisNum = /^\d+$/.test(a.id);
                 const idBisNum = /^\d+$/.test(b.id);
                 if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
@@ -84,14 +160,36 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                 if (a.id > b.id) return -1;
                 return 0;
             });
-
             setServicos(sortedServicos);
-            setClientes(clientesData);
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-        } finally {
+            setClientes(MOCK_CLIENTES);
             setLoading(false);
-        }
+        }, 500);
+
+        // ===== VERSÃO COM API (COMENTADA) =====
+        // try {
+        //     const [servicosRes, clientesRes] = await Promise.all([
+        //         Api.get("/servicos"),
+        //         Api.get("/clientes")
+        //     ]);
+        //     const servicosData = servicosRes.data;
+        //     const clientesData = clientesRes.data;
+
+        //     const sortedServicos = servicosData.sort((a, b) => {
+        //         const idAisNum = /^\d+$/.test(a.id);
+        //         const idBisNum = /^\d+$/.test(b.id);
+        //         if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
+        //         if (a.id < b.id) return 1;
+        //         if (a.id > b.id) return -1;
+        //         return 0;
+        //     });
+
+        //     setServicos(sortedServicos);
+        //     setClientes(clientesData);
+        // } catch (error) {
+        //     console.error("Erro ao buscar dados:", error);
+        // } finally {
+        //     setLoading(false);
+        // }
     };
 
     useEffect(() => {
@@ -126,13 +224,20 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
             );
         }
 
+        // Filtro de Status - aceita múltiplos valores
         if (statusFilter && statusFilter !== "Todos") {
-            // Ajuste simples para lidar com nomenclatura diferente se necessário
-            lista = lista.filter(s => s.status === statusFilter);
+            const statusArray = Array.isArray(statusFilter) ? statusFilter : [statusFilter];
+            if (statusArray.length > 0 && !statusArray.includes("Todos")) {
+                lista = lista.filter(s => statusArray.includes(s.status));
+            }
         }
 
+        // Filtro de Etapa - aceita múltiplos valores
         if (etapaFilter && etapaFilter !== "Todos") {
-            lista = lista.filter(s => s.etapa === etapaFilter);
+            const etapaArray = Array.isArray(etapaFilter) ? etapaFilter : [etapaFilter];
+            if (etapaArray.length > 0 && !etapaArray.includes("Todos")) {
+                lista = lista.filter(s => etapaArray.includes(s.etapa));
+            }
         }
 
         return lista;
@@ -146,7 +251,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
     useEffect(() => {
         if (page > totalPages && totalPages > 0) setPage(totalPages);
         else if (page === 0 && totalPages > 0) setPage(1);
-    }, [totalPages, page, listaFiltrada]); // Adicionado listaFiltrada para resetar ao filtrar
+    }, [totalPages, page, listaFiltrada]);
 
     const proxima = () => page < totalPages && setPage((p) => p + 1);
     const anterior = () => page > 1 && setPage((p) => p - 1);
@@ -215,38 +320,58 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
             progresso: [Number(formToValidate.progressoValor) || 1, Number(formToValidate.progressoTotal) || 6],
         };
 
-        const url = mode === 'edit' ? `${API_SERVICOS_URL}/${current.id}` : API_SERVICOS_URL;
-        const method = mode === 'edit' ? 'PUT' : 'POST';
-
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(servicoPayload)
-            });
-            if (!response.ok) throw new Error("Erro na API");
-            await fetchData();
-            fecharTodos();
-            if (mode === 'new') setPage(1);
-        } catch (error) {
-            console.error("Erro ao salvar:", error);
+        // ===== VERSÃO MOCADA =====
+        if (mode === 'edit') {
+            const updatedServicos = servicos.map(s => 
+                s.id === current.id ? { ...s, ...servicoPayload } : s
+            );
+            setServicos(updatedServicos);
+        } else {
+            const newId = String(Math.max(...servicos.map(s => parseInt(s.id) || 0)) + 1);
+            setServicos([{ id: newId, ...servicoPayload }, ...servicos]);
+            setPage(1);
         }
+        fecharTodos();
+
+        // ===== VERSÃO COM API (COMENTADA) =====
+        // const url = mode === 'edit' ? `${API_SERVICOS_URL}/${current.id}` : API_SERVICOS_URL;
+        // const method = mode === 'edit' ? 'PUT' : 'POST';
+
+        // try {
+        //     const response = await fetch(url, {
+        //         method: method,
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify(servicoPayload)
+        //     });
+        //     if (!response.ok) throw new Error("Erro na API");
+        //     await fetchData();
+        //     fecharTodos();
+        //     if (mode === 'new') setPage(1);
+        // } catch (error) {
+        //     console.error("Erro ao salvar:", error);
+        // }
     };
 
     const confirmarExclusao = async () => {
         if (!targetId) return;
-        try {
-            await fetch(`${API_SERVICOS_URL}/${targetId}`, { method: 'DELETE' });
-            await fetchData();
-            fecharTodos();
-        } catch (error) {
-            console.error("Erro ao excluir:", error);
-        }
+        
+        // ===== VERSÃO MOCADA =====
+        setServicos(servicos.filter(s => s.id !== targetId));
+        fecharTodos();
+
+        // ===== VERSÃO COM API (COMENTADA) =====
+        // try {
+        //     await fetch(`${API_SERVICOS_URL}/${targetId}`, { method: 'DELETE' });
+        //     await fetchData();
+        //     fecharTodos();
+        // } catch (error) {
+        //     console.error("Erro ao excluir:", error);
+        // }
     };
 
     return (
         <>
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col align-items-center justify-center gap-4 w-full">
                 {loading && <p className="text-slate-500 text-center py-10">Carregando serviços...</p>}
                 
                 {!loading && pagina.length === 0 && (
@@ -256,7 +381,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                 )}
 
                 {!loading && pagina.map((item) => (
-                    <article key={item.id} className={`rounded-lg border border-slate-200 bg-white p-5 transition-all hover:shadow-sm ${item.status === 'Finalizado' ? "opacity-75 bg-slate-50" : ""}`}>
+                    <article key={item.id} className={`rounded-lg border border-slate-200 bg-white p-5 transition-all hover:shadow-sm cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
                         <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-[#e0f2fe] text-[#007EA7] rounded-md">
@@ -275,13 +400,13 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                             <div className="flex items-center gap-2 self-end md:self-auto">
                                 <StatusPill status={item.status} />
                                 <div className="h-4 w-px bg-slate-300 mx-1"></div>
-                                <button type="button" className="icon-btn" title="Exibir Detalhes" onClick={() => abrirExibir(item)}>
+                                <button type="button" className="p-1.5 rounded-full text-[#64748b] transition-colors hover:bg-[#f1f5f9] hover:text-[#0f172a]" title="Exibir Detalhes" onClick={() => abrirExibir(item)}>
                                     <FaExternalLinkAlt />
                                 </button>
-                                <button type="button" className="icon-btn" title="Editar" onClick={() => abrirEditar(item)}>
+                                <button type="button" className="p-1.5 rounded-full text-[#64748b] transition-colors hover:bg-[#f1f5f9] hover:text-[#0f172a]" title="Editar" onClick={() => abrirEditar(item)}>
                                     <FaEdit />
                                 </button>
-                                <button type="button" className="icon-btn text-rose-500 hover:bg-rose-50 hover:text-rose-600" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
+                                <button type="button" className="p-1.5 rounded-full text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
                                     <FaTrash />
                                 </button>
                             </div>
