@@ -76,7 +76,6 @@ export default function Perfil() {
 
     useEffect(() => {
         const userId = sessionStorage.getItem('userId');
-        console.log('User ID:', userId)
 
         if (!userId) {
             console.error("ID do usuário não encontrado no sessionStorage.");

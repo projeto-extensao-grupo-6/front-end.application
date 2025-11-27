@@ -172,7 +172,7 @@ import React, { useState } from "react";
                   <button
                     type="button"
                     className="text-sm text-[#007EA7] hover:text-[#005f73] transition"
-                    onClick={() => alert("Função de recuperação em breve!")}
+                    onClick={() => navigate("/esqueceuSenha")}
                   >
                     Esqueceu sua senha?
                   </button>

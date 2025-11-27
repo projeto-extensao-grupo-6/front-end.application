@@ -13,6 +13,7 @@ import CalendarDashboard from '../pages/calendar-dashboard.jsx/index.jsx';
 import Perfil from '../pages/perfil/perfil.jsx';
 import MapContainer from '../pages/geoLocalizacao/MapContainer.jsx';
 import NovaSenha from '../pages/novaSenha/novaSenha.jsx';
+import EsqueceuSenha from '../pages/esqueceuSenha/EsqueceuSenha.jsx';
 
 export const routes = createBrowserRouter([
   { path: '/', element: <Login /> }, 
@@ -29,4 +30,6 @@ export const routes = createBrowserRouter([
   { path: '/primeiroAcesso/:idUsuario', element: <ProtectedRoute><NovaSenha/></ProtectedRoute>},
   { path: '/perfil', element: <ProtectedRoute><Perfil /></ProtectedRoute> },
   { path: '/geoLocalizacao', element: <ProtectedRoute><MapContainer /></ProtectedRoute> },
+  { path: '/esqueceuSenha', element: <EsqueceuSenha /> },
+
 ]);
