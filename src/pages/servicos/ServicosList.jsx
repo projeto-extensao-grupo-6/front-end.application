@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { FaWrench, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from "react-icons/fa";
+import SkeletonLoader from "../../shared/components/skeleton/SkeletonLoader";
 // import Api from "../../axios/Api"
 
 // const API_SERVICOS_URL = "http://localhost:3000/servicos";
@@ -151,19 +152,17 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         setLoading(true);
         
         // ===== VERSÃO MOCADA =====
-        setTimeout(() => {
-            const sortedServicos = [...MOCK_SERVICOS].sort((a, b) => {
-                const idAisNum = /^\d+$/.test(a.id);
-                const idBisNum = /^\d+$/.test(b.id);
-                if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
-                if (a.id < b.id) return 1;
-                if (a.id > b.id) return -1;
-                return 0;
-            });
-            setServicos(sortedServicos);
-            setClientes(MOCK_CLIENTES);
-            setLoading(false);
-        }, 500);
+        const sortedServicos = [...MOCK_SERVICOS].sort((a, b) => {
+            const idAisNum = /^\d+$/.test(a.id);
+            const idBisNum = /^\d+$/.test(b.id);
+            if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
+            if (a.id < b.id) return 1;
+            if (a.id > b.id) return -1;
+            return 0;
+        });
+        setServicos(sortedServicos);
+        setClientes(MOCK_CLIENTES);
+        setLoading(false);
 
         // ===== VERSÃO COM API (COMENTADA) =====
         // try {
@@ -371,8 +370,8 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
     return (
         <>
-            <div className="flex flex-col align-items-center justify-center gap-4 w-full">
-                {loading && <p className="text-slate-500 text-center py-10">Carregando serviços...</p>}
+            <div className="flex flex-col gap-4 w-full py-4">
+                {loading && <SkeletonLoader count={ITEMS_PER_PAGE} />}
                 
                 {!loading && pagina.length === 0 && (
                     <div className="text-center py-10 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">
@@ -381,7 +380,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                 )}
 
                 {!loading && pagina.map((item) => (
-                    <article key={item.id} className={`rounded-lg border border-slate-200 bg-white p-5 transition-all hover:shadow-sm cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
+                    <article key={item.id} className={`rounded-lg border border-slate-200 bg-white p-5 w-[1300px] transition-all hover:shadow-sm cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
                         <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-[#e0f2fe] text-[#007EA7] rounded-md">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FaBox, FaBoxOpen, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from 'react-icons/fa';
+import SkeletonLoader from '../../shared/components/skeleton/SkeletonLoader';
 
 // import Api from "../../axios/Api";
 
@@ -137,18 +138,16 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
         setLoading(true);
 
         // ===== VERSÃO MOCADA =====
-        setTimeout(() => {
-            const sortedPedidos = [...MOCK_PEDIDOS].sort((a, b) => {
-                const idAisNum = /^\d+$/.test(a.id);
-                const idBisNum = /^\d+$/.test(b.id);
-                if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
-                if (a.id < b.id) return 1;
-                if (a.id > b.id) return -1;
-                return 0;
-            });
-            setPedidos(sortedPedidos);
-            setLoading(false);
-        }, 500);
+        const sortedPedidos = [...MOCK_PEDIDOS].sort((a, b) => {
+            const idAisNum = /^\d+$/.test(a.id);
+            const idBisNum = /^\d+$/.test(b.id);
+            if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
+            if (a.id < b.id) return 1;
+            if (a.id > b.id) return -1;
+            return 0;
+        });
+        setPedidos(sortedPedidos);
+        setLoading(false);
 
         // ===== VERSÃO COM API (COMENTADA) =====
         // try {
@@ -205,12 +204,20 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
             );
         }
 
+        // Filtro de Status - aceita múltiplos valores
         if (statusFilter && statusFilter !== "Todos") {
-            lista = lista.filter(p => p.status === statusFilter);
+            const statusArray = Array.isArray(statusFilter) ? statusFilter : [statusFilter];
+            if (statusArray.length > 0 && !statusArray.includes("Todos")) {
+                lista = lista.filter(p => statusArray.includes(p.status));
+            }
         }
 
+        // Filtro de Pagamento - aceita múltiplos valores
         if (paymentFilter && paymentFilter !== "Todos") {
-            lista = lista.filter(p => p.formaPagamento === paymentFilter);
+            const paymentArray = Array.isArray(paymentFilter) ? paymentFilter : [paymentFilter];
+            if (paymentArray.length > 0 && !paymentArray.includes("Todos")) {
+                lista = lista.filter(p => paymentArray.includes(p.formaPagamento));
+            }
         }
 
         return lista;
@@ -342,7 +349,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
     return (
         <>
             <div className="flex flex-col gap-4 w-full py-4">
-                {loading && <p className="text-slate-500 text-center py-10">Carregando pedidos...</p>}
+                {loading && <SkeletonLoader count={ITEMS_PER_PAGE} />}
 
                 {!loading && pagina.length === 0 && (
                     <div className="text-center py-10 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">

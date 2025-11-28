@@ -55,21 +55,21 @@ export default function Pedidos() {
     };
 
     // Classes das abas
-    const tabBaseClass = "px-8 py-4 rounded-t-lg font-semibold text-md transition-all flex items-center gap-3 border-t border-l border-r cursor-pointer select-none translate-y-[1px] shadow-[0_-2px_4px_-2px_rgba(0,0,0,0.1),2px_0_4px_-2px_rgba(0,0,0,0.1),-2px_0_8px_-2px_rgba(0,0,0,0.1)]";
+    const tabBaseClass = "px-6 md:px-9 py-3 md:py-4 rounded-t-lg font-semibold text-base md:text-lg transition-all duration-300 flex items-center gap-2 md:gap-3 border-t border-l border-r cursor-pointer select-none translate-y-[1px] shadow-[0_-2px_4px_-2px_rgba(0,0,0,0.1),2px_0_4px_-2px_rgba(0,0,0,0.1),-2px_0_8px_-2px_rgba(0,0,0,0.1)]";
     const activeTabClass = "bg-white text-[#007EA7] border-slate-200 z-10"; 
     const inactiveTabClass = "bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200 z-0";
 
     return (
-        <div className="flex bg-gray-50 min-h-screen w-[1000px]">
+        <div className="flex flex-col justify-center items-center bg-gray-50 min-h-screen">
             <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             
-            <div className="flex-1 flex flex-col min-h-screen">
+            <div className="flex-1 flex flex-col">
                 <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
                 
                 <div className="pt-20 lg:pt-20" />
 
                 <main className="flex-1 p-4 md:p-8">
-                    <section className="mb-8 w-full max-w-[10000px] mx-auto">
+                    <section className="mb-8 w-full max-w-[1400px] mx-auto">
 
                         {/* Abas de Navegação */}
                         <div className="flex items-end gap-2 w-full">
@@ -141,7 +141,7 @@ export default function Pedidos() {
                             </div>
 
                             {/* Conteúdo das Listas */}
-                            <div className="min-h-[400px]">
+                            <div className="overflow-x-auto">
                                 {activeTab === 'pedidos' && (
                                     <PedidosList
                                         busca={busca}
