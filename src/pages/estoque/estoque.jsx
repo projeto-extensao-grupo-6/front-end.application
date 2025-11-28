@@ -426,7 +426,6 @@ const handleSaveItem = useCallback(async (itemData) => {
           {/* Cabeçalho */}
           <div className="text-center mb-8 px-2 w-full max-w-[1600px]">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-2 flex items-center justify-center gap-2">
-              <Package className="w-8 h-8 text-[#007EA7]" />
               Controle de Estoque
             </h1>
             <p className="text-gray-500 text-sm sm:text-base">

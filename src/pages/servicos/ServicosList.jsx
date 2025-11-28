@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { FaWrench, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from "react-icons/fa";
 import SkeletonLoader from "../../shared/components/skeleton/SkeletonLoader";
+import NovoServicoModal from "../../shared/components/pedidosServicosComponents/NovoServicoModal";
 // import Api from "../../axios/Api"
 
 // const API_SERVICOS_URL = "http://localhost:3000/servicos";
@@ -90,9 +91,9 @@ const MOCK_SERVICOS = [
 // ===== FIM DADOS MOCADOS =====
 
 function StatusPill({ status }) {
-    const styles = { 
+    const styles = {
         Ativo: "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
-        Finalizado: "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]", 
+        Finalizado: "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]",
         "Aguardando": "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]"
     };
     return <span className={styles[status] || "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide"}>{status}</span>;
@@ -102,16 +103,16 @@ function Progress({ value = 0, total = 6, dark = false }) {
     const pct = Math.min(100, Math.round((Number(value) / Number(total)) * 100));
     return (
         <div className="flex items-center gap-2 min-w-[140px]">
-            <div className="h-2.5 w-full max-w-[120px] rounded-full bg-slate-200 overflow-hidden">
-                <div 
+            <div className="h-3.5 w-full max-w-[120px] rounded-full bg-slate-200 overflow-hidden">
+                <div
                     className="h-full rounded-full transition-all duration-500"
-                    style={{ 
-                        width: `${pct}%`, 
-                        backgroundColor: dark ? "#475569" : "#007EA7"
-                    }} 
+                    style={{
+                        width: `${pct}%`,
+                        backgroundColor: dark ? "#475569" : "#002A4B"
+                    }}
                 />
             </div>
-            <span className="text-xs text-slate-600 font-medium">{value}/{total}</span>
+            <span className="text-sm text-slate-600 font-medium">{value}/{total}</span>
         </div>
     );
 }
@@ -141,7 +142,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
     const [clientes, setClientes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-    const [modal, setModal] = useState({ confirm: false, view: false, form: false });
+    const [modal, setModal] = useState({ confirm: false, view: false, form: false, novo: false });
     const [mode, setMode] = useState("new");
     const [current, setCurrent] = useState(null);
     const [targetId, setTargetId] = useState(null);
@@ -150,7 +151,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
     const fetchData = async () => {
         setLoading(true);
-        
+
         // ===== VERSÃO MOCADA =====
         const sortedServicos = [...MOCK_SERVICOS].sort((a, b) => {
             const idAisNum = /^\d+$/.test(a.id);
@@ -197,21 +198,27 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
     useEffect(() => {
         if (triggerNovoRegistro) {
-            setMode("new");
-            setForm(NOVO_FORM());
-            setErrors({});
-            setModal((m) => ({ ...m, form: true }));
+            setModal((m) => ({ ...m, novo: true }));
             onNovoRegistroHandled();
         }
     }, [triggerNovoRegistro, onNovoRegistroHandled]);
 
     useEffect(() => {
         const onKey = (e) => {
-            if (e.key === "Escape") setModal({ confirm: false, view: false, form: false });
+            if (e.key === "Escape") setModal({ confirm: false, view: false, form: false, novo: false });
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, []);
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        try {
+            return new Date(dateString + 'T00:00:00').toLocaleDateString("pt-BR");
+        } catch (e) {
+            return 'Data inválida';
+        }
+    }
 
     const listaFiltrada = useMemo(() => {
         let lista = servicos;
@@ -259,14 +266,14 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         setForm((f) => ({ ...f, [name]: value }));
         if (errors[name]) setErrors(e => ({ ...e, [name]: undefined }));
     };
-    
-    const fecharTodos = () => setModal({ confirm: false, view: false, form: false });
+
+    const fecharTodos = () => setModal({ confirm: false, view: false, form: false, novo: false });
 
     const abrirExibir = (item) => {
         setCurrent(item);
         setModal((m) => ({ ...m, view: true }));
     };
-    
+
     const abrirEditar = (item) => {
         setMode("edit");
         setCurrent(item);
@@ -304,7 +311,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         const selectedClient = clientes.find(c => c.id === form.clienteId);
         const clienteNomeToSave = selectedClient ? selectedClient.nome : "";
         const formToValidate = { ...form, clienteNome: clienteNomeToSave };
-        
+
         const errs = validar(formToValidate);
         setErrors(errs);
         if (Object.keys(errs).length) return;
@@ -321,7 +328,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
         // ===== VERSÃO MOCADA =====
         if (mode === 'edit') {
-            const updatedServicos = servicos.map(s => 
+            const updatedServicos = servicos.map(s =>
                 s.id === current.id ? { ...s, ...servicoPayload } : s
             );
             setServicos(updatedServicos);
@@ -353,7 +360,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
     const confirmarExclusao = async () => {
         if (!targetId) return;
-        
+
         // ===== VERSÃO MOCADA =====
         setServicos(servicos.filter(s => s.id !== targetId));
         fecharTodos();
@@ -368,11 +375,31 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         // }
     };
 
+    const handleNovoServicoSuccess = (novoServico) => {
+        // ===== VERSÃO MOCADA =====
+        const newId = String(Math.max(...servicos.map(s => parseInt(s.id) || 0)) + 1);
+        const servicoCompleto = {
+            id: newId,
+            clienteId: novoServico.clienteId,
+            clienteNome: novoServico.clienteNome,
+            data: novoServico.data,
+            descricao: novoServico.descricao,
+            status: "Ativo",
+            etapa: "Aguardando orçamento",
+            progresso: [1, 6]
+        };
+        setServicos([servicoCompleto, ...servicos]);
+        setPage(1);
+
+        // ===== VERSÃO COM API (COMENTADA) =====
+        // fetchData(); // Recarregar dados da API
+    };
+
     return (
         <>
             <div className="flex flex-col gap-4 w-full py-4">
                 {loading && <SkeletonLoader count={ITEMS_PER_PAGE} />}
-                
+
                 {!loading && pagina.length === 0 && (
                     <div className="text-center py-10 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">
                         Nenhum serviço encontrado com os filtros atuais.
@@ -380,22 +407,19 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                 )}
 
                 {!loading && pagina.map((item) => (
-                    <article key={item.id} className={`rounded-lg border border-slate-200 bg-white p-5 w-[1300px] transition-all hover:shadow-sm cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
+                    <article key={item.id} className={`flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-6 w-[1300px] shadow-lg/5 transition-all hover:shadow-sm cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
                         <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-[#e0f2fe] text-[#007EA7] rounded-md">
+                                <div className="p-2 text-[#828282] rounded-md">
                                     <FaWrench />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 text-base">
-                                        OS #{formatServicoId(item.id)}
+                                    <h3 className="font-semibold text-slate-800 text-base">
+                                        Pedido de Serviço - #{formatServicoId(item.id)}
                                     </h3>
-                                    <span className="text-xs text-slate-500">
-                                        {item.data ? new Date(item.data + 'T00:00:00').toLocaleDateString("pt-BR") : '-'}
-                                    </span>
                                 </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 self-end md:self-auto">
                                 <StatusPill status={item.status} />
                                 <div className="h-4 w-px bg-slate-300 mx-1"></div>
@@ -411,27 +435,46 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                             </div>
                         </header>
 
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-sm">
-                            <div className="md:col-span-3">
-                                <div className="text-slate-500 text-xs font-semibold uppercase mb-1">Cliente</div>
-                                <div className="font-medium text-slate-700 truncate" title={item.clienteNome}>
-                                    {item.clienteNome || `ID: ${item.clienteId}`}
-                                </div>
-                            </div>
-                            
-                            <div className="md:col-span-4">
-                                <div className="text-slate-500 text-xs font-semibold uppercase mb-1">Descrição</div>
-                                <div className="text-slate-600 line-clamp-2" title={item.descricao}>
-                                    {item.descricao}
+                        <div className="flex flex-row gap-10 text-1xl w-[1050px]">
+                            <div className="w-1/4 flex flex-col items-center gap-1">
+                                <div className="md:col-span-3 flex flex-col items-start gap-1">
+                                    <span className="text-slate-500 font-semibold">Nome do Cliente</span>
+                                    <span
+                                        className="font-semibold text-slate-700 truncate"
+                                        title={item.clienteNome}
+                                    >
+                                        {item.clienteNome || `ID: ${item.clienteId}`}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="md:col-span-5 flex flex-col justify-center gap-1">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-slate-500 text-xs font-semibold uppercase">Etapa Atual</span>
-                                    <span className="text-slate-700 text-xs font-medium">{item.etapa}</span>
+                            <div className="w-1/4 flex flex-col gap-1">
+                                <div className="md:col-span-3 flex flex-col items-start gap-1">
+                                    <span className="text-slate-500 font-semibold">Data Lançamento</span>
+                                    <span className="text-slate-700">
+                                        {formatDate(item.data)}
+                                    </span>
                                 </div>
-                                <Progress value={item.progresso?.[0]} total={item.progresso?.[1]} dark={item.status === "Finalizado"} />
+                            </div>
+
+                            <div className="w-1/4 flex flex-col gap-1">
+                                <div className="md:col-span-3 flex flex-col items-start gap-1">
+                                    <span className="text-slate-500 font-semibold">Descrição Serviço</span>
+                                    <span
+                                        className="text-slate-600" title={item.descricao}>{item.descricao}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="w-1/4 flex flex-col gap-2">
+                                <div className="md:col-span-3 flex flex-col items-start gap-2">
+                                    <span className="text-slate-500 font-semibold">{item.etapa}</span>
+                                    <Progress
+                                        value={item.progresso?.[0]}
+                                        total={item.progresso?.[1]}
+                                        dark={item.status === "Finalizado"}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </article>
@@ -483,13 +526,13 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                         <div className="flex justify-between items-start mb-6 border-b pb-4">
                             <div>
                                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                    <FaWrench className="text-[#007EA7]"/> Detalhes da OS
+                                    <FaWrench className="text-[#007EA7]" /> Detalhes da OS
                                 </h2>
                                 <p className="text-sm text-slate-500">ID: #{formatServicoId(current.id)}</p>
                             </div>
                             <StatusPill status={current.status} />
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div>
@@ -528,7 +571,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
             {modal.form && (
                 <div className="fixed inset-0 z-9999 grid place-items-center bg-black/40 px-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) fecharTodos(); }}>
                     <form onSubmit={salvar} className="w-full max-w-3xl bg-white rounded-xl shadow-2xl p-0 overflow-hidden flex flex-col max-h-[90vh] animate-scaleIn">
-                        
+
                         {/* Header Modal */}
                         <div className="px-6 py-4 bg-slate-50 border-b flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -540,7 +583,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                                     <p className="text-xs text-slate-500">Preencha os dados abaixo</p>
                                 </div>
                             </div>
-                            
+
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800">Status Ativo</span>
                                 <div className="relative">
@@ -600,7 +643,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                             </div>
 
                             <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><FaExclamationTriangle className="text-amber-500"/> Controle de Andamento</h3>
+                                <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><FaExclamationTriangle className="text-amber-500" /> Controle de Andamento</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Etapa Atual</label>
@@ -650,6 +693,13 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                     </form>
                 </div>
             )}
+            
+            {/* MODAL NOVO SERVIÇO COM MULTI-ETAPAS */}
+            <NovoServicoModal 
+                isOpen={modal.novo}
+                onClose={fecharTodos}
+                onSuccess={handleNovoServicoSuccess}
+            />
         </>
     );
 }

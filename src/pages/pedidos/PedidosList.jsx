@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FaBox, FaBoxOpen, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { BiSolidPencil } from "react-icons/bi";
 import SkeletonLoader from '../../shared/components/skeleton/SkeletonLoader';
 
 // import Api from "../../axios/Api";
@@ -347,7 +348,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
     };
 
     return (
-        <>
+         <>
             <div className="flex flex-col gap-4 w-full py-4">
                 {loading && <SkeletonLoader count={ITEMS_PER_PAGE} />}
 
@@ -358,64 +359,67 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                 )}
 
                 {!loading && pagina.map((item) => (
-                    <article key={item.id} className={`rounded-lg border border-slate-200 bg-white p-5 w-[1300px] transition-all hover:shadow-sm cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
+                    <article key={item.id} className={`flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-6 w-[1300px] shadow-lg/5 transition-all hover:shadow-lg cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
                         <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 text-[#828282] rounded-md">
                                     <FaBox />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 text-base">
-                                        Pedido #{formatPedidoId(item.id)}
+                                    <h3 className="font-semibold text-slate-800 text-base">
+                                        Pedido de Produto - #{formatPedidoId(item.id)}
                                     </h3>
-                                    <span className="text-xs text-slate-500">
-                                        {formatDate(item.dataCompra)}
-                                    </span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2 self-end md:self-auto">
                                 <StatusBadge status={item.status} />
                                 <div className="h-4 w-px bg-slate-300 mx-1"></div>
-                                <button type="button" className="p-1.5 rounded-full text-[#64748b] transition-colors hover:bg-[#f1f5f9] hover:text-[#0f172a]" title="Exibir Detalhes" onClick={() => abrirExibir(item)}>
+                                <button type="button" className="p-1.5 rounded-full text-[#64748b] transition-colors hover:bg-[#f1f5f9] cursor-pointer hover:text-[#0f172a]" title="Exibir Detalhes" onClick={() => abrirExibir(item)}>
                                     <FaExternalLinkAlt />
                                 </button>
-                                <button type="button" className="p-1.5 rounded-full text-[#64748b] transition-colors hover:bg-[#f1f5f9] hover:text-[#0f172a]" title="Editar" onClick={() => abrirEditar(item)}>
-                                    <FaBox />
+                                <button type="button" className="p-1 rounded-full text-[#64748b] transition-colors hover:bg-[#f1f5f9] cursor-pointer hover:text-[#0f172a]" title="Editar" onClick={() => abrirEditar(item)}>
+                                    <BiSolidPencil />
                                 </button>
-                                <button type="button" className="p-1.5 rounded-full text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
+                                <button type="button" className="p-1.5 rounded-full text-rose-700 transition-colors hover:bg-rose-50 cursor-pointer hover:text-rose-500" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
                                     <FaTrash />
                                 </button>
                             </div>
                         </header>
 
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-sm">
-                            <div className="md:col-span-3">
-                                <div className="text-slate-500 text-xs font-semibold uppercase mb-1">Produtos</div>
-                                <div className="font-medium text-slate-700 truncate" title={item.produtosDesc}>
-                                    {item.produtosDesc}
+                        <div className="flex flex-row gap-15 text-1xl pl-11">
+                            <div className="md:col-span-3 flex flex-col justify-center">
+                                <div className="flex flex-col justify-between items-start gap-1">
+                                    <span className="text-1xl text-slate-500 text-right mt-1 font-semibold">{item.itensCount} {item.itensCount === 1 ? 'item' : 'itens'}</span>
+                                    <span className="text-[#34849e] text-1xl font-bold">{formatCurrency(item.valorTotal)}</span>
                                 </div>
-                            </div>
-
-                            <div className="md:col-span-4">
-                                <div className="text-slate-500 text-xs font-semibold uppercase mb-1">Descrição</div>
-                                <div className="text-slate-600 line-clamp-2" title={item.descricao}>
-                                    {item.descricao || '-'}
-                                </div>
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <div className="text-slate-500 text-xs font-semibold uppercase mb-1">Pagamento</div>
-                                <div className="text-slate-700 font-medium">{item.formaPagamento}</div>
                             </div>
 
                             <div className="md:col-span-3 flex flex-col justify-center">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-slate-500 text-xs font-semibold uppercase">Valor Total</span>
-                                    <span className="text-[#007EA7] text-lg font-bold">{formatCurrency(item.valorTotal)}</span>
+                                <div className="flex flex-col justify-between items-start gap-1">
+                                    <span className="text-slate-500 text-1xl font-semibold mb-1">Produtos</span>
+                                    <span className="font-medium text-slate-700 truncate" title={item.produtosDesc}>{item.produtosDesc}</span>
                                 </div>
-                                <div className="text-xs text-slate-500 text-right mt-1">
-                                    {item.itensCount} {item.itensCount === 1 ? 'item' : 'itens'}
+                            </div>
+
+                            <div className="md:col-span-4 flex flex-col justify-center">
+                                <div className="flex flex-col justify-between items-start gap-1">
+                                    <span className="text-slate-500 text-1xl font-semibold mb-1">Descrição</span>
+                                    <span className="text-slate-600 line-clamp-2" title={item.descricao}>{item.descricao || '-'}</span>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-2 flex flex-col justify-center">
+                                <div className="flex flex-col justify-between items-start gap-1">
+                                    <span className="text-slate-500 text-1xl font-semibold mb-1">Pagamento</span>
+                                    <span className="text-slate-700 font-medium">{item.formaPagamento}</span>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-2 flex flex-col justify-center">
+                                <div className="flex flex-col justify-between items-start gap-1">
+                                    <span className="text-slate-500 text-1xl font-semibold mb-1">Data da Compra</span>
+                                    <span className="text-1xl text-slate-500">{formatDate(item.dataCompra)}</span>
                                 </div>
                             </div>
                         </div>
