@@ -1,6 +1,10 @@
 const API_BASE_URL = "http://localhost:3000/api";
 
+<<<<<<< HEAD
 const agendamentosService = {
+=======
+export const agendamentosService = {
+>>>>>>> 70ab83d (integrations)
   create: async (agendamento) => {
     try {
       const response = await fetch(`${API_BASE_URL}/agendamentos`, {
@@ -24,11 +28,10 @@ const agendamentosService = {
 
   getAll: async () => {
     try {
-      console.log("Buscando todos os agendamentos...");
       const response = await fetch(`${API_BASE_URL}/agendamentos`);
-      
+
       if (!response.ok) {
-        throw new Error(`ESSA PORRA DEU ERRADO: ${response.statusText}`);
+        throw new Error(`Erro ao buscar agendamentos: ${response.statusText}`);
       }
 
       return await response.json();

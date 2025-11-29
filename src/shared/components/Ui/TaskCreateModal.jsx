@@ -120,6 +120,12 @@ const categoryOptions = [
   { value: "ORCAMENTO", label: "Orçamento", color: "#FBBF24" },
 ];
 
+const serviceOptions = [
+  { value: "PEDIDO_001", label: "Pedido#001" },
+  { value: "PEDIDO_002", label: "Pedido#002" },
+  { value: "PEDIDO_003", label: "Pedido#003" },
+];
+
 const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const [formData, setFormData] = useState({
     tipoAgendamento: "",
@@ -342,15 +348,27 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   const validateStep = (currentStep) => {
     const newErrors = {};
-    if (currentStep === 1) {
-      if (!formData?.tipoAgendamento) newErrors.tipoAgendamento = "* Obrigatório";
-      if (!formData?.pedido) newErrors.pedido = "* Obrigatório";
-      if (!formData?.eventDate) newErrors.eventDate = "* Obrigatório";
-      if (!formData?.startTime) newErrors.startTime = "* Obrigatório";
-      if (!formData?.endTime) newErrors.endTime = "* Obrigatório";
-    } else if (currentStep === 2) {
-      if (!formData?.rua) newErrors.rua = "* Obrigatório";
-    }
+
+    if (!formData?.tipoAgendamento?.trim())
+      newErrors.tipoAgendamento = "* Tipo de agendamento é obrigatório";
+    if (!formData?.eventDate?.trim())
+      newErrors.eventDate = "* Data do evento é obrigatória";
+    if (!formData?.startTime?.trim())
+      newErrors.startTime = "* Horário de início é obrigatório";
+    if (!formData?.endTime?.trim())
+      newErrors.endTime = "* Horário de fim é obrigatório";
+    if (!formData?.rua?.trim())
+      newErrors.rua = "* Nome da rua é obrigatório";
+    if (!formData?.cep?.trim()) newErrors.cep = "* CEP é obrigatório";
+    if (!formData?.numero?.trim())
+      newErrors.numero = "* Número é obrigatório";
+    if (!formData?.bairro?.trim())
+      newErrors.bairro = "* Bairro é obrigatório";
+    if (!formData?.cidade?.trim())
+      newErrors.cidade = "* Cidade é obrigatória";
+    if (!formData?.uf?.trim()) newErrors.uf = "* UF é obrigatório";
+    if (!formData?.pais?.trim()) newErrors.pais = "* País é obrigatório";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
