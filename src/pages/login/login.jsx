@@ -4,6 +4,7 @@ import Input from "../../shared/components/Ui/Input";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import LockIcon from "@mui/icons-material/Lock";
 import Button from "../../shared/components/buttons/button.component";
+import axios from "axios";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -18,25 +19,35 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
-      });
+      const response = await axios.post(
+        "http://localhost:3000/api/auth/login",
+        { email, senha},
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-      if (!response.ok) throw new Error("Email ou senha inválidos");
+      console.log("Login OK:", response.data);
 
-      const data = await response.json();
-      console.log("Login OK:", data);
+      const data = response.data;
+
+      if (data?.token) {
+        localStorage.setItem("authToken", data.token);
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+      }
 
       setModalOpen(true);
 
       setTimeout(() => {
         setModalOpen(false);
+        window.location.href = "./paginaInicial";
       }, 2000);
-      window.location.href = "./paginaInicial";
     } catch (error) {
-      setError(error.message);
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Erro ao fazer login";
+      setError(errorMsg);
+      console.error("Erro completo:", error);
     } finally {
       setLoading(false);
     }

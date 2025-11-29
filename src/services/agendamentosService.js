@@ -1,6 +1,6 @@
 const API_BASE_URL = "http://localhost:3000/api";
 
-export const agendamentosService = {
+const agendamentosService = {
   create: async (agendamento) => {
     try {
       const response = await fetch(`${API_BASE_URL}/agendamentos`, {
@@ -24,15 +24,16 @@ export const agendamentosService = {
 
   getAll: async () => {
     try {
+      console.log("Buscando todos os agendamentos...");
       const response = await fetch(`${API_BASE_URL}/agendamentos`);
-
+      
       if (!response.ok) {
-        throw new Error(`Erro ao buscar agendamentos: ${response.statusText}`);
+        throw new Error(`ESSA PORRA DEU ERRADO: ${response.statusText}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error("Erro na requisição:", error);
+      console.error("essa porra deu errada:", error);
       throw error;
     }
   },
@@ -51,4 +52,19 @@ export const agendamentosService = {
       throw error;
     }
   },
+  delete: async (id) => {
+    try {
+      console.log(`🗑️ Deletando agendamento ${id}...`);
+      const response = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
+        method: "DELETE",
+      });
+      console.log(`✅ Agendamento ${id} deletado com sucesso`);
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Erro ao deletar agendamento ${id}:`, error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
+
+export default agendamentosService;

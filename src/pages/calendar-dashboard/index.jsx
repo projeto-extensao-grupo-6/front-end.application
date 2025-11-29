@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TaskCreateModal from "../../shared/components/Ui/TaskCreateModal";
 import MiniCalendar from "./components/MiniCalendar";
 import SharedCalendarList from "./components/SharedCalendar";
@@ -8,7 +8,8 @@ import Icon from "../../shared/components/AppIcon";
 import Button from "../../shared/components/buttons/button.component";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
-import { color } from "framer-motion";
+
+const API_BASE_URL = "http://localhost:3000/api";
 
 const CalendarDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,9 +19,83 @@ const CalendarDashboard = () => {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
-  const [tasks, setTasks] = useState(() => {
-    return JSON.parse(localStorage.getItem("tasks") || "[]");
-  });
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const getToken = () => {
+    return (
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("access_token") ||
+      (localStorage.getItem("user") && JSON.parse(localStorage.getItem("user")).token)
+    );
+  };
+
+  useEffect(() => {
+    console.log("🔄 Iniciando carregamento de agendamentos...");
+    fetchAgendamentos();
+  }, []);
+
+  const fetchAgendamentos = async () => {
+    setLoading(true);
+    try {
+      const token = getToken();
+      
+      const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          // ...(token && { Authorization: `Bearer ${token}` }), // ✅ Adiciona token se existir
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      const transformedTasks = data.map((agendamento) => {
+        let dataFormatada = agendamento.dataAgendamento;
+        if (agendamento.dataAgendamento && agendamento.dataAgendamento.includes("/")) {
+          const [dia, mes, ano] = agendamento.dataAgendamento.split("/");
+          dataFormatada = `${ano}-${mes}-${dia}`;
+        }
+
+        const startTime = agendamento.inicioAgendamento?.substring(0, 5) || "00:00";
+        const endTime = agendamento.fimAgendamento?.substring(0, 5) || "00:00";
+
+        let backgroundColor = "#3B82F6";
+        if (agendamento.tipoAgendamento === "SERVICO") {
+          backgroundColor = "#3B82F6";
+        } else if (agendamento.tipoAgendamento === "ORCAMENTO") {
+          backgroundColor = "#FBBF24";
+        }
+
+        return {
+          id: agendamento.id,
+          title: agendamento.tipoAgendamento || "Agendamento",
+          date: dataFormatada,
+          startTime: startTime,
+          endTime: endTime,
+          backgroundColor: backgroundColor,
+          observacao: agendamento.observacao,
+          endereco: agendamento.endereco,
+          funcionarios: agendamento.funcionarios,
+          pedido: agendamento.pedido,
+          statusAgendamento: agendamento.statusAgendamento,
+          ...agendamento,
+        };
+      });
+
+      setTasks(transformedTasks);
+      localStorage.setItem("tasks", JSON.stringify(transformedTasks));
+    } catch (error) {
+      console.error("❌ Erro ao carregar agendamentos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
@@ -31,48 +106,59 @@ const CalendarDashboard = () => {
   };
 
   const handleEventCreate = (eventData = {}) => {
+    // eventData.eventDate vem do CalendarView quando você clica num dia/slot
+    let formattedDate =
+      eventData?.eventDate ||
+      eventData?.date ||
+      selectedDate?.toISOString()?.split("T")?.[0];
+
+    // Garantir formato yyyy-MM-dd
+    if (formattedDate && formattedDate.includes("/")) {
+      const [dia, mes, ano] = formattedDate.split("/");
+      formattedDate = `${ano}-${mes}-${dia}`;
+    }
+
     setModalInitialData({
-      eventDate:
-        eventData?.eventDate ||
-        eventData?.date ||
-        selectedDate?.toISOString()?.split("T")?.[0],
-      eventTime: eventData?.eventTime || eventData?.time || "",
-      ...eventData,
+      eventDate: formattedDate,           // ✅ pré-preenche a data
+      startTime: eventData?.startTime || "",
+      endTime: eventData?.endTime || "",
+      tipoAgendamento: eventData?.tipoAgendamento || "",
+      pedido: null,
+      funcionarios: [],
     });
+
     setShowTaskModal(true);
   };
-  const addMinutesToTime = (time, minutes) => {
-    const [hour, minute] = time.split(":").map(Number);
-    const date = new Date();
-    date.setHours(hour);
-    date.setMinutes(minute + minutes);
-    return date.toTimeString().slice(0, 5);
+
+  const handleTaskSave = async (taskData) => {
+    await fetchAgendamentos();
   };
 
-  const handleTaskSave = (taskData) => {
-    const newTask = {
-      id: Date.now(),
-      ...taskData,
-      title: taskData?.category || "Agendamento", // adiciona título
-      date: taskData.eventDate,
-      startTime: taskData.startTime,
-      endTime: taskData.endTime,
-      createdAt: new Date().toISOString(),
-      backgroundColor: taskData.backgroundColor || "#3B82F6", // corrige aqui
-      color: taskData.backgroundColor, // se precisar também em color
-    };
-    console.log("Nova tarefa criada:", newTask); // debug
-    const updatedTasks = [...tasks, newTask];
-    setTasks(updatedTasks);
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  const handleEventDeleted = async (eventId) => {
+    console.log("🗑️ [Dashboard] Deletando evento ID:", eventId);
+
+    setTasks((prevTasks) => {
+      const filtered = prevTasks.filter((task) => task.id !== eventId);
+      console.log("📋 Tasks após exclusão:", filtered.length, "eventos");
+      localStorage.setItem("tasks", JSON.stringify(filtered));
+      return filtered;
+    });
+
+    setTimeout(async () => {
+      console.log("🔄 [Dashboard] Recarregando agendamentos do backend...");
+      await fetchAgendamentos();
+    }, 500);
   };
 
   return (
     <>
+      {/* ✅ Header fixo no topo */}
       <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="bg-background">
-        <div className="h-screen flex pt-auto">
+      
+      {/* ✅ Conteúdo com pt-20 para não sobresair o header */}
+      <div className="bg-background h-full pt-15">
+        <div className="h-[calc(100vh-80px)] flex">
           {/* Left Sidebar */}
           <div
             className={`${
@@ -101,12 +187,11 @@ const CalendarDashboard = () => {
 
             {!sidebarCollapsed && (
               <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                {/* Quick Actions */}
                 <div className="space-y-3 pb-2 w-full">
                   <Button
                     iconName="Plus"
                     size="md"
-                    className='btn-primary'
+                    className="btn-primary"
                     onClick={() =>
                       handleEventCreate({
                         date: selectedDate?.toISOString()?.split("T")?.[0],
@@ -117,19 +202,17 @@ const CalendarDashboard = () => {
                   </Button>
                 </div>
 
-                {/* Mini Calendar */}
                 <MiniCalendar
                   selectedDate={selectedDate}
                   onDateSelect={handleDateSelect}
                 />
 
-                {/* Shared Calendars */}
                 <SharedCalendarList onCalendarToggle={handleCalendarToggle} />
               </div>
             )}
 
             {sidebarCollapsed && (
-              <div className="flex-1 p-2 space-y-4">
+              <div className="flex p-2 flex-cols space-y-4">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -151,7 +234,6 @@ const CalendarDashboard = () => {
 
           {/* Main Calendar View */}
           <div className="flex-1 flex flex-col">
-            {/* Calendar Toolbar */}
             <div className="border-b border-hairline bg-surface p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -161,7 +243,6 @@ const CalendarDashboard = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  {/* Quick Create Button */}
                   <Button
                     variant="default"
                     size="sm"
@@ -175,13 +256,13 @@ const CalendarDashboard = () => {
               </div>
             </div>
 
-            {/* Calendar Content */}
-            <div className="flex-1 p-4">
+            <div className="flex-1 overflow-hidden">
               <CalendarView
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
                 onEventCreate={handleEventCreate}
                 events={tasks}
+                onEventDeleted={handleEventDeleted}
               />
             </div>
           </div>
@@ -214,15 +295,12 @@ const CalendarDashboard = () => {
 
             {!rightPanelCollapsed && (
               <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                {/* Upcoming Events */}
-                <UpcomingEvents />
-
-                {/* Meeting Room Availability */}
+                <UpcomingEvents events={tasks} />
               </div>
             )}
 
             {rightPanelCollapsed && (
-              <div className="flex-1 p-2 space-y-4">
+              <div className="flex-1 flex flex-col items-center gap-4 p-2 space-y-4">
                 <Button variant="ghost" size="icon" title="Próximos Eventos">
                   <Icon name="Clock" size={20} />
                 </Button>
@@ -237,17 +315,9 @@ const CalendarDashboard = () => {
           </div>
         </div>
 
-        {/* Keyboard Shortcuts Indicator */}
-        <div className="fixed bottom-4 left-4 bg-popover border border-hairline rounded-modern p-2 text-xs text-text-secondary shadow-soft">
-          <div className="flex items-center space-x-2">
-            <kbd className="px-1 py-0.5 bg-muted rounded text-xs">N</kbd>
-            <span>Nova Tarefa</span>
-            <kbd className="px-1 py-0.5 bg-muted rounded text-xs">←→</kbd>
-            <span>Navegar</span>
-          </div>
-        </div>
+      
 
-        {/* Task Creation Modal */}
+        {/* Modal */}
         <TaskCreateModal
           isOpen={showTaskModal}
           onClose={() => setShowTaskModal(false)}
