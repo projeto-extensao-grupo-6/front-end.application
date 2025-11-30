@@ -1,42 +1,62 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Filter, Check } from "lucide-react";
 
 const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange, mode = "pedidos" }) => {
   
+  const [tempFilters, setTempFilters] = useState(selectedFilters);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTempFilters(selectedFilters);
+    }
+  }, [isOpen, selectedFilters]);
+
   const filterOptionsPedidos = {
     situacao: {
       title: "Situação do Pedido",
-      options: ["Todos", "Ativo", "Finalizado"],
+      options: ["Ativo", "Finalizado"],
     },
     pagamento: {
       title: "Forma de Pagamento",
-      options: ["Todos", "Pix", "Cartão de crédito", "Dinheiro", "Boleto"],
+      options: ["Pix", "Cartão de crédito", "Dinheiro", "Boleto"],
     },
   };
   
   const filterOptionsServicos = {
     situacao: {
       title: "Situação do Serviço",
-      options: ["Todos", "Ativo", "Finalizado"],
+      options: ["Ativo", "Finalizado"],
     },
     etapa: {
       title: "Etapa do Serviço",
-      options: ["Todos", "Aguardando orçamento", "Orçamento aprovado", "Execução em andamento", "Aguardando peças", "Concluído"],
+      options: ["Aguardando orçamento", "Orçamento aprovado", "Execução em andamento", "Aguardando peças", "Concluído"],
     }
   };
 
   const filterOptions = mode === "pedidos" ? filterOptionsPedidos : filterOptionsServicos;
 
   const handleToggleFilter = (filterKey, option) => {
-    const currentSelection = selectedFilters[filterKey] || [];
-    const newSelection = currentSelection.includes(option)
-      ? currentSelection.filter((item) => item !== option)
-      : [...currentSelection, option];
+    setTempFilters((prev) => {
+      const currentSelection = prev[filterKey] || [];
+      
+      const newSelection = currentSelection.includes(option)
+        ? currentSelection.filter((item) => item !== option)
+        : [...currentSelection, option];
 
-    onFilterChange({
-      ...selectedFilters,
-      [filterKey]: newSelection,
+      return {
+        ...prev,
+        [filterKey]: newSelection,
+      };
     });
+  };
+
+  const handleClear = () => {
+    setTempFilters({});
+  };
+
+  const handleApply = () => {
+    onFilterChange(tempFilters);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -55,7 +75,8 @@ const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange, mode
           </h3>
           <div className="space-y-1">
             {filterOptions[key].options.map((option) => {
-              const isSelected = (selectedFilters[key] || []).includes(option);
+
+              const isSelected = (tempFilters[key] || []).includes(option);
               return (
                 <div
                   key={option}
@@ -81,13 +102,13 @@ const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange, mode
 
       <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
         <button
-          onClick={() => onFilterChange({})}
+          onClick={handleClear}
           className="text-sm font-medium text-gray-600 hover:text-red-600 transition-colors cursor-pointer"
         >
           Limpar Filtros
         </button>
         <button
-          onClick={onClose}
+          onClick={handleApply}
           className="bg-[#007EA7] text-white text-sm font-medium py-1.5 px-4 rounded-md hover:bg-[#006891] transition-colors cursor-pointer"
         >
           Aplicar

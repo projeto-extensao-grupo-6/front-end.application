@@ -1,13 +1,9 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { FaWrench, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from "react-icons/fa";
+import { FaWrench, FaTrash, FaExclamationTriangle } from "react-icons/fa";
 import { BiSolidPencil } from "react-icons/bi";
 import SkeletonLoader from "../../shared/components/skeleton/SkeletonLoader";
 import NovoServicoModal from "../../shared/components/pedidosServicosComponents/NovoServicoModal";
 import EditarServicoModal from "../../shared/components/pedidosServicosComponents/EditarServicoModal";
-// import Api from "../../axios/Api"
-
-// const API_SERVICOS_URL = "http://localhost:3000/servicos";
-// const API_CLIENTES_URL = "http://localhost:3000/clientes";
 
 // ===== DADOS MOCADOS =====
 const MOCK_CLIENTES = [
@@ -94,27 +90,27 @@ const MOCK_SERVICOS = [
 
 function StatusPill({ status }) {
     const styles = {
-        Ativo: "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
-        Finalizado: "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]",
-        "Aguardando": "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]"
+        Ativo: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
+        Finalizado: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]",
+        "Aguardando": "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]"
     };
-    return <span className={styles[status] || "px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide"}>{status}</span>;
+    return <span className={styles[status] || styles.Ativo}>{status}</span>;
 }
 
 function Progress({ value = 0, total = 6, dark = false }) {
     const pct = Math.min(100, Math.round((Number(value) / Number(total)) * 100));
     return (
-        <div className="flex items-center gap-2 min-w-[140px]">
-            <div className="h-3.5 w-full max-w-[120px] rounded-full bg-slate-200 overflow-hidden">
+        <div className="flex items-center gap-2 w-full mt-1">
+            <div className="h-2 w-full max-w-[120px] rounded-full bg-slate-200 overflow-hidden">
                 <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                         width: `${pct}%`,
-                        backgroundColor: dark ? "#475569" : "#002A4B"
+                        backgroundColor: dark ? "#475569" : "#007EA7"
                     }}
                 />
             </div>
-            <span className="text-sm text-slate-600 font-medium">{value}/{total}</span>
+            <span className="text-xs text-slate-500 font-medium">{value}/{total}</span>
         </div>
     );
 }
@@ -153,45 +149,19 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
     const fetchData = async () => {
         setLoading(true);
-
-        // ===== VERSÃO MOCADA =====
-        const sortedServicos = [...MOCK_SERVICOS].sort((a, b) => {
-            const idAisNum = /^\d+$/.test(a.id);
-            const idBisNum = /^\d+$/.test(b.id);
-            if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
-            if (a.id < b.id) return 1;
-            if (a.id > b.id) return -1;
-            return 0;
-        });
-        setServicos(sortedServicos);
-        setClientes(MOCK_CLIENTES);
-        setLoading(false);
-
-        // ===== VERSÃO COM API (COMENTADA) =====
-        // try {
-        //     const [servicosRes, clientesRes] = await Promise.all([
-        //         Api.get("/servicos"),
-        //         Api.get("/clientes")
-        //     ]);
-        //     const servicosData = servicosRes.data;
-        //     const clientesData = clientesRes.data;
-
-        //     const sortedServicos = servicosData.sort((a, b) => {
-        //         const idAisNum = /^\d+$/.test(a.id);
-        //         const idBisNum = /^\d+$/.test(b.id);
-        //         if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
-        //         if (a.id < b.id) return 1;
-        //         if (a.id > b.id) return -1;
-        //         return 0;
-        //     });
-
-        //     setServicos(sortedServicos);
-        //     setClientes(clientesData);
-        // } catch (error) {
-        //     console.error("Erro ao buscar dados:", error);
-        // } finally {
-        //     setLoading(false);
-        // }
+        setTimeout(() => {
+            const sortedServicos = [...MOCK_SERVICOS].sort((a, b) => {
+                const idAisNum = /^\d+$/.test(a.id);
+                const idBisNum = /^\d+$/.test(b.id);
+                if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
+                if (a.id < b.id) return 1;
+                if (a.id > b.id) return -1;
+                return 0;
+            });
+            setServicos(sortedServicos);
+            setClientes(MOCK_CLIENTES);
+            setLoading(false);
+        }, 500);
     };
 
     useEffect(() => {
@@ -232,7 +202,6 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
             );
         }
 
-        // Filtro de Status - aceita múltiplos valores
         if (statusFilter && statusFilter !== "Todos") {
             const statusArray = Array.isArray(statusFilter) ? statusFilter : [statusFilter];
             if (statusArray.length > 0 && !statusArray.includes("Todos")) {
@@ -240,7 +209,6 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
             }
         }
 
-        // Filtro de Etapa - aceita múltiplos valores
         if (etapaFilter && etapaFilter !== "Todos") {
             const etapaArray = Array.isArray(etapaFilter) ? etapaFilter : [etapaFilter];
             if (etapaArray.length > 0 && !etapaArray.includes("Todos")) {
@@ -264,17 +232,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
     const proxima = () => page < totalPages && setPage((p) => p + 1);
     const anterior = () => page > 1 && setPage((p) => p - 1);
 
-    const setField = (name, value) => {
-        setForm((f) => ({ ...f, [name]: value }));
-        if (errors[name]) setErrors(e => ({ ...e, [name]: undefined }));
-    };
-
     const fecharTodos = () => setModal({ confirm: false, view: false, form: false, novo: false, editar: false });
-
-    const abrirExibir = (item) => {
-        setCurrent(item);
-        setModal((m) => ({ ...m, view: true }));
-    };
 
     const abrirEditar = (item) => {
         setCurrent(item);
@@ -286,87 +244,13 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         setModal((m) => ({ ...m, confirm: true }));
     };
 
-    const validar = (f) => {
-        const e = {};
-        if (!f.clienteId) e.clienteId = "Selecione um cliente.";
-        if (!String(f.descricao).trim()) e.descricao = "Informe a descrição.";
-        if (!f.data) e.data = "Informe a data.";
-        if (Number(f.progressoTotal) <= 0) e.progressoTotal = "Total > 0.";
-        if (Number(f.progressoValor) < 0 || Number(f.progressoValor) > Number(f.progressoTotal)) e.progressoValor = "Inválido.";
-        return e;
-    };
-
-    const salvar = async (e) => {
-        e?.preventDefault();
-        const selectedClient = clientes.find(c => c.id === form.clienteId);
-        const clienteNomeToSave = selectedClient ? selectedClient.nome : "";
-        const formToValidate = { ...form, clienteNome: clienteNomeToSave };
-
-        const errs = validar(formToValidate);
-        setErrors(errs);
-        if (Object.keys(errs).length) return;
-
-        const servicoPayload = {
-            clienteId: formToValidate.clienteId,
-            clienteNome: formToValidate.clienteNome,
-            data: formToValidate.data,
-            descricao: formToValidate.descricao.trim(),
-            status: formToValidate.status,
-            etapa: (formToValidate.etapa || "Aguardando orçamento").trim(),
-            progresso: [Number(formToValidate.progressoValor) || 1, Number(formToValidate.progressoTotal) || 6],
-        };
-
-        // ===== VERSÃO MOCADA =====
-        if (mode === 'edit') {
-            const updatedServicos = servicos.map(s =>
-                s.id === current.id ? { ...s, ...servicoPayload } : s
-            );
-            setServicos(updatedServicos);
-        } else {
-            const newId = String(Math.max(...servicos.map(s => parseInt(s.id) || 0)) + 1);
-            setServicos([{ id: newId, ...servicoPayload }, ...servicos]);
-            setPage(1);
-        }
-        fecharTodos();
-
-        // ===== VERSÃO COM API (COMENTADA) =====
-        // const url = mode === 'edit' ? `${API_SERVICOS_URL}/${current.id}` : API_SERVICOS_URL;
-        // const method = mode === 'edit' ? 'PUT' : 'POST';
-
-        // try {
-        //     const response = await fetch(url, {
-        //         method: method,
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify(servicoPayload)
-        //     });
-        //     if (!response.ok) throw new Error("Erro na API");
-        //     await fetchData();
-        //     fecharTodos();
-        //     if (mode === 'new') setPage(1);
-        // } catch (error) {
-        //     console.error("Erro ao salvar:", error);
-        // }
-    };
-
     const confirmarExclusao = async () => {
         if (!targetId) return;
-
-        // ===== VERSÃO MOCADA =====
         setServicos(servicos.filter(s => s.id !== targetId));
         fecharTodos();
-
-        // ===== VERSÃO COM API (COMENTADA) =====
-        // try {
-        //     await fetch(`${API_SERVICOS_URL}/${targetId}`, { method: 'DELETE' });
-        //     await fetchData();
-        //     fecharTodos();
-        // } catch (error) {
-        //     console.error("Erro ao excluir:", error);
-        // }
     };
 
     const handleNovoServicoSuccess = (novoServico) => {
-        // ===== VERSÃO MOCADA =====
         const newId = String(Math.max(...servicos.map(s => parseInt(s.id) || 0)) + 1);
         const servicoCompleto = {
             id: newId,
@@ -380,20 +264,13 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         };
         setServicos([servicoCompleto, ...servicos]);
         setPage(1);
-
-        // ===== VERSÃO COM API (COMENTADA) =====
-        // fetchData(); // Recarregar dados da API
     };
 
     const handleEditarServicoSuccess = (servicoAtualizado) => {
-        // ===== VERSÃO MOCADA =====
         const updatedServicos = servicos.map(s =>
             s.id === servicoAtualizado.id ? servicoAtualizado : s
         );
         setServicos(updatedServicos);
-
-        // ===== VERSÃO COM API (COMENTADA) =====
-        // fetchData(); // Recarregar dados da API
     };
 
     return (
@@ -408,72 +285,65 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                 )}
 
                 {!loading && pagina.map((item) => (
-                    <article key={item.id} className={`flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-6 w-[1300px] shadow-lg/5 transition-all hover:shadow-sm cursor-pointer ${item.status === 'Finalizado' ? "opacity-60 bg-[#f8f9fa]" : ""}`}>
-                        <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                    <article key={item.id} className={`flex flex-col gap-3 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md ${item.status === 'Finalizado' ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}>
+                        {/* HEADER DO CARD */}
+                        <header className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 text-[#828282] rounded-md">
+                                <div className={`p-2 rounded-md ${item.status === 'Finalizado' ? 'text-gray-400 bg-gray-200' : 'text-slate-400 bg-slate-100'}`}>
                                     <FaWrench />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-slate-800 text-base">
-                                        Pedido de Serviço - #{formatServicoId(item.id)}
+                                    <h3 className={`font-semibold text-sm md:text-base ${item.status === 'Finalizado' ? 'text-gray-600' : 'text-slate-800'}`}>
+                                        Serviço #{formatServicoId(item.id)}
                                     </h3>
+                                    <span className={`text-xs block md:hidden ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>{formatDate(item.data)}</span>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 self-end md:self-auto">
+                            <div className="flex items-center gap-2">
                                 <StatusPill status={item.status} />
-                                <div className="h-4 w-px bg-slate-300 mx-1"></div>
-                                <button type="button" className="p-1.5 rounded-full text-[#64748b] transition-colors cursor-pointer hover:bg-[#f1f5f9] hover:text-[#0f172a]" title="Editar" onClick={() => abrirEditar(item)}>
-                                    <BiSolidPencil />
+                                <div className="hidden md:block h-4 w-px bg-slate-200 mx-1"></div>
+                                <button type="button" className="p-1.5 rounded-md text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-colors" title="Editar" onClick={() => abrirEditar(item)}>
+                                    <BiSolidPencil size={18} />
                                 </button>
-                                <button type="button" className="p-1.5 rounded-full text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
-                                    <FaTrash />
+                                <button type="button" className="p-1.5 rounded-md text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir" onClick={() => abrirConfirmarExclusao(item.id)}>
+                                    <FaTrash size={16} />
                                 </button>
                             </div>
                         </header>
 
-                        <div className="flex flex-row gap-10 text-1xl w-[1050px]">
-                            <div className="w-1/4 flex flex-col items-center gap-1">
-                                <div className="md:col-span-3 flex flex-col items-start gap-1">
-                                    <span className="text-slate-500 font-semibold">Nome do Cliente</span>
-                                    <span
-                                        className="font-semibold text-slate-700 truncate"
-                                        title={item.clienteNome}
-                                    >
-                                        {item.clienteNome || `ID: ${item.clienteId}`}
-                                    </span>
-                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mt-2">
+                            
+                            <div className="md:col-span-3 flex flex-col items-start justify-start gap-2">
+                                <span className={`text-md font-bold mb-1 ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Cliente</span>
+                                <span className={`text-md font-medium truncate w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`} title={item.clienteNome}>
+                                    {item.clienteNome || `ID: ${item.clienteId}`}
+                                </span>
                             </div>
 
-                            <div className="w-1/4 flex flex-col gap-1">
-                                <div className="md:col-span-3 flex flex-col items-start gap-1">
-                                    <span className="text-slate-500 font-semibold">Data Lançamento</span>
-                                    <span className="text-slate-700">
-                                        {formatDate(item.data)}
-                                    </span>
-                                </div>
+                            <div className="md:col-span-2 flex flex-col items-start justify-start gap-2">
+                                <span className={`text-md font-bold mb-1 ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Data</span>
+                                <span className={`text-md font-medium ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`}>
+                                    {formatDate(item.data)}
+                                </span>
                             </div>
 
-                            <div className="w-1/4 flex flex-col gap-1">
-                                <div className="md:col-span-3 flex flex-col items-start gap-1">
-                                    <span className="text-slate-500 font-semibold">Descrição Serviço</span>
-                                    <span
-                                        className="text-slate-600" title={item.descricao}>{item.descricao}
-                                    </span>
-                                </div>
+                            <div className="md:col-span-4 flex flex-col items-start justify-start gap-2">
+                                <span className={`text-md font-bold mb-1 ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Descrição</span>
+                                <p className={`text-md line-clamp-2 leading-snug w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-600'}`} title={item.descricao}>
+                                    {item.descricao}
+                                </p>
                             </div>
 
-                            <div className="w-1/4 flex flex-col gap-2">
-                                <div className="md:col-span-3 flex flex-col items-start gap-2">
-                                    <span className="text-slate-500 font-semibold">{item.etapa}</span>
-                                    <Progress
-                                        value={item.progresso?.[0]}
-                                        total={item.progresso?.[1]}
-                                        dark={item.status === "Finalizado"}
-                                    />
-                                </div>
+                            <div className="md:col-span-3 flex flex-col items-start justify-start gap-2">
+                                <span className={`text-md font-medium truncate w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`} title={item.etapa}>{item.etapa}</span>
+                                <Progress
+                                    value={item.progresso?.[0]}
+                                    total={item.progresso?.[1]}
+                                    dark={item.status === "Finalizado"}
+                                />
                             </div>
+
                         </div>
                     </article>
                 ))}
@@ -498,7 +368,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
             {/* MODAL CONFIRMAÇÃO */}
             {modal.confirm && (
-                <div className="fixed inset-0 z-9999 grid place-items-center bg-black/40 px-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) fecharTodos(); }}>
+                <div className="fixed inset-0 z-[9999] grid place-items-center bg-black/40 px-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) fecharTodos(); }}>
                     <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-6 animate-scaleIn">
                         <div className="flex flex-col items-center text-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 text-xl">
@@ -510,8 +380,8 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                             </p>
                         </div>
                         <div className="mt-6 flex gap-3">
-                            <button onClick={fecharTodos} className="flex-1 h-10 rounded-md border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50">Cancelar</button>
-                            <button onClick={confirmarExclusao} className="flex-1 h-10 rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 shadow-sm">Sim, Excluir</button>
+                            <button onClick={fecharTodos} className="flex-1 h-10 rounded-md border border-slate-300 bg-white text-slate-700 font-medium cursor-pointer hover:bg-slate-50">Cancelar</button>
+                            <button onClick={confirmarExclusao} className="flex-1 h-10 rounded-md bg-rose-600 text-white font-medium cursor-pointer hover:bg-rose-700 shadow-sm">Sim, Excluir</button>
                         </div>
                     </div>
                 </div>

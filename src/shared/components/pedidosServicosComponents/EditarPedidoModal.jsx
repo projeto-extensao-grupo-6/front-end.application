@@ -33,7 +33,6 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
         const { name, value } = e.target;
         let maskedValue = value;
 
-        // Aplicar máscara de apenas letras para nome do cliente
         if (name === "clienteNome") {
             maskedValue = onlyLetters(value);
         }
@@ -203,11 +202,11 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col items-center justify-center gap-3">
                             {formData.produtos.map((produto, index) => (
                                 <div
                                     key={index}
-                                    className="grid grid-cols-12 gap-4 items-center bg-white p-3 rounded-md border"
+                                    className="grid grid-cols-12 gap-4 bg-white p-3 rounded-md border"
                                 >
                                     <div className="col-span-5 flex flex-col items-start gap-1">
                                         <label className="block text-sm text-gray-600 mb-1">
@@ -261,7 +260,7 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                                         />
                                     </div>
                                     {modoEdicao && (
-                                        <div className="col-span-2">
+                                        <div className="col-span-2 flex flex-col justify-end">
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoverProduto(index)}
@@ -301,7 +300,7 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                         </label>
                         <select
                             name="formaPagamento"
-                            className={`w-full px-4 py-2 border border-gray-300 rounded-md ${
+                            className={`w-full px-4 py-2 border border-gray-300 rounded-md cursor-pointer ${
                                 modoEdicao ? "bg-white" : "bg-gray-100"
                             }`}
                             value={formData.formaPagamento}
@@ -390,7 +389,7 @@ const EditarPedidoModal = ({ isOpen, onClose, pedido, onSuccess }) => {
                         <button
                             type="button"
                             onClick={() => setModoEdicao(true)}
-                            className="px-6 py-2.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold"
+                            className="px-6 py-2.5 bg-[#007EA7] text-white rounded-lg cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold"
                         >
                             <Edit className="w-4 h-4" />
                             Editar
