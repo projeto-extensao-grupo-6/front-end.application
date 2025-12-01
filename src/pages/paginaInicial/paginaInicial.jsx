@@ -194,22 +194,17 @@ export default function PaginaInicial() {
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] font-[Inter]">
-      {/* Sidebar agora dentro do flex principal */}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      {/* Container principal que ocupa o resto */}
       <div className="flex-1 flex flex-col">
-          {/* Header renderizado aqui, mas posicionado fixed */}
           <Header
               ref={headerRef}
               toggleSidebar={toggleSidebar}
               sidebarOpen={sidebarOpen}
           />
 
-          {/* Conteúdo principal com padding dinâmico */}
           <main
             className="flex-1 flex flex-col items-center justify-start px-6 sm:px-8 md:px-10 py-10 gap-10 transition-all duration-300"
-            // Padding calculado corretamente
             style={{ paddingTop: `${headerHeight + 40}px` }}
           >
             {/* Título */}
