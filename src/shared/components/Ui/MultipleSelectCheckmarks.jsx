@@ -1,17 +1,16 @@
-// components/ui/Select.jsx - Shadcn style Select
+// components/ui/MultipleSelectCheckmarks.jsx
 import React, { useState } from "react";
 import { ChevronDown, Check, Search, X } from "lucide-react";
 import { cn } from "../../../utils/cn";
 import Button from "../buttons/button.component";
 import Input from "./Input";
 
-const Select = React.forwardRef(({
+const MultipleSelectCheckmarks = React.forwardRef(({
     className,
     options = [],
-    value,
-    defaultValue,
-    placeholder = "Selecione uma opção",
-    multiple = false,
+    value = [],
+    defaultValue = [],
+    placeholder = "Selecione opções",
     disabled = false,
     required = false,
     label,
@@ -24,6 +23,8 @@ const Select = React.forwardRef(({
     name,
     onChange,
     onOpenChange,
+    showSelectAll = true,
+    maxDisplayItems = 2,
     ...props
 }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -42,17 +43,15 @@ const Select = React.forwardRef(({
 
     // Get selected option(s) for display
     const getSelectedDisplay = () => {
-        if (!value) return placeholder;
-
-        if (multiple) {
-            const selectedOptions = options?.filter(opt => value?.includes(opt?.value));
-            if (selectedOptions?.length === 0) return placeholder;
-            if (selectedOptions?.length === 1) return selectedOptions?.[0]?.label;
-            return `${selectedOptions?.length} items selected`;
+        const selectedOptions = options?.filter(opt => value?.includes(opt?.value));
+        
+        if (selectedOptions?.length === 0) return placeholder;
+        
+        if (selectedOptions?.length <= maxDisplayItems) {
+            return selectedOptions?.map(opt => opt?.label)?.join(", ");
         }
-
-        const selectedOption = options?.find(opt => opt?.value === value);
-        return selectedOption ? selectedOption?.label : placeholder;
+        
+        return `${selectedOptions?.length} itens selecionados`;
     };
 
     const handleToggle = () => {
@@ -66,23 +65,37 @@ const Select = React.forwardRef(({
         }
     };
 
-    const handleOptionSelect = (option) => {
-        if (multiple) {
-            const newValue = value || [];
-            const updatedValue = newValue?.includes(option?.value)
-                ? newValue?.filter(v => v !== option?.value)
-                : [...newValue, option?.value];
+    const handleOptionToggle = (option) => {
+        const newValue = value || [];
+        const updatedValue = newValue?.includes(option?.value)
+            ? newValue?.filter(v => v !== option?.value)
+            : [...newValue, option?.value];
+        onChange?.(updatedValue);
+    };
+
+    const handleSelectAll = () => {
+        const availableOptions = filteredOptions?.filter(opt => !opt?.disabled);
+        const allValues = availableOptions?.map(opt => opt?.value);
+        const currentFilteredSelected = value?.filter(v => 
+            availableOptions?.some(opt => opt?.value === v)
+        );
+        
+        // If all filtered options are selected, deselect them
+        if (currentFilteredSelected?.length === availableOptions?.length) {
+            const updatedValue = value?.filter(v => 
+                !allValues?.includes(v)
+            );
             onChange?.(updatedValue);
         } else {
-            onChange?.(option?.value);
-            setIsOpen(false);
-            onOpenChange?.(false);
+            // Select all filtered options
+            const updatedValue = [...new Set([...value, ...allValues])];
+            onChange?.(updatedValue);
         }
     };
 
     const handleClear = (e) => {
         e?.stopPropagation();
-        onChange?.(multiple ? [] : '');
+        onChange?.([]);
     };
 
     const handleSearchChange = (e) => {
@@ -90,13 +103,16 @@ const Select = React.forwardRef(({
     };
 
     const isSelected = (optionValue) => {
-        if (multiple) {
-            return value?.includes(optionValue) || false;
-        }
-        return value === optionValue;
+        return value?.includes(optionValue) || false;
     };
 
-    const hasValue = multiple ? value?.length > 0 : value !== undefined && value !== '';
+    const isAllSelected = () => {
+        const availableOptions = filteredOptions?.filter(opt => !opt?.disabled);
+        return availableOptions?.length > 0 && 
+               availableOptions?.every(opt => value?.includes(opt?.value));
+    };
+
+    const hasValue = value?.length > 0;
 
     return (
         <div className={cn("relative", className)}>
@@ -104,8 +120,9 @@ const Select = React.forwardRef(({
                 <label
                     htmlFor={selectId}
                     className={cn(
-                        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2",
-                        error ? "text-destructive" : "text-foreground"
+                        "block text-sm font-medium leading-none mb-2",
+                        error ? "text-destructive" : "text-foreground",
+                        disabled && "opacity-70 cursor-not-allowed"
                     )}
                 >
                     {label}
@@ -118,7 +135,7 @@ const Select = React.forwardRef(({
                     id={selectId}
                     type="button"
                     className={cn(
-                        "flex h-10 w-full items-zcenter justify-between rounded-md border border-input bg-white text-black px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-white text-black px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                         error && "border-destructive focus:ring-destructive",
                         !hasValue && "text-muted-foreground"
                     )}
@@ -130,7 +147,7 @@ const Select = React.forwardRef(({
                 >
                     <span className="truncate">{getSelectedDisplay()}</span>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 ml-2">
                         {loading && (
                             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -142,7 +159,7 @@ const Select = React.forwardRef(({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-4 w-4"
+                                className="h-4 w-4 p-0 hover:bg-transparent"
                                 onClick={handleClear}
                             >
                                 <X className="h-3 w-3" />
@@ -156,11 +173,11 @@ const Select = React.forwardRef(({
                 {/* Hidden native select for form submission */}
                 <select
                     name={name}
-                    value={value || ''}
-                    onChange={() => { }} // Controlled by our custom logic
+                    value={value}
+                    onChange={() => { }}
                     className="sr-only"
                     tabIndex={-1}
-                    multiple={multiple}
+                    multiple
                     required={required}
                 >
                     <option value="">Select...</option>
@@ -179,40 +196,62 @@ const Select = React.forwardRef(({
                                 <div className="relative">
                                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search options..."
+                                        placeholder="Buscar opções..."
                                         value={searchTerm}
                                         onChange={handleSearchChange}
                                         className="pl-8"
+                                        autoFocus
                                     />
                                 </div>
                             </div>
                         )}
 
                         <div className="py-1 max-h-60 overflow-auto">
+                            {showSelectAll && filteredOptions?.length > 0 && (
+                                <div
+                                    className={cn(
+                                        "flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-sm font-medium border-b hover:bg-accent hover:text-accent-foreground"
+                                    )}
+                                    onClick={handleSelectAll}
+                                >
+                                    <div className={cn(
+                                        "flex h-4 w-4 items-center justify-center rounded border border-primary",
+                                        isAllSelected() && "bg-primary text-primary-foreground"
+                                    )}>
+                                        {isAllSelected() && <Check className="h-3 w-3" />}
+                                    </div>
+                                    <span>Selecionar todos</span>
+                                </div>
+                            )}
+
                             {filteredOptions?.length === 0 ? (
                                 <div className="px-3 py-2 text-sm text-muted-foreground">
-                                    {searchTerm ? 'No options found' : 'No options available'}
+                                    {searchTerm ? 'Nenhuma opção encontrada' : 'Nenhuma opção disponível'}
                                 </div>
                             ) : (
                                 filteredOptions?.map((option) => (
                                     <div
                                         key={option?.value}
                                         className={cn(
-                                            "relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                                            isSelected(option?.value) && "bg-primary text-primary-foreground",
+                                            "flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
                                             option?.disabled && "pointer-events-none opacity-50"
                                         )}
-                                        onClick={() => !option?.disabled && handleOptionSelect(option)}
+                                        onClick={() => !option?.disabled && handleOptionToggle(option)}
                                     >
-                                        <span className="flex-1">{option?.label}</span>
-                                        {multiple && isSelected(option?.value) && (
-                                            <Check className="h-4 w-4" />
-                                        )}
-                                        {option?.description && (
-                                            <span className="text-xs text-muted-foreground ml-2">
-                                                {option?.description}
-                                            </span>
-                                        )}
+                                        <div className={cn(
+                                            "flex h-4 w-4 items-center justify-center rounded border border-primary shrink-0",
+                                            isSelected(option?.value) && "bg-primary text-primary-foreground"
+                                        )}>
+                                            {isSelected(option?.value) && <Check className="h-3 w-3" />}
+                                        </div>
+                                        <div className="flex-1 flex flex-col">
+                                            <span>{option?.label}</span>
+                                            {option?.description && (
+                                                <span className="text-xs text-muted-foreground">
+                                                    {option?.description}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 ))
                             )}
@@ -234,6 +273,6 @@ const Select = React.forwardRef(({
     );
 });
 
-Select.displayName = "Select";
+MultipleSelectCheckmarks.displayName = "MultipleSelectCheckmarks";
 
-export default Select;
+export default MultipleSelectCheckmarks;

@@ -3,8 +3,8 @@ import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
 import { Search, Check, X, CheckCheck, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import ModalConfirmacao from "../../shared/components/modalAceiteOrRecusa/ModalAceiteOrRecusa";
+import Api from "../../axios/Api";
 
-const API_URL = "http://localhost:3000/api/solicitacoes"; 
 const ITENS_POR_PAGINA = 10;
 
 export default function Acesso() {
@@ -39,15 +39,14 @@ export default function Acesso() {
       let url;
   
       if (busca.trim()) {
-        url = `${API_URL}/findAllBy?nome=${encodeURIComponent(busca.trim())}`;
+        url = `/solicitacoes/findAllBy?nome=${encodeURIComponent(busca.trim())}`;
       } else {
-        url = `${API_URL}?status=${statusAtual}`;
+        url = `/solicitacoes?status=${statusAtual}`;
       }
   
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-  
-      const data = await response.json();
+      const response = await Api.get(url);
+      // Garantindo que sempre seja um array
+      const data = Array.isArray(response.data) ? response.data : [];
       setSolicitacoes(data);
     } catch (error) {
       console.error("Erro ao buscar solicitações:", error);
@@ -57,12 +56,11 @@ export default function Acesso() {
     }
   }
   
-  
-  const updateSolicitacaoStatus = async (ids, novoStatus) => {
+  const updateSolicitacaoStatus = (ids, novoStatus) => {
     const promises = ids.map(id => {
       const endpoint = novoStatus === 'Aprovado' 
-        ? `${API_URL}/aceitar/${id}` 
-        : `${API_URL}/recusar/${id}`;
+        ? `/solicitacoes/aceitar/${id}` 
+        : `/solicitacoes/recusar/${id}`;
   
       const statusBackend = novoStatus === 'Aprovado' ? 'ACEITO' : 'RECUSADO';
   
@@ -75,9 +73,14 @@ export default function Acesso() {
         options.body = JSON.stringify({ status: statusBackend });
       }
   
-      return fetch(endpoint, options).then(res => {
-        if (!res.ok) throw new Error(`Falha ao atualizar ${id}`);
-        return res.json();
+      return Api.request({
+        url: endpoint,
+        method: options.method,
+        data: options.method !== 'GET' ? JSON.parse(options.body) : undefined,
+        headers: options.headers
+      }).then(res => {
+        if (res.status < 200 || res.status >= 300) throw new Error(`Falha ao atualizar ${id}`);
+        return res.data;
       });
     });
   
@@ -219,7 +222,7 @@ export default function Acesso() {
                 Visualize todas as solicitações de acessos de sua empresa
               </p>
             </div>
-
+            <br />
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
 
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">

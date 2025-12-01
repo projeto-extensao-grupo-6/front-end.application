@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Input from "../../shared/components/Ui/Input.jsx";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import EmailIcon from "@mui/icons-material/Email";
@@ -10,6 +11,7 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import { QontoConnector, QontoStepIcon } from "../../shared/components/steppers/QontoStepper.jsx";
 import Button from "../../shared/components/buttons/button.component";
+import Api from "../../axios/Api";
 
 function Cadastro() {
   const [step, setStep] = useState(1);
@@ -20,6 +22,7 @@ function Cadastro() {
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const steps = ["Nome", "Email", "CPF", "Telefone"];
 
@@ -68,31 +71,26 @@ function Cadastro() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/solicitacoes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, email, cpf, telefone }),
-      });
+      const dadosCadastro = {
+        nome,
+        cpf: cpf.replace(/[^\d]/g, ""),
+        telefone: telefone.replace(/[^\d]/g, ""),
+        email,
+      };
 
-      // const responseJsonServer = await fetch("http://localhost:8080/solicitacoes", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ nome, email, cpf, telefone }),
-      // });
+      const response = await Api.post("/solicitacoes", dadosCadastro);
 
-      if (!response.ok) throw new Error("Erro ao cadastrar");
-      // if (!responseJsonServer.ok) throw new Error("Erro ao cadastrar no json server");
-
-      await response.json();
-      // await responseJsonServer.json();
+      console.log("Cadastro OK:", response.data);
 
       setModalOpen(true);
+
       setTimeout(() => {
         setModalOpen(false);
-        window.location.href = "/login";
-      }, 2000);
+        navigate("/login");
+      }, 3000);
     } catch (error) {
-      setError(error.message);
+      console.error("Erro no cadastro:", error);
+      setError(error.response?.data?.message || "Erro ao realizar cadastro. Tente novamente.");
     } finally {
       setLoading(false);
     }

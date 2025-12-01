@@ -1,9 +1,11 @@
-  import React, { useState } from "react";
-  import { motion, AnimatePresence } from "framer-motion";
-  import AccountCircle from "@mui/icons-material/AccountCircle";
-  import LockIcon from "@mui/icons-material/Lock";
-  import Button from "../../shared/components/buttons/button.component";
-  import { useNavigate } from "react-router-dom"
+import React, { useState } from "react";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import AccountCircle from "@mui/icons-material/AccountCircle";
+import LockIcon from "@mui/icons-material/Lock";
+import Button from "../../shared/components/buttons/button.component";
+import { useNavigate } from "react-router-dom"
+import Input from "../../shared/components/Ui/Input";
 
   function Login() {
     const [email, setEmail] = useState("");
@@ -34,29 +36,33 @@
         const { id, token, firstLogin, nome, email: userEmail} = data;
         console.log("Login OK:", data);
 
-        localStorage.setItem("userToken", token); 
-        localStorage.setItem("userId", id);
-        localStorage.setItem("userFirstLogin", String(firstLogin));
-        localStorage.setItem("loggedUserName", nome);
-        localStorage.setItem("loggedUserEmail", userEmail);
+        sessionStorage.setItem("accessToken", token); 
+        sessionStorage.setItem("userId", id);
+        sessionStorage.setItem("userFirstLogin", String(firstLogin));
+        sessionStorage.setItem("loggedUserName", nome);
+        sessionStorage.setItem("loggedUserEmail", userEmail);
+        sessionStorage.setItem("nome", nome); // Para compatibilidade com novaSenha.jsx
 
         setModalOpen(true);
 
-        const redirectPath = firstLogin 
-          ? `/primeiroAcesso/${id}` 
-          : "/paginaInicial";
-
-      setTimeout(() => {
+        setTimeout(() => {
           setModalOpen(false);
-          navigate(redirectPath);
-        }, 1000);
-        
+          
+          // Verificar se é primeiro login para redirecionar para nova senha
+          if (data.firstLogin === true || data.firstLogin === "true") {
+            navigate(`/primeiroAcesso/${data.id}`);
+          } else {
+            navigate("/paginaInicial");
+          }
+        }, 2000);
+    
       } catch (error) {
-        setError(error.message);
+        setError(error.response?.data?.message || "Email ou senha inválidos");
       } finally {
         setLoading(false);
       }
     };
+  
 
     const variants = {
       initial: { opacity: 0, x: 20 },
@@ -164,7 +170,7 @@
                   <button
                     type="button"
                     className="text-sm text-[#007EA7] hover:text-[#005f73] transition"
-                    onClick={() => alert("Função de recuperação em breve!")}
+                    onClick={() => navigate("/esqueceuSenha")}
                   >
                     Esqueceu sua senha?
                   </button>

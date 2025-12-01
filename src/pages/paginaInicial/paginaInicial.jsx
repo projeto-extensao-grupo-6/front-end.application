@@ -11,8 +11,9 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Kpis from "../../shared/components/kpis/kpis";
+import Api from "../../axios/Api";
 
-const API_ESTOQUE_URL = "http://localhost:3001/estoque";
+const API_ESTOQUE_URL = "http://localhost:3001/estoques";
 const API_CLIENTES_URL = "http://localhost:3001/clientes";
 
 const isToday = (date) => {
@@ -63,24 +64,27 @@ export default function PaginaInicial() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const carregarDados = async () => {
       setLoading(true);
       try {
         const [estoqueRes, clientesRes] = await Promise.all([
-          fetch(API_ESTOQUE_URL),
-          fetch(API_CLIENTES_URL),
+          Api.get("/estoques"),
+          Api.get("/clientes")
         ]);
-        const estoqueJson = await estoqueRes.json();
-        const clientesJson = await clientesRes.json();
-        setEstoqueData(estoqueJson);
-        setClientesData(clientesJson);
+
+        const estoqueData = estoqueRes.data;
+        const clientesData = clientesRes.data;
+
+        setEstoqueData(estoqueData);
+        setClientesData(clientesData);
       } catch (error) {
-        console.error("Erro ao buscar dados do dashboard:", error);
+        console.error("Erro ao carregar dados:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    carregarDados();
   }, []);
 
   useEffect(() => {
@@ -98,12 +102,16 @@ export default function PaginaInicial() {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    const itensBaixoEstoque = estoqueData.filter(
+    // Garantir que estoqueData é um array
+    const estoqueArray = Array.isArray(estoqueData) ? estoqueData : [];
+    const clientesArray = Array.isArray(clientesData) ? clientesData : [];
+
+    const itensBaixoEstoque = estoqueArray.filter(
       (item) => item.quantidade < item.estoqueMinimo && item.quantidade > 0
     );
     const countItensBaixo = itensBaixoEstoque.length;
 
-    const todosAgendamentos = clientesData.flatMap(cliente =>
+    const todosAgendamentos = clientesArray.flatMap(cliente =>
         (cliente.historicoServicos || []).map(servico => ({
             ...servico,
             clienteNome: cliente.nome,
@@ -133,7 +141,10 @@ export default function PaginaInicial() {
   }, [estoqueData, clientesData]);
 
   const alertasEstoque = useMemo(() => {
-    return estoqueData
+    // Garantir que estoqueData é um array
+    const estoqueArray = Array.isArray(estoqueData) ? estoqueData : [];
+    
+    return estoqueArray
       .filter((item) => item.quantidade < item.estoqueMinimo)
       .sort((a, b) => a.quantidade - b.quantidade)
       .slice(0, 3)
@@ -146,7 +157,10 @@ export default function PaginaInicial() {
   }, [estoqueData]);
 
   const proximosAgendamentos = useMemo(() => {
-    return clientesData
+    // Garantir que clientesData é um array
+    const clientesArray = Array.isArray(clientesData) ? clientesData : [];
+    
+    return clientesArray
       .flatMap(cliente =>
         (cliente.historicoServicos || []).map(servico => ({
             idServico: servico.id || `temp-${servico.dataServico}-${Math.random()}`,

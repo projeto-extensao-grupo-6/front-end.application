@@ -19,8 +19,7 @@ import { Edit, Delete } from "@mui/icons-material";
 
 import FuncionarioForm from "../../shared/components/modalFuncionarios/FuncionarioForm";
 import DeleteFuncionario from "../../shared/components/modalFuncionarios/DeleteFuncionario";
-
-const API_URL = "http://localhost:3001/funcionarios";
+import Api from "../../axios/Api";
 
 export default function Funcionarios() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,11 +39,13 @@ export default function Funcionarios() {
 
   const fetchFuncionarios = async () => {
     try {
-      const response = await fetch(API_URL);
-      const data = await response.json();
+      const response = await Api.get("/funcionarios");
+      // Garantindo que sempre seja um array
+      const data = Array.isArray(response.data) ? response.data : [];
       setFuncionarios(data);
     } catch (error) {
       console.error("Erro ao buscar funcionários:", error);
+      setFuncionarios([]);
     }
   };
 
@@ -52,9 +53,9 @@ export default function Funcionarios() {
     fetchFuncionarios();
   }, []); 
 
-  const funcionariosFiltrados = funcionarios.filter((f) =>
-    f.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  const funcionariosFiltrados = Array.isArray(funcionarios) ? funcionarios.filter((f) =>
+    f.nome && f.nome.toLowerCase().includes(busca.toLowerCase())
+  ) : [];
 
   const indexUltimo = pagina * limitePorPagina;
   const indexPrimeiro = indexUltimo - limitePorPagina;
@@ -82,17 +83,9 @@ export default function Funcionarios() {
     try {
       if (modoEdicao && funcionarioSelecionado) {
         const funcAtualizado = { ...funcionarioSelecionado, ...novoFunc };
-        await fetch(`${API_URL}/${funcionarioSelecionado.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(funcAtualizado),
-        });
+        await Api.put(`/funcionarios/${funcionarioSelecionado.id}`, funcAtualizado);
       } else {
-        await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(novoFunc),
-        });
+        await Api.post("/funcionarios", novoFunc);
       }
       fetchFuncionarios();
     } catch (error) {
@@ -102,9 +95,7 @@ export default function Funcionarios() {
 
   const deletarFuncionario = async (id) => {
     try {
-      await fetch(`${API_URL}/${id}`, {
-        method: 'DELETE',
-      });
+      await Api.delete(`/funcionarios/${id}`);
       setFuncionarios((prev) => prev.filter((f) => f.id !== id));
     } catch (error) {
       console.error("Erro ao deletar funcionário:", error);
@@ -171,18 +162,12 @@ export default function Funcionarios() {
                         <TableCell>{f.nome}</TableCell>
                         <TableCell>{f.telefone}</TableCell>
                         <TableCell>{f.funcao}</TableCell>
-                        <TableCell>{f.escala}</TableCell>
+                        <TableCell>{f.escala || "N/A"}</TableCell>
                         <TableCell>{f.contrato}</TableCell>
                         <TableCell>
                           <Chip
-                            label={f.status}
-                            color={
-                              f.status === "Ativo"
-                                ? "success"
-                                : f.status === "Pausado"
-                                ? "error"
-                                : "default"
-                            }
+                            label={f.ativo ? "Ativo" : "Inativo"}
+                            color={f.ativo ? "success" : "error"}
                             variant="outlined"
                             className="font-medium!"
                             size="small"
