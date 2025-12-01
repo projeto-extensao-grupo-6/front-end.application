@@ -1,44 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRightLeft, CalendarDays, User, FileText, Hash, ChevronDown } from 'lucide-react'; // ChevronDown adicionado aqui
+import { ArrowRightLeft, ChevronDown, Hash, AlertCircle } from 'lucide-react';
+import Api from '../../../axios/Api';
+import { useNavigate } from 'react-router-dom';
 
-const EntradaSaidaEstoque = ({ isOpen, onClose, onSave, itemIds, estoque, funcionarios }) => {
-    const today = new Date().toISOString().split('T')[0];
-
-    const [tipoMovimento, setTipoMovimento] = useState('Entrada');
-    const [dataMovimento, setDataMovimento] = useState(today);
+const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
+    const navigate = useNavigate();
+    const [tipoMovimento, setTipoMovimento] = useState('entrada');
     const [quantidade, setQuantidade] = useState(1);
-    const [observacao, setObservacao] = useState('');
-    const [funcionarioResponsavel, setFuncionarioResponsavel] = useState('');
     const [itemsInfo, setItemsInfo] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     useEffect(() => {
         if (isOpen && itemIds.length > 0) {
-            const info = itemIds
-                .map(id => estoque.find(item => item.id === id))
-                .filter(item => item)
-                .map(item => ({ id: item.id, nome: item.nome, unidade: item.detalhes?.unidadeMedida || 'Unidade' }));
-            setItemsInfo(info);
+            // Pega apenas o primeiro item já que é um registro por vez
+            const item = estoque.find(item => item.id === itemIds[0]);
+            console.log('EntradaSaidaEstoque: item selecionado', item);
+            if (item) {
+                setItemsInfo([{ 
+                    id: item.id, 
+                    nome: item.produto.nome, 
+                    unidade: item.detalhes?.unidadeMedida || 'Unidade',
+                    localizacao: item.localizacao || 'localizacao_20f384d35f5f'
+                }]);
+            }
 
-            setTipoMovimento('Entrada');
-            setDataMovimento(today);
+            setTipoMovimento('entrada');
             setQuantidade(1);
-            setObservacao('');
-            setFuncionarioResponsavel(funcionarios.length > 0 ? funcionarios[0].nome : '');
+            setError('');
+            setSuccess(false);
         } else if (!isOpen) {
-             setItemsInfo([]);
+            setItemsInfo([]);
+            setError('');
+            setSuccess(false);
         }
-    }, [isOpen, itemIds, estoque, funcionarios, today]);
+    }, [isOpen, itemIds, estoque]);
 
+    const handleSaveClick = async () => {
+        setError('');
+        setLoading(true);
 
-    const handleSaveClick = () => {
-        const movementData = {
-            tipo: tipoMovimento,
-            data: dataMovimento,
-            quantidade: parseInt(quantidade, 10) || 0,
-            observacao: observacao,
-            funcionario: funcionarioResponsavel
-        };
-        onSave(itemIds, movementData);
+        try {
+            const endpoint = tipoMovimento === 'entrada' ? '/estoques/entrada' : '/estoques/saida';
+            
+            const item = itemsInfo[0];
+            const requestBody = {
+                produtoId: item.id,
+                localizacao: item.localizacao,
+                quantidadeTotal: parseInt(quantidade, 10) || 0
+            };
+
+            const response = await Api.post(endpoint, requestBody);
+            
+            setSuccess(true);
+            
+            setTimeout(() => {
+                onClose();
+                navigate(0); 
+            }, 1000);
+
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || err.message || 'Erro ao registrar movimento';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleModalContentClick = (e) => {
@@ -67,123 +94,121 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, onSave, itemIds, estoque, funcio
                     </div>
                 </div>
 
-                <div className="p-5 space-y-4 overflow-y-auto">
-                    <div className='mb-4 p-3 bg-gray-50 border rounded-md text-sm'>
-                       <p className='font-medium text-gray-700 mb-1'>Itens Selecionados:</p>
-                       <ul className='list-disc list-inside text-gray-600'>
-                            {itemsInfo.map(info => <li key={info.id}>{info.nome}</li>)}
-                       </ul>
+                <div className="p-6 space-y-5 overflow-y-auto">
+                    {/* Produto Selecionado - Design Melhorado */}
+                    <div className='p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-lg'>
+                       <p className='text-xs font-semibold text-blue-900 uppercase tracking-wide mb-3'>
+                            Produto Selecionado
+                       </p>
+                       <br />
+                       <div className='flex items-center gap-3 text-sm bg-white/80 px-4 py-3 rounded-lg shadow-sm'>
+                            <div className='w-2.5 h-2.5 bg-blue-600 rounded-full flex-shrink-0'></div>
+                            <span className='font-bold text-gray-900 text-base'>{itemsInfo[0]?.nome || 'Carregando...'}</span>
+                       </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-1.5">Tipo de Movimento</label>
-                        <div className="flex gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="tipoMovimento"
-                                    value="Entrada"
-                                    checked={tipoMovimento === 'Entrada'}
-                                    onChange={(e) => setTipoMovimento(e.target.value)}
-                                    className="w-4 h-4 text-[#007EA7] focus:ring-[#007EA7] border-gray-300"
-                                />
-                                <span className="text-sm text-gray-700">Entrada</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="tipoMovimento"
-                                    value="Saída"
-                                    checked={tipoMovimento === 'Saída'}
-                                    onChange={(e) => setTipoMovimento(e.target.value)}
-                                    className="w-4 h-4 text-[#007EA7] focus:ring-[#007EA7] border-gray-300"
-                                />
-                                <span className="text-sm text-gray-700">Saída</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="dataMovimento" className="block text-sm font-medium text-gray-900 mb-1.5">Data</label>
-                            <div className='relative'>
-                                <input
-                                    type="date"
-                                    id="dataMovimento"
-                                    className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                                    value={dataMovimento}
-                                    onChange={(e) => setDataMovimento(e.target.value)}
-                                />
-                                <CalendarDays className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    {/* Mensagem de Erro */}
+                    {error && (
+                        <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg flex items-start gap-3 shadow-sm">
+                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-semibold text-red-900 mb-1">Erro ao processar</p>
+                                <p className="text-sm text-red-700">{error}</p>
                             </div>
                         </div>
-                         <div>
-                            <label htmlFor="quantidade" className="block text-sm font-medium text-gray-900 mb-1.5">
-                                Quantidade ({unidadeMedida})
-                             </label>
-                             <div className='relative'>
-                                <input
-                                    type="number"
-                                    id="quantidade"
-                                    min="1"
-                                    className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                                    value={quantidade}
-                                    onChange={(e) => setQuantidade(e.target.value)}
-                                />
-                                <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                            </div>
-                        </div>
-                    </div>
+                    )}
 
-                    <div>
-                        <label htmlFor="funcionarioResponsavel" className="block text-sm font-medium text-gray-900 mb-1.5">Funcionário Responsável</label>
-                         <div className='relative'>
+                    {/* Mensagem de Sucesso */}
+                    {success && (
+                        <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg shadow-sm">
+                            <p className="text-sm font-semibold text-green-900 flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                                </svg>
+                                Movimento registrado com sucesso!
+                            </p>
+                        </div>
+                    )}
+                    <br />
+                    {/* Tipo de Movimento - Design Melhorado */}
+                    <div className="space-y-2">
+                        <label htmlFor="tipoMovimento" className="block text-sm font-semibold text-gray-900">
+                            Tipo de Movimento
+                        </label>
+                        <div className='relative group'>
                             <select
-                                id="funcionarioResponsavel"
-                                className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2.5 appearance-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm bg-white"
-                                value={funcionarioResponsavel}
-                                onChange={(e) => setFuncionarioResponsavel(e.target.value)}
+                                id="tipoMovimento"
+                                className="w-full border-2 border-gray-200 rounded-lg pl-11 pr-10 py-3 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-all hover:border-gray-300 disabled:bg-gray-50 disabled:cursor-not-allowed font-medium"
+                                value={tipoMovimento}
+                                onChange={(e) => setTipoMovimento(e.target.value)}
+                                disabled={loading}
                             >
-                                {funcionarios.length === 0 && <option disabled>Carregando...</option>}
-                                {funcionarios.map(func => (
-                                    <option key={func.id} value={func.nome}>{func.nome}</option>
-                                ))}
+                                <option value="entrada"> Entrada</option>
+                                <option value="saida">Saída</option>
+                                <option value="reserva"> Reserva</option>
                             </select>
-                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <ArrowRightLeft className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none" />
+                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                         </div>
                     </div>
-
-                    <div>
-                        <label htmlFor="observacao" className="block text-sm font-medium text-gray-900 mb-1.5">Observação</label>
-                         <div className='relative'>
-                            <textarea
-                                id="observacao"
-                                rows="3"
-                                placeholder="Adicione uma observação (opcional)"
-                                className="w-full border border-gray-300 rounded-md pl-10 px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm resize-none placeholder:text-gray-400"
-                                value={observacao}
-                                onChange={(e) => setObservacao(e.target.value)}
+                    <br />
+                    {/* Quantidade - Design Melhorado */}
+                    <div className="space-y-2">
+                        <label htmlFor="quantidade" className="block text-sm font-semibold text-gray-900">
+                            Quantidade
+                            <span className="ml-2 text-xs font-normal text-gray-500">({unidadeMedida})</span>
+                        </label>
+                        <div className='relative'>
+                            <input
+                                type="number"
+                                id="quantidade"
+                                min="1"
+                                className="w-full border-2 border-gray-200 rounded-lg pl-11 pr-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all hover:border-gray-300 disabled:bg-gray-50 disabled:cursor-not-allowed font-medium"
+                                placeholder="Digite a quantidade"
+                                value={quantidade}
+                                onChange={(e) => setQuantidade(e.target.value)}
+                                disabled={loading}
                             />
-                            <FileText className="absolute left-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <Hash className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none" />
                         </div>
+                        {quantidade > 0 && (
+                            <p className="text-xs text-gray-500 flex items-center gap-1.5 ml-1">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                                </svg>
+                                Total: {tipoMovimento} de {quantidade} {quantidade > 1 ? unidadeMedida + 's' : unidadeMedida}
+                            </p>
+                        )}
                     </div>
-
                 </div>
 
-                <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2 mt-auto">
+                {/* Botões de Ação - Design Melhorado */}
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 mt-auto">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors font-medium text-sm"
+                        disabled={loading}
+                        className="px-5 py-2.5 text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSaveClick}
-                        disabled={!funcionarioResponsavel || quantidade <= 0}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={loading || quantidade <= 0 || success}
+                        className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg"
                     >
-                        Salvar Movimento
+                        {loading ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Processando...
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Salvar Movimento
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

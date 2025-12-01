@@ -8,8 +8,8 @@ const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange }) =>
       options: ["Disponível", "Abaixo do normal", "Fora de estoque"],
     },
     tipo: {
-      title: "Tipo de Produto",
-      options: ["Vidros", "Ferragens", "Acessórios", "Ferramentas", "EPIS"],
+      title: "Status do Produto",
+      options: ["Ativo", "Inativo"],
     },
   };
 
@@ -33,7 +33,7 @@ const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange }) =>
         <Filter className="w-4 h-4 mr-2" />
         Filtros
       </div>
-
+      <br />
       {Object.keys(filterOptions).map((key) => (
         <div key={key} className="mb-4 last:mb-0">
           <h3 className="text-sm font-semibold text-gray-800 mb-2">

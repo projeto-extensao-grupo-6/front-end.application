@@ -1,330 +1,548 @@
 import React, { useState, useEffect } from "react";
-import { Package, ChevronDown } from "lucide-react";
+import { Package, ChevronDown, Plus, X, AlertCircle } from "lucide-react";
+import Api from "../../../axios/Api"; 
+
+const useProductAPI = () => {
+
+  const salvarProduto = async (produtoData) => {
+    try {
+      const response = await Api.post(`/produtos`, {
+        nome: produtoData.nome,
+        descricao: produtoData.descricao,
+        unidademedida: produtoData.unidadeMedida,
+        preco: parseFloat(produtoData.preco),
+        ativo: produtoData.ativo,
+        metrica: {
+          nivelMinimo: parseInt(produtoData.nivelMinimo) || 0,
+          nivelMaximo: parseInt(produtoData.nivelMaximo) || 0,
+        },
+        atributos: produtoData.atributos.filter(
+          (attr) => attr.tipo && attr.valor
+        ),
+      });
+
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Erro ao salvar produto");
+    }
+  };
+
+  const registrarEntradaEstoque = async (produtoId, estoqueData) => {
+    try {
+      const response = await Api.post(`/estoques/entrada`, {
+        produtoId: produtoId,
+        localizacao: estoqueData.localizacao,
+        quantidadeTotal: parseInt(estoqueData.qtdTotal) || 0,
+      });
+
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Erro ao registrar entrada no estoque");
+    }
+  };
+
+  return { salvarProduto, registrarEntradaEstoque };
+};
 
 const DEFAULT_FORM_DATA = {
   nome: "",
   descricao: "",
+  unidadeMedida: "Unidade",
   preco: 0,
-  quantidade: 0,
-  estoqueMinimo: 0,
-  tipo: "Ferragens",
-  detalhes: {
-    espessura: "",
-    unidadeMedida: "Unidade",
-    tipoVidro: "",
-    cor: "",
-    aplicacao: "",
-    acabamento: "",
-    valorCompra: 0,
-    valorVenda: 0,
-    movimentos: [],
-  },
+  ativo: true,
+  atributos: [],
+  nivelMinimo: 0,
+  nivelMaximo: 0,
+  qtdTotal: 0,
+  localizacao: "",
 };
 
-const NovoProdutoModal = ({ isOpen, onClose, onSave, item = null }) => {
+const NovoProdutoModal = ({ isOpen, onClose, onSuccess, item = null }) => {
+  const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const isEditing = item !== null;
+  
+  const { salvarProduto, registrarEntradaEstoque } = useProductAPI();
+
+  const steps = [
+    { id: 0, name: "Informações Básicas" },
+    { id: 1, name: "Atributos" },
+    { id: 2, name: "Métricas" },
+    { id: 3, name: "Estoque" },
+  ];
 
   useEffect(() => {
     if (isOpen) {
-      if (item) {
-        setFormData({
-          ...DEFAULT_FORM_DATA, 
-          ...item,
-          detalhes: item.detalhes ? item.detalhes : DEFAULT_FORM_DATA.detalhes
-        });
-      } else {
-        setFormData(DEFAULT_FORM_DATA);
-      }
+      setFormData(item ? { ...DEFAULT_FORM_DATA, ...item } : DEFAULT_FORM_DATA);
+      setCurrentStep(0);
+      setError(null);
     }
   }, [item, isOpen]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setError(null);
+  };
+
+  const handleAddAtributo = () => {
+    setFormData((prev) => ({
+      ...prev,
+      atributos: [...prev.atributos, { tipo: "", valor: "" }],
     }));
   };
 
-  const handleDetailsChange = (e) => {
-    const { name, value } = e.target;
+  const handleRemoveAtributo = (index) => {
     setFormData((prev) => ({
       ...prev,
-      detalhes: {
-        ...prev.detalhes,
-        [name]: value,
-      },
+      atributos: prev.atributos.filter((_, i) => i !== index),
     }));
   };
 
-  const handleSave = () => {
-    onSave(formData);
+  const handleAtributoChange = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      atributos: prev.atributos.map((attr, i) =>
+        i === index ? { ...attr, [field]: value } : attr
+      ),
+    }));
   };
 
-  const handleModalContentClick = (e) => {
-    e.stopPropagation();
+  const validateStep = () => {
+    setError(null);
+    
+    if (currentStep === 0) {
+      if (!formData.nome.trim()) {
+        setError("Nome do produto é obrigatório");
+        return false;
+      }
+      if (!formData.preco || formData.preco <= 0) {
+        setError("Preço deve ser maior que zero");
+        return false;
+      }
+    }
+    
+    if (currentStep === 2) {
+      const min = parseInt(formData.nivelMinimo) || 0;
+      const max = parseInt(formData.nivelMaximo) || 0;
+      
+      if (max > 0 && min > max) {
+        setError("Nível mínimo não pode ser maior que o nível máximo");
+        return false;
+      }
+    }
+    
+    if (currentStep === 3) {
+      if (formData.qtdTotal > 0 && !formData.localizacao.trim()) {
+        setError("Localização é obrigatória quando há quantidade em estoque");
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateStep()) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Salvar o produto (etapas 0, 1, 2)
+      const produtoSalvo = await salvarProduto(formData);
+      
+      // 2. Se há quantidade em estoque, registrar entrada (etapa 3)
+      if (formData.qtdTotal > 0 && formData.localizacao.trim()) {
+        await registrarEntradaEstoque(produtoSalvo.id, formData);
+      }
+
+      // Sucesso!
+      if (onSuccess) {
+        onSuccess(produtoSalvo);
+      }
+      onClose();
+      
+    } catch (err) {
+      setError(err.message || "Erro ao salvar produto");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (validateStep()) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 px-10 py-20 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-auto max-h-[90vh] flex flex-col"
-        onClick={handleModalContentClick}
+        className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <div className="bg-gray-100 p-2 rounded">
-              <Package className="w-5 h-5 text-gray-700" />
+        {/* Header */}
+        <div className="flex items-center justify-center px-8 py-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-50 p-2.5 rounded-lg">
+              <Package className="w-6 h-6 text-[#007EA7]" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 text-center">
               {isEditing ? "Editar Produto" : "Novo Produto"}
             </h2>
           </div>
         </div>
 
-        <div className="p-5 space-y-4 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="nome" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Nome do produto
-              </label>
-              <input
-                type="text"
-                id="nome"
-                name="nome"
-                placeholder="Nome do produto"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.nome}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="descricao" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Descrição
-              </label>
-              <input
-                type="text"
-                id="descricao"
-                name="descricao"
-                placeholder="Adicione sua descrição"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.descricao}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
+        {/* Stepper */}
+        <div className="px-8 pt-8 pb-6">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <React.Fragment key={step.id}>
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                      index <= currentStep
+                        ? "bg-[#007EA7] text-white shadow-md"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                  <span
+                    className={`text-xs mt-3 text-center ${
+                      index <= currentStep ? "text-gray-900 font-semibold" : "text-gray-500"
+                    }`}
+                  >
+                    {step.name}
+                  </span>
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label htmlFor="preco" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Preço (Venda)
-              </label>
-              <input
-                type="number"
-                id="preco"
-                name="preco"
-                placeholder="R$ 0,00"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.preco}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="quantidade" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Quantidade
-              </label>
-              <input
-                type="number"
-                id="quantidade"
-                name="quantidade"
-                placeholder="0"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.quantidade}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="estoqueMinimo" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Estoque Mínimo
-              </label>
-              <input
-                type="number"
-                id="estoqueMinimo"
-                name="estoqueMinimo"
-                placeholder="0"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.estoqueMinimo}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="tipo" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Tipo de Produto
-              </label>
-              <div className="relative">
-                <select
-                  id="tipo"
-                  name="tipo"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 appearance-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm bg-white"
-                  value={formData.tipo}
-                  onChange={handleChange}
-                >
-                  <option>Vidros</option>
-                  <option>Ferragens</option>
-                  <option>Acessórios</option>
-                  <option>Ferramentas</option>
-                  <option>EPIS</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          <h3 className="text-md font-semibold text-gray-800 pt-2 border-t mt-4">
-            Detalhes (Opcional)
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="unidadeMedida" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Unidade de medida
-              </label>
-              <div className="relative">
-                <select
-                  id="unidadeMedida"
-                  name="unidadeMedida"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 appearance-none focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm bg-white"
-                  value={formData.detalhes.unidadeMedida}
-                  onChange={handleDetailsChange}
-                >
-                  <option>Unidade</option>
-                  <option>m²</option>
-                  <option>Kg</option>
-                  <option>Litro</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="valorCompra" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Valor Compra
-              </label>
-              <input
-                type="number"
-                id="valorCompra"
-                name="valorCompra"
-                placeholder="R$ 0,00"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.detalhes.valorCompra}
-                onChange={handleDetailsChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="valorVenda" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Valor Venda (Detalhe)
-              </label>
-              <input
-                type="number"
-                id="valorVenda"
-                name="valorVenda"
-                placeholder="R$ 0,00"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.detalhes.valorVenda}
-                onChange={handleDetailsChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="espessura" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Espessura
-              </label>
-              <input
-                type="text"
-                id="espessura"
-                name="espessura"
-                placeholder="ex: 4 mm"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.detalhes.espessura}
-                onChange={handleDetailsChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="tipoVidro" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Tipo de vidro
-              </label>
-              <input
-                type="text"
-                id="tipoVidro"
-                name="tipoVidro"
-                placeholder="ex: Temperado"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.detalhes.tipoVidro}
-                onChange={handleDetailsChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="cor" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Cor
-              </label>
-              <input
-                type="text"
-                id="cor"
-                name="cor"
-                placeholder="ex: Incolor"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.detalhes.cor}
-                onChange={handleDetailsChange}
-              />
-            </div>
-            <div className="md:col-span-3">
-              <label htmlFor="aplicacao" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Aplicação
-              </label>
-              <input
-                type="text"
-                id="aplicacao"
-                name="aplicacao"
-                placeholder="ex: Janelas, portas..."
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.detalhes.aplicacao}
-                onChange={handleDetailsChange}
-              />
-            </div>
-            <div className="md:col-span-3">
-              <label htmlFor="acabamento" className="block text-sm font-medium text-gray-900 mb-1.5">
-                Acabamento
-              </label>
-              <input
-                type="text"
-                id="acabamento"
-                name="acabamento"
-                placeholder="ex: Corte reto"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm placeholder:text-gray-400"
-                value={formData.detalhes.acabamento}
-                onChange={handleDetailsChange}
-              />
-            </div>
+                {index < steps.length - 1 && (
+                  <div
+                    className={`flex-1 h-1 mb-8 mx-3 rounded-full ${
+                      index < currentStep ? "bg-[#007EA7]" : "bg-gray-200"
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+            ))}
           </div>
         </div>
 
-        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2 mt-auto">
+        {/* Error Alert */}
+        {error && (
+          <div className="mx-8 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">Erro</p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Conteúdo */}
+        <div className="px-8 py-8 space-y-6 overflow-y-auto flex-1">
+          {/* Etapa 0 - Informações Básicas */}
+          {currentStep === 0 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                  Nome do produto *
+                </label>
+                <input
+                  type="text"
+                  name="nome"
+                  placeholder="Digite o nome do produto"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
+                  value={formData.nome}
+                  onChange={handleChange}
+                />
+              </div>
+              <br />
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                    Unidade de medida
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="unidadeMedida"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left appearance-none"
+                      value={formData.unidadeMedida}
+                      onChange={handleChange}
+                    >
+                      <option>Unidade</option>
+                      <option>m²</option>
+                      <option>Kg</option>
+                      <option>Litro</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                    Preço do produto *
+                  </label>
+                  <input
+                    type="number"
+                    name="preco"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
+                    value={formData.preco}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+              <br />
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                  Descrição do produto
+                </label>
+                <textarea
+                  name="descricao"
+                  placeholder="Adicione uma descrição detalhada do produto"
+                  rows={5}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 resize-none text-left"
+                  value={formData.descricao}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="flex items-center gap-4 pt-2">
+                <input
+                  type="checkbox"
+                  name="ativo"
+                  className="w-5 h-5 text-[#007EA7]"
+                  checked={formData.ativo}
+                  onChange={handleChange}
+                />
+                <label className="text-sm text-gray-900">Produto Ativo</label>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 1 - Atributos */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 text-left">
+                    Atributos do Produto
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1 text-left">
+                    Adicione características específicas
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleAddAtributo}
+                  className="px-4 py-2 bg-[#007EA7] text-white rounded-lg shadow hover:bg-[#006891] transition-colors"
+                >
+                  <Plus className="inline-block w-4 h-4 mr-2" />
+                  Adicionar
+                </button>
+              </div>
+
+              {formData.atributos.length === 0 ? (
+                <div className="text-center py-16 bg-gray-50 rounded-lg border border-gray-200">
+                  <Plus className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">Clique em "Adicionar" para criar atributos</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {formData.atributos.map((attr, index) => (
+                    <div key={index} className="flex gap-4 p-4 bg-gray-50 rounded-lg border">
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-gray-700 mb-2 text-left">
+                          Tipo
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Cor, Tamanho..."
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-left"
+                          value={attr.tipo}
+                          onChange={(e) =>
+                            handleAtributoChange(index, "tipo", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-gray-700 mb-2 text-left">
+                          Valor
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Azul, Grande"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-left"
+                          value={attr.valor}
+                          onChange={(e) =>
+                            handleAtributoChange(index, "valor", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => handleRemoveAtributo(index)}
+                        className="p-3 text-red-500 hover:bg-red-50 rounded-lg mt-6 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Etapa 2 - Métricas */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="text-left">
+                <h3 className="text-base font-semibold text-gray-900">Métricas de Estoque</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Defina limites de estoque
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-blue-50 p-4 rounded-lg border">
+                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                    Nível Mínimo
+                  </label>
+                  <input
+                    type="number"
+                    name="nivelMinimo"
+                    placeholder="0"
+                    min="0"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
+                    value={formData.nivelMinimo}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg border">
+                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                    Nível Máximo
+                  </label>
+                  <input
+                    type="number"
+                    name="nivelMaximo"
+                    placeholder="0"
+                    min="0"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
+                    value={formData.nivelMaximo}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 3 - Estoque */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <div className="text-left">
+                <h3 className="text-base font-semibold text-gray-900">Estoque Inicial</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Configure o estoque inicial (opcional)
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                    Quantidade Total
+                  </label>
+                  <input
+                    type="number"
+                    name="qtdTotal"
+                    placeholder="0"
+                    min="0"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
+                    value={formData.qtdTotal}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                    Localização
+                  </label>
+                  <input
+                    type="text"
+                    name="localizacao"
+                    placeholder="Ex: Prateleira A3"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-left"
+                    value={formData.localizacao}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 py-5 border-t bg-gray-50 flex justify-between">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors font-medium text-sm"
+            disabled={loading}
+            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
           </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-[#007EA7] text-white rounded-md hover:bg-[#006891] transition-colors font-medium text-sm"
-          >
-            {isEditing ? "Salvar Alterações" : "Salvar Produto"}
-          </button>
+
+          <div className="flex gap-3">
+            {currentStep > 0 && (
+              <button
+                onClick={() => setCurrentStep(currentStep - 1)}
+                disabled={loading}
+                className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Voltar
+              </button>
+            )}
+
+            {currentStep < steps.length - 1 ? (
+              <button
+                onClick={handleNext}
+                disabled={loading}
+                className="px-6 py-2.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Próxima Etapa
+              </button>
+            ) : (
+              <button
+                onClick={handleSave}
+                disabled={loading}
+                className="px-6 py-2.5 bg-[#007EA7] text-white rounded-lg hover:bg-[#006891] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>{isEditing ? "Salvar Alterações" : "Salvar Produto"}</>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

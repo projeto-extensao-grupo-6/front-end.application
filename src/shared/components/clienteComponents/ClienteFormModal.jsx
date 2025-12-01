@@ -36,6 +36,7 @@ import {
 
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
+import Api from "../../../axios/Api";
 
 const TextMaskAdapter = React.forwardRef(function TextMaskAdapter(
   props,
@@ -83,8 +84,6 @@ const getNovoServico = () => ({
   funcionario: "N/A",
 });
 
-const API_BASE_URL = "http://localhost:3000";
-
 export default function ClienteFormModal({
   open,
   onClose,
@@ -101,12 +100,10 @@ export default function ClienteFormModal({
     if (open) {
       const fetchFuncionarios = async () => {
         try {
-          const response = await fetch(`${API_BASE_URL}/funcionarios`);
-          if (!response.ok) throw new Error("Erro ao buscar funcionários");
-          const data = await response.json();
-          setFuncionarios(data);
+          const response = await Api.get("/funcionarios");
+          setFuncionarios(response.data);
         } catch (error) {
-          console.error("Falha ao carregar funcionários:", error);
+          console.error("Erro ao buscar funcionários:", error);
         }
       };
       
@@ -116,18 +113,36 @@ export default function ClienteFormModal({
     }
   }, [open]); 
 
-  useEffect(() => {
-    if (modoEdicao && clienteInicial) {
-      setClienteData({
-        ...getClienteInicial(),
-        ...clienteInicial,
-      });
-      setHistorico(clienteInicial.historicoServicos || []);
-    } else {
-      setClienteData(getClienteInicial());
-      setHistorico([]);
-    }
-  }, [open, modoEdicao, clienteInicial]);
+useEffect(() => {
+  if (modoEdicao && clienteInicial) {
+
+    const endereco = clienteInicial.enderecos?.[0] || {};
+
+    setClienteData({
+      ...getClienteInicial(),
+
+      nome: clienteInicial.nome,
+      contato: clienteInicial.telefone,
+      email: clienteInicial.email,
+      cpf: clienteInicial.cpf,
+      status: clienteInicial.status,
+      rua: endereco.rua,
+      complemento: endereco.complemento,
+      cep: endereco.cep,
+      bairro: endereco.bairro,
+      cidade: endereco.cidade,
+      uf: endereco.uf,
+      endereco: endereco.rua,
+    });
+
+    setHistorico(clienteInicial.historicoServicos || []);
+
+  } else {
+    setClienteData(getClienteInicial());
+    setHistorico([]);
+  }
+}, [open, modoEdicao, clienteInicial]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -166,9 +181,24 @@ export default function ClienteFormModal({
   const handleSubmit = (e) => {
     e.preventDefault();
     const dadosCompletos = {
-      ...clienteData,
-      contato: clienteData.contato.replace(/\D/g, ""),
-      historicoServicos: historico,
+      nome: clienteData.nome,
+      cpf: clienteData.cpf,
+      email: clienteData.email,
+      telefone: clienteData.contato.replace(/\D/g, ""),
+      status: clienteData.status,
+
+      enderecos: [
+        {
+          rua: clienteData.rua,
+          complemento: clienteData.complemento || "",
+          cep: clienteData.cep,
+          cidade: clienteData.cidade,
+          bairro: clienteData.bairro,
+          uf: clienteData.uf,
+          pais: "Brasil",
+        },
+      ],
+
     };
     onSubmit(dadosCompletos);
     handleClose();
@@ -227,6 +257,15 @@ export default function ClienteFormModal({
                     onChange={handleChange}
                     InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutline fontSize="small" /></InputAdornment> }}
                   />
+                  
+                  <TextField
+                    required
+                    label="CPF"
+                    name="cpf"
+                    placeholder="Ex: 123.456.789-00"
+                    value={clienteData.cpf || ""}
+                    onChange={handleChange}
+                  />
 
                   <TextField
                     required
@@ -240,9 +279,8 @@ export default function ClienteFormModal({
                       startAdornment: <InputAdornment position="start"><PhoneOutlined fontSize="small" /></InputAdornment>,
                     }}
                   />
-                </Box>
 
-                <TextField
+                  <TextField
                   required
                   fullWidth
                   label="Email"
@@ -253,6 +291,8 @@ export default function ClienteFormModal({
                   onChange={handleChange}
                   InputProps={{ startAdornment: <InputAdornment position="start"><EmailOutlined fontSize="small" /></InputAdornment> }}
                 />
+
+                </Box>
 
                 <TextField
                   fullWidth
@@ -273,6 +313,16 @@ export default function ClienteFormModal({
                     onChange={handleChange}
                     InputProps={{ startAdornment: <InputAdornment position="start"><BusinessOutlined fontSize="small" /></InputAdornment> }}
                   />
+                  
+                  <TextField
+                    required
+                    label="CEP"
+                    name="cep"
+                    placeholder="Ex: 80035010"
+                    value={clienteData.cep || ""}
+                    onChange={handleChange}
+                  />
+
                   <TextField
                     label="UF"
                     name="uf"
@@ -281,6 +331,33 @@ export default function ClienteFormModal({
                     onChange={handleChange}
                     InputProps={{ startAdornment: <InputAdornment position="start"><MapOutlined fontSize="small" /></InputAdornment> }}
                   />
+
+                  <TextField
+                    required
+                    label="Rua"
+                    name="rua"
+                    placeholder="Ex: Rua das Flores"
+                    value={clienteData.rua || ""}
+                    onChange={handleChange}
+                  />
+
+                  <TextField
+                    label="Complemento"
+                    name="complemento"
+                    placeholder="Ex: Bloco B, apto 13"
+                    value={clienteData.complemento || ""}
+                    onChange={handleChange}
+                  />
+
+                  <TextField
+                    required
+                    label="Bairro"
+                    name="bairro"
+                    placeholder="Ex: Centro"
+                    value={clienteData.bairro || ""}
+                    onChange={handleChange}
+                  />  
+
                 </Box>
 
                 <FormControlLabel

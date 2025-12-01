@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FaBoxOpen, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle } from 'react-icons/fa';
+import Api from "../../axios/Api";
 
-const API_PEDIDOS_URL = "http://localhost:3000/pedidos";
 const ITEMS_PER_PAGE = 3;
 
 const NOVO_FORM_PEDIDO = () => ({
@@ -52,10 +52,8 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
     const fetchPedidos = async () => {
         setLoading(true);
         try {
-            const response = await fetch(API_PEDIDOS_URL);
-            const data = await response.json();
-
-            const sortedData = data.sort((a, b) => {
+            const response = await Api.get("/pedidos");
+            const sortedData = response.data.sort((a, b) => {
                 const numA = parseInt(a.id.replace(/\D/g, '') || 0, 10);
                 const numB = parseInt(b.id.replace(/\D/g, '') || 0, 10);
 
@@ -179,18 +177,13 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
             formaPagamento: form.formaPagamento,
         };
 
-        const url = mode === 'edit' ? `${API_PEDIDOS_URL}/${current.id}` : API_PEDIDOS_URL;
-        const method = mode === 'edit' ? 'PUT' : 'POST';
-
         try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(pedidoPayload)
-            });
-            if (!response.ok) {
-                throw new Error(`Erro ao ${mode === 'edit' ? 'atualizar' : 'salvar'} pedido`);
+            if (mode === 'edit') {
+                await Api.put(`/pedidos/${current.id}`, pedidoPayload);
+            } else {
+                await Api.post("/pedidos", pedidoPayload);
             }
+            
             await fetchPedidos();
             setCurrent(null);
             setModal((m) => ({ ...m, form: false }));
@@ -203,10 +196,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
     const confirmarExclusao = async () => {
         if (!targetId) return;
         try {
-            const response = await fetch(`${API_PEDIDOS_URL}/${targetId}`, { method: 'DELETE' });
-            if (!response.ok) {
-                throw new Error('Erro ao excluir pedido');
-            }
+            await Api.delete(`/pedidos/${targetId}`);
             await fetchPedidos();
             setTargetId(null);
             setModal((m) => ({ ...m, confirm: false }));

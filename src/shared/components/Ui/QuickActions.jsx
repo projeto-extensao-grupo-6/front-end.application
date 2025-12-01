@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from './Button';
 import Icon from '../AppIcon';
@@ -8,20 +8,30 @@ const QuickActions = () => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    const savedTasks = JSON.parse(sessionStorage.getItem('tasks') || '[]');
+    setTasks(savedTasks);
+  }, []);
+
+  const saveTasks = (newTasks) => {
+    setTasks(newTasks);
+    sessionStorage.setItem('tasks', JSON.stringify(newTasks));
+  };
 
   const handleTaskSave = (taskData) => {
     // Save task logic here
     console.log('Quick task saved:', taskData);
     
-    // Save to localStorage for demonstration
-    const savedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    // Save to sessionStorage for demonstration
     const newTask = {
       id: Date.now(),
       ...taskData,
       createdAt: new Date()?.toISOString()
     };
-    savedTasks?.push(newTask);
-    localStorage.setItem('tasks', JSON.stringify(savedTasks));
+    const updatedTasks = [...tasks, newTask];
+    saveTasks(updatedTasks);
     
     // Show success feedback
     alert('Task created successfully!');

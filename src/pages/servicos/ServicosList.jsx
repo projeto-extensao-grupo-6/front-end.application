@@ -1,25 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import "./servicos.css";
 import { FaWrench, FaEdit, FaTrash, FaExternalLinkAlt, FaExclamationTriangle, FaUser } from "react-icons/fa";
-
-const API_SERVICOS_URL = "http://localhost:3000/servicos";
-const API_CLIENTES_URL = "http://localhost:3000/clientes";
-
-function StatusPill({ status }) {
-    const map = { Ativo: "chip chip-green", Finalizado: "chip chip-red", Concluído: "chip chip-green" };
-    return <span className={map[status] || "chip"}>{status}</span>;
-}
-function Progress({ value = 0, total = 6, dark = false }) {
-    const pct = Math.min(100, Math.round((Number(value) / Number(total)) * 100));
-    return (
-        <div className="flex items-center gap-2 min-w-[180px]">
-            <div className="h-2 w-40 rounded-full bg-slate-300/60 overflow-hidden">
-                <div className={`h-2 rounded-full ${dark ? "bg-[#003249]" : "bg-[#003249]"}`} style={{ width: `${pct}%` }} />
-            </div>
-            <span className="text-xs text-slate-600">{value}/{total}</span>
-        </div>
-    );
-}
+import Api from "../../axios/Api";
 
 const formatServicoId = (id) => {
     if (!id) return '';
@@ -57,11 +39,11 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
         setLoading(true);
         try {
             const [servicosRes, clientesRes] = await Promise.all([
-                fetch(API_SERVICOS_URL),
-                fetch(API_CLIENTES_URL)
+                Api.get("/servicos"),
+                Api.get("/clientes")
             ]);
-            const servicosData = await servicosRes.json();
-            const clientesData = await clientesRes.json();
+            const servicosData = servicosRes.data;
+            const clientesData = clientesRes.data;
 
             const sortedServicos = servicosData.sort((a, b) => {
                 const idAisNum = /^\d+$/.test(a.id);
@@ -142,7 +124,6 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
     const proxima = () => page < totalPages && setPage((p) => p + 1);
     const anterior = () => page > 1 && setPage((p) => p - 1);
 
-
     const setField = (name, value) => {
         setForm((f) => ({ ...f, [name]: value }));
         if (errors[name]) {
@@ -219,18 +200,13 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
             delete servicoPayload.id;
         }
 
-        const url = mode === 'edit' ? `${API_SERVICOS_URL}/${current.id}` : API_SERVICOS_URL;
-        const method = mode === 'edit' ? 'PUT' : 'POST';
-
         try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(servicoPayload)
-            });
-            if (!response.ok) {
-                throw new Error(`Erro ao ${mode === 'edit' ? 'atualizar' : 'salvar'} serviço`);
+            if (mode === 'edit') {
+                await Api.put(`/servicos/${current.id}`, servicoPayload);
+            } else {
+                await Api.post("/servicos", servicoPayload);
             }
+            
             await fetchData();
             setCurrent(null);
             setModal((m) => ({ ...m, form: false }));
@@ -243,10 +219,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
     const confirmarExclusao = async () => {
         if (!targetId) return;
         try {
-            const response = await fetch(`${API_SERVICOS_URL}/${targetId}`, { method: 'DELETE' });
-            if (!response.ok) {
-                throw new Error('Erro ao excluir serviço');
-            }
+            await Api.delete(`/servicos/${targetId}`);
             await fetchData();
             fecharConfirmarExclusao();
         } catch (error) {

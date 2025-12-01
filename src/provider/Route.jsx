@@ -9,7 +9,7 @@ import Estoque from '../pages/estoque/estoque.jsx';
 import ProdutoDetalhe from '../pages/estoque/ProdutoDetalhe.jsx';
 import Pedidos from '../pages/pedidos/pedidos.jsx';
 import Solicitacoes from '../pages/solicitacoes/Solicitacoes.jsx';
-import CalendarDashboard from '../pages/calendar-dashboard/index.jsx';
+import CalendarDashboard from '../pages/calendar-dashboard.jsx/index.jsx';
 import Perfil from '../pages/perfil/perfil.jsx';
 import MapContainer from '../pages/geoLocalizacao/MapContainer.jsx';
 import NovaSenha from '../pages/novaSenha/novaSenha.jsx';
