@@ -157,11 +157,9 @@ const CalendarDashboard = () => {
 
   return (
     <>
-      {/* ✅ Header fixo no topo */}
       <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       
-      {/* ✅ Conteúdo com pt-20 para não sobresair o header */}
       <div className="bg-background h-full pt-15">
         <div className="h-[calc(100vh-80px)] flex">
           {/* Left Sidebar */}
@@ -170,7 +168,7 @@ const CalendarDashboard = () => {
               sidebarCollapsed ? "w-16" : "w-80"
             } transition-all duration-300 border-r border-hairline bg-surface flex flex-col`}
           >
-            <div className="p-6 border-b border-hairline">
+            <div className="p-5 border-b border-hairline">
               <div className="flex items-center justify-between">
                 {!sidebarCollapsed && (
                   <h2 className="font-semibold text-text-primary">
@@ -181,6 +179,7 @@ const CalendarDashboard = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  className="cursor-pointer"
                 >
                   <Icon
                     name={sidebarCollapsed ? "ChevronRight" : "ChevronLeft"}
@@ -192,47 +191,12 @@ const CalendarDashboard = () => {
 
             {!sidebarCollapsed && (
               <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                <div className="space-y-3 pb-2 w-full">
-                  <Button
-                    iconName="Plus"
-                    size="md"
-                    className="btn-primary"
-                    onClick={() =>
-                      handleEventCreate({
-                        date: selectedDate?.toISOString()?.split("T")?.[0],
-                      })
-                    }
-                  >
-                    Criar Tarefa
-                  </Button>
-                </div>
-
                 <MiniCalendar
                   selectedDate={selectedDate}
                   onDateSelect={handleDateSelect}
                 />
 
-                <SharedCalendarList onCalendarToggle={handleCalendarToggle} />
-              </div>
-            )}
-
-            {sidebarCollapsed && (
-              <div className="flex p-2 flex-cols space-y-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    handleEventCreate({
-                      date: selectedDate?.toISOString()?.split("T")?.[0],
-                    })
-                  }
-                  title="Criar Tarefa"
-                >
-                  <Icon name="Plus" size={20} />
-                </Button>
-                <Button variant="ghost" size="icon" title="Calendário">
-                  <Icon name="Calendar" size={20} />
-                </Button>
+                {/* <SharedCalendarList onCalendarToggle={handleCalendarToggle} /> */}
               </div>
             )}
           </div>
@@ -243,33 +207,21 @@ const CalendarDashboard = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <h1 className="text-2xl font-semibold text-text-primary">
-                    Painel do Calendário
+                    Agenda de Atendimentos
                   </h1>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    iconName="Plus"
-                    iconPosition="left"
-                    onClick={() => handleEventCreate()}
-                  >
-                    Adição Rápida
-                  </Button>
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-hidden">
-              <CalendarView
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                onEventCreate={handleEventCreate}
-                events={tasks}
-                onEventDeleted={handleEventDeleted}  // ✅ agora definido
-              />
-            </div>
+          <div className="flex-1 overflow-hidden">
+            <CalendarView
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              onEventCreate={handleEventCreate}
+              events={tasks}
+              onEventDeleted={handleEventDeleted}
+            />
+          </div>
           </div>
 
           {/* Right Panel */}
@@ -278,12 +230,13 @@ const CalendarDashboard = () => {
               rightPanelCollapsed ? "w-16" : "w-80"
             } transition-all duration-300 border-l border-hairline bg-surface flex flex-col`}
           >
-            <div className="p-4 border-b border-hairline">
+            <div className="p-5 border-b border-hairline">
               <div className="flex items-center justify-between">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+                  className="cursor-pointer"
                 >
                   <Icon
                     name={rightPanelCollapsed ? "ChevronLeft" : "ChevronRight"}
@@ -301,20 +254,6 @@ const CalendarDashboard = () => {
             {!rightPanelCollapsed && (
               <div className="flex-1 overflow-y-auto p-4 space-y-6">
                 <UpcomingEvents events={tasks} />
-              </div>
-            )}
-
-            {rightPanelCollapsed && (
-              <div className="flex-1 flex flex-col items-center gap-4 p-2 space-y-4">
-                <Button variant="ghost" size="icon" title="Próximos Eventos">
-                  <Icon name="Clock" size={20} />
-                </Button>
-                <Button variant="ghost" size="icon" title="Salas de Reunião">
-                  <Icon name="Home" size={20} />
-                </Button>
-                <Button variant="ghost" size="icon" title="Notificações">
-                  <Icon name="Bell" size={20} />
-                </Button>
               </div>
             )}
           </div>

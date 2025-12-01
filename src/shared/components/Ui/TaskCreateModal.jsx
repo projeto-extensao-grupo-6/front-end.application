@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { X } from "lucide-react";
 import Icon from "../AppIcon";
 import Button from "../buttons/button.component";
 import Input from "./Input";
