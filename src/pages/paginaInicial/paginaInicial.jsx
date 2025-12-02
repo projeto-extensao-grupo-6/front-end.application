@@ -11,7 +11,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Kpis from "../../shared/components/kpis/kpis";
-import Api from "../../axios/Api";
 import {
   getQtdAgendamentosFuturos,
   getQtdAgendamentosHoje,
@@ -20,7 +19,7 @@ import {
   getEstoqueCritico,
   getAgendamentosFuturos,
   getQtdServicosHoje
-} from "../../service/dashboardService";
+} from "../../services/dashboardService";
 
 const isToday = (date) => {
   if (!date) return false;

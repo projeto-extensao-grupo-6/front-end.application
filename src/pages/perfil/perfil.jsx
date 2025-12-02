@@ -79,20 +79,18 @@ export default function Perfil() {
 
         if (!userId) {
             console.error("ID do usuário não encontrado no sessionStorage.");
-            // window.location.href = '/login';
+            setLoading(false);
             return;
         }
 
         setLoading(true);
         Api.get(`/usuarios/${userId}`)
             .then(response => {
-                // Tenta acessar os dados em diferentes estruturas possíveis
                 const userData = response.data.usuario || response.data.data || response.data;
 
                 console.log('userData extraído:', userData);
                 console.log('userData.endereco:', userData.endereco);
 
-                // Extrai o endereço com segurança
                 const endereco = userData.endereco || {};
 
                 console.log('Endereço processado:', endereco);
@@ -126,6 +124,14 @@ export default function Perfil() {
                 console.error("Error.response:", error.response);
                 console.error("Error.response.data:", error.response?.data);
                 console.error("Error.message:", error.message);
+                
+                setMessage({ 
+                    type: 'error', 
+                    text: 'Erro ao carregar dados do perfil. Tente novamente.' 
+                });
+            })
+            .finally(() => {
+                setLoading(false);
             });
 
     }, []);
@@ -203,36 +209,24 @@ export default function Perfil() {
                 setIsEditing(false);
                 setIsChangingPassword(false);
 
-                // Recarrega os dados
-                return Api.get(`/usuarios/${userId}`);
-            })
-            .then(response => {
-                const userData = response.data.usuario || response.data.data || response.data;
-                const endereco = userData.endereco || {};
-
-                setFormData({
-                    nome: userData.nome || "",
-                    cpf: userData.cpf || "",
-                    email: userData.email || "",
-                    telefone: userData.telefone || "",
-                    cargo: "Gerente Administrativo",
-                    rua: endereco.rua || "",
-                    cep: endereco.cep || "",
-                    bairro: endereco.bairro || "",
-                    cidade: endereco.cidade || "",
-                    numero: endereco.numero || "",
-                    estado: endereco.uf || endereco.estado || "",
-                    pais: endereco.pais || "Brasil",
-                    complemento: endereco.complemento || ""
-                    // senhaAtual: "",
-                    // novaSenha: "",
-                    // confirmarSenha: ""
-                });
+                // Limpa os campos de senha após salvar
+                setFormData(prev => ({
+                    ...prev,
+                    senhaAtual: "",
+                    novaSenha: "",
+                    confirmarSenha: ""
+                }));
             })
             .catch(error => {
                 console.error("Erro ao salvar:", error);
                 console.error("Detalhes:", error.response?.data);
-                alert('Erro ao salvar as informações. Verifique o console.');
+                setMessage({ 
+                    type: 'error', 
+                    text: 'Erro ao salvar as informações. Tente novamente.' 
+                });
+            })
+            .finally(() => {
+                setLoading(false);
             });
     };
 
