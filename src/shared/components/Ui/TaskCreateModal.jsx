@@ -5,6 +5,7 @@ import Button from "../buttons/button.component";
 import Input from "./Input";
 import Select from "./Select";
 import MultipleSelectCheckmarks from "./MultipleSelectCheckmarks";
+import Api from "../../../axios/Api";
 
 const categoryOptions = [
   { value: "SERVICO", label: "Prestação de serviço", color: "#3B82F6" },
@@ -51,9 +52,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const fetchFuncionarios = useCallback(async () => {
     setLoadingFuncionarios(true);
     try {
-      const resp = await fetch("http://localhost:3000/api/funcionarios");
-      if (!resp.ok) throw new Error("Falha ao buscar funcionários");
-      const data = await resp.json();
+      const response = await Api.get("/funcionarios");
+      const data = response.data;
       // Espera array de objetos com id / nome
       const mapped = data.map((f) => ({
         value: f.id,
@@ -78,9 +78,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     setLoadingPedidos(true);
     try {
       const etapa = tipoValue === "ORCAMENTO" ? "PENDENTE" : "ORÇAMENTO APROVADO";
-      const resp = await fetch(`http://localhost:3000/api/pedidos/findAllBy?etapa=${encodeURIComponent(etapa)}`);
-      if (!resp.ok) throw new Error("Falha ao buscar pedidos");
-      const data = await resp.json();
+      const response = await Api.get(`/pedidos/findAllBy?etapa=${encodeURIComponent(etapa)}`);
+      const data = response.data;
       const mapped = data.map((p) => ({
         value: p.id,
         label: p.descricao || p.nome || `Pedido #${p.id}`,
@@ -191,17 +190,13 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         funcionarios: funcionariosPayload,
         produtos: [],
       };
-      const resp = await fetch("http://localhost:3000/api/agendamentos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!resp.ok) throw new Error("Erro ao salvar");
-      const result = await resp.json();
+      
+      const response = await Api.post("/agendamentos", payload);
+      const result = response.data;
       onSave?.(result);
       onClose?.();
     } catch (err) {
-      setErrors({ submit: err.message });
+      setErrors({ submit: err.message || "Erro ao salvar agendamento" });
     } finally {
       setLoading(false);
     }
