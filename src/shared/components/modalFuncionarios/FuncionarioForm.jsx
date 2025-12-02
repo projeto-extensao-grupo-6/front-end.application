@@ -47,7 +47,7 @@ export default function FuncionarioForm({ open, setOpen, modoEdicao, funcionario
         funcao: funcionario.funcao,
         escala: funcionario.escala,
         contrato: funcionario.contrato,
-        status: funcionario.status === "Ativo",
+        status: funcionario.status === "Ativo" || funcionario.status === true,
       });
     } else {
       setNovoFuncionario({
@@ -72,7 +72,7 @@ export default function FuncionarioForm({ open, setOpen, modoEdicao, funcionario
 
   const handleSalvar = () => {
     if (!novoFuncionario.nome.trim()) return alert("Digite o nome do funcionário.");
-    salvarFuncionario({ ...novoFuncionario, status: novoFuncionario.status ? "Ativo" : "Pausado" });
+    salvarFuncionario(novoFuncionario);
     setOpen(false);
   };
 

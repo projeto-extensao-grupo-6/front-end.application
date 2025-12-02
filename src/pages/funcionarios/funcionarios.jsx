@@ -166,8 +166,8 @@ export default function Funcionarios() {
                         <TableCell>{f.contrato}</TableCell>
                         <TableCell>
                           <Chip
-                            label={f.ativo ? "Ativo" : "Inativo"}
-                            color={f.ativo ? "success" : "error"}
+                            label={f.status ? "Ativo" : "Inativo"}
+                            color={f.status ? "success" : "error"}
                             variant="outlined"
                             className="font-medium!"
                             size="small"
