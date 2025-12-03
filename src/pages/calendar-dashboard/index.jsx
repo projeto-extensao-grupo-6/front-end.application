@@ -8,6 +8,7 @@ import Icon from "../../shared/components/AppIcon";
 import Button from "../../shared/components/buttons/button.component";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
+import axios from "axios";
 
 const API_BASE_URL = "http://localhost:3000/api";
 
@@ -24,8 +25,8 @@ const CalendarDashboard = () => {
   const getToken = () => {
     return (
       localStorage.getItem("authToken") ||
+      sessionStorage.getItem("accessToken") ||
       localStorage.getItem("token") ||
-      localStorage.getItem("access_token") ||
       (localStorage.getItem("user") && JSON.parse(localStorage.getItem("user")).token)
     );
   };
@@ -33,15 +34,14 @@ const CalendarDashboard = () => {
   const fetchAgendamentos = async () => {
     try {
       const token = getToken();
-      
-      const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+      console.log("Token de autenticação:", token);
+      const response = await axios.get(`${API_BASE_URL}/agendamentos`, {
         method: "GET",
         headers: {
+          "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
-          // ...(token && { Authorization: `Bearer ${token}` }), // ✅ Adiciona token se existir
-        },
+        }, 
       });
-
       if (!response.ok) {
         throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
       }

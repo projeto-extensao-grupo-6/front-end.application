@@ -41,167 +41,6 @@ import {
   ErrorMessage,
 } from "./EventModalComponents";
 
-const CreateEventModal = ({ isOpen, onClose, onCreate, initialDate }) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    date: initialDate || "",
-    startTime: "",
-    endTime: "",
-    rua: "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
-    uf: "",
-    pais: "Brasil",
-    observacao: "",
-  });
-
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh] overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
-            <h2 className="text-xl font-bold text-gray-800">Nova Tarefa</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-              <X size={24} />
-            </button>
-          </div>
-
-          <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white">
-            <div className="space-y-6">
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Selecione os funcionários responsáveis</label>
-                <select className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                  <option>Escolha uma ou mais opções</option>
-                  <option>Júlio Cesar</option>
-                  <option>Equipe Técnica</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data do evento *</label>
-                  <input 
-                    type="date" 
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Horário início *</label>
-                  <input 
-                    type="time" 
-                    onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Horário fim *</label>
-                  <input 
-                    type="time" 
-                    onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm" 
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                   Endereço do Cliente
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="md:col-span-3">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Rua *</label>
-                    <input type="text" placeholder="Nome da rua" className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Número *</label>
-                    <input type="text" placeholder="123" className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Bairro *</label>
-                    <input type="text" placeholder="Bairro" className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Complemento</label>
-                    <input type="text" placeholder="Apto, Bloco..." className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Cidade *</label>
-                    <input type="text" placeholder="Cidade" className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">UF *</label>
-                    <input type="text" placeholder="SP" className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">País *</label>
-                    <input type="text" defaultValue="Brasil" className="w-full border border-gray-300 rounded-lg p-2 text-sm" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Observação</label>
-                <textarea 
-                  rows={3} 
-                  className="w-full border border-gray-300 rounded-lg p-2 text-sm resize-none focus:ring-2 focus:ring-blue-500 outline-none" 
-                  placeholder="Adicione detalhes extras sobre o serviço..."
-                />
-              </div>
-
-            </div>
-          </div>
-
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={() => {
-                onCreate?.(formData);
-                onClose();
-              }}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-2"
-            >
-              <Plus size={16} />
-              Criar Agendamento
-            </button>
-          </div>
-
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, isDeleting }) => {
   if (!isOpen) return null;
   return (
@@ -404,7 +243,7 @@ const MonthView = ({ currentMonth, events, onDateClick, onEventClick }) => {
           return (
             <div
               key={dateKey}
-              className={`bg-white relative flex flex-col p-1.5 group transition-colors hover:bg-gray-50 border-gray-200 overflow-hidden ${
+              className={`bg-white relative flex flex-col p-1.5 group transition-colors hover:bg-gray-50 border-gray-200 overflow-hidden cursor-pointer ${
                 !isCurrent ? "opacity-60 bg-gray-50/50" : ""
               }`}
               onClick={() => onDateClick?.(day)}
@@ -517,7 +356,7 @@ const calculateEventLayout = (events) => {
   return eventsWithLayout;
 };
 
-const WeekView = ({ currentDate, timeSlots, events, onEventClick, onDateClick, onTimeSlotClick }) => {
+const WeekView = ({ currentDate, timeSlots, events, onEventClick, onTimeSlotClick }) => {
   const start = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(start, i));
   const eventsByDay = useMemo(() => {
@@ -541,7 +380,7 @@ const WeekView = ({ currentDate, timeSlots, events, onEventClick, onDateClick, o
       <div className="grid grid-cols-8 border-b border-gray-200 bg-white shrink-0">
         <div className="w-20 border-r border-gray-100"></div>
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className={`py-3 text-center border-r border-gray-100 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition ${isToday(day) ? "bg-blue-50/30" : ""}`} onClick={() => onDateClick?.(day)}>
+          <div key={day.toISOString()} className={`py-3 text-center border-r border-gray-100 flex flex-col items-center justify-center ${isToday(day) ? "bg-blue-50/30" : ""}`}>
             <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${isToday(day) ? "text-blue-600" : "text-gray-400"}`}>{format(day, "EEE", { locale: ptBR })}</div>
             <div className={`text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full ${isToday(day) ? "bg-blue-600 text-white" : "text-gray-900"}`}>{format(day, "d")}</div>
           </div>
@@ -557,7 +396,13 @@ const WeekView = ({ currentDate, timeSlots, events, onEventClick, onDateClick, o
             const eventsWithLayout = calculateEventLayout(dayEvents);
             return (
               <div key={day.toISOString()} className="flex flex-col relative border-r border-gray-100 bg-white">
-                {timeSlots.map((t) => <div key={t} className="h-[70px] border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer" onClick={() => onTimeSlotClick?.(day, t)} />)}
+                {timeSlots.map((t) => (
+                  <div
+                    key={t}
+                    className="h-[70px] border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer"
+                    onClick={() => onTimeSlotClick?.(day, t)}
+                  />
+                ))}
                 <div className="absolute inset-0 p-1 pointer-events-none">
                   {eventsWithLayout.map((evt, index) => {
                     const eventStyle = calculateEventStyle(evt.startTime, evt.endTime);
@@ -614,7 +459,11 @@ const DayView = ({ currentDay, timeSlots, events, onEventClick, onTimeSlotClick 
           </div>
           <div className="relative bg-white">
             {timeSlots.map((t) => (
-              <div key={t} className="h-20 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer relative" onClick={() => onTimeSlotClick?.(currentDay, t)}>
+              <div
+                key={t}
+                className="h-20 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer relative"
+                onClick={() => onTimeSlotClick?.(currentDay, t)}
+              >
                 <div className="absolute top-1/2 w-full border-t border-dotted border-gray-100 pointer-events-none" />
               </div>
             ))}
@@ -656,8 +505,6 @@ const CalendarView = ({
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
   const [viewType, setViewType] = useState("month");
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newDate, setNewDate] = useState("");
 
   const timeSlots = useMemo(() => {
     const slots = [];
@@ -693,25 +540,36 @@ const CalendarView = ({
     return "";
   };
 
-  // Abre o modal de criação de evento com a data pré-selecionada
-  const handleOpenCreateModal = (dateStr) => {
-    setNewDate(dateStr);
-    setIsCreateModalOpen(true);
-  };
-
   const handleDayClick = (day) => {
     setCurrentDate(day);
     onDateSelect?.(day);
-    handleOpenCreateModal(format(day, "yyyy-MM-dd"));
+    onEventCreate?.({
+      eventDate: format(day, "yyyy-MM-dd"),
+      startTime: "",
+      endTime: "",
+    });
   };
 
   const handleTimeSlotClick = (day, time) => {
     setCurrentDate(day);
-    handleOpenCreateModal(format(day, "yyyy-MM-dd"));
+    onDateSelect?.(day);
+    onEventCreate?.({
+      eventDate: format(day, "yyyy-MM-dd"),
+      startTime: time,
+      endTime: "",
+    });
   };
 
   const handleEventClick = (evt) => {
     setSelectedEvent(evt);
+  };
+
+  const handleCreateClick = () => {
+    onEventCreate?.({
+      eventDate: format(currentDate, "yyyy-MM-dd"),
+      startTime: "",
+      endTime: "",
+    });
   };
 
   return (
@@ -745,7 +603,7 @@ const CalendarView = ({
         </div>
         <div className="flex items-center gap-7 bg-white p-1">
           <button
-            onClick={() => handleOpenCreateModal(format(currentDate, "yyyy-MM-dd"))}
+            onClick={handleCreateClick}
             className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold text-white transition-colors bg-[#007EA7] rounded-md shadow-sm cursor-pointer hover:bg-[#046b8d] shrink-0 whitespace-nowrap"
             title="Nova Tarefa"
           >
@@ -807,7 +665,6 @@ const CalendarView = ({
                 timeSlots={timeSlots}
                 events={events}
                 onEventClick={handleEventClick}
-                onDateClick={handleDayClick}
                 onTimeSlotClick={handleTimeSlotClick}
               />
             </motion.div>
@@ -843,23 +700,12 @@ const CalendarView = ({
                 endereco.rua, endereco.numero, endereco.complemento,
                 endereco.bairro, endereco.cidade, endereco.uf, endereco.cep
               ].filter(Boolean);
-              window.open(`https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addressParts.join(", "))}`, "_blank");
+              window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressParts.join(", "))}`, "_blank");
             }}
             onEventDeleted={onEventDeleted}
           />
         )}
       </AnimatePresence>
-
-      <CreateEventModal 
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onCreate={(data) => {
-          console.log("Criar evento com dados:", data);
-          onEventCreate?.(data); // Passa para o pai se necessário
-        }}
-        initialDate={newDate}
-      />
-
     </motion.div>
   );
 };

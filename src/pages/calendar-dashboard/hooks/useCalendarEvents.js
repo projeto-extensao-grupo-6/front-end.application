@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import agendamentosService from "../../../services/agendamentosService";
-import { groupEventsByDate } from "../utils/eventHelpers";
+import { useState, useEffect, useMemo } from "react";
+import { format } from "date-fns";
+import { getEventDate } from "../utils/eventHelpers";
 
 /**
  * Hook para gerenciar detalhes de um evento/agendamento
@@ -8,46 +8,35 @@ import { groupEventsByDate } from "../utils/eventHelpers";
  * @returns {Object} - Estado e funções do evento
  */
 export const useEventDetails = (initialEvent) => {
-  const [details, setDetails] = useState(initialEvent);
+  const [details, setDetails] = useState(initialEvent || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!initialEvent?.id) return;
+    
     const fetchDetails = async () => {
-      if (!initialEvent?.id) {
-        setDetails(initialEvent);
-        return;
-      }
-
       setLoading(true);
       setError(null);
-
       try {
-        const response = await fetch(
-          `http://localhost:3000/api/agendamentos/${initialEvent.id}`
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          // Mescla dados da API com dados iniciais, preservando funcionários
-          const merged = {
-            ...initialEvent,
-            ...data,
-            funcionarios: data.funcionarios?.length
-              ? data.funcionarios
-              : initialEvent.funcionarios || [],
-          };
-          
-          setDetails(merged);
-        } else {
-          setDetails(initialEvent);
-          setError("Não foi possível carregar os detalhes completos");
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`http://localhost:3000/api/agendamentos/${initialEvent.id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error("Falha ao buscar detalhes do evento");
         }
+        
+        const data = await response.json();
+        setDetails(data);
       } catch (err) {
-        console.error("Erro ao buscar detalhes do evento:", err);
+        console.error("Erro ao buscar detalhes:", err);
+        setError(err.message);
         setDetails(initialEvent);
-        setError("Erro ao carregar detalhes");
       } finally {
         setLoading(false);
       }
@@ -56,12 +45,7 @@ export const useEventDetails = (initialEvent) => {
     fetchDetails();
   }, [initialEvent]);
 
-  return {
-    details,
-    loading,
-    error,
-    setError,
-  };
+  return { details, loading, error };
 };
 
 /**
@@ -71,39 +55,36 @@ export const useEventDetails = (initialEvent) => {
  */
 export const useDeleteAgendamento = (onSuccess) => {
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState(null);
 
-  const deleteAgendamento = useCallback(
-    async (id) => {
-      if (!id) {
-        setError("ID do agendamento não fornecido");
-        return false;
+  const deleteAgendamento = async (id) => {
+    if (!id) return false;
+    
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://localhost:3000/api/agendamentos/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha ao excluir agendamento");
       }
 
-      setDeleting(true);
-      setError(null);
-
-      try {
-        await agendamentosService.delete(id);
-        onSuccess?.(id);
-        return true;
-      } catch (err) {
-        console.error("Erro ao deletar agendamento:", err);
-        setError("Erro ao excluir agendamento. Tente novamente.");
-        return false;
-      } finally {
-        setDeleting(false);
-      }
-    },
-    [onSuccess]
-  );
-
-  return {
-    deleteAgendamento,
-    deleting,
-    error,
-    setError,
+      onSuccess?.(id);
+      return true;
+    } catch (err) {
+      console.error("Erro ao excluir:", err);
+      return false;
+    } finally {
+      setDeleting(false);
+    }
   };
+
+  return { deleteAgendamento, deleting };
 };
 
 /**
@@ -113,34 +94,15 @@ export const useDeleteAgendamento = (onSuccess) => {
  */
 export const useEventsByDate = (events) => {
   const eventsByDate = useMemo(() => {
-    return groupEventsByDate(events);
+    const grouped = {};
+    events?.forEach((evt) => {
+      const dateKey = getEventDate(evt);
+      if (!dateKey) return;
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(evt);
+    });
+    return grouped;
   }, [events]);
 
-  const getEventsForDate = useCallback(
-    (dateKey) => {
-      return eventsByDate[dateKey] || [];
-    },
-    [eventsByDate]
-  );
-
-  const hasEvents = useCallback(
-    (dateKey) => {
-      return eventsByDate[dateKey] && eventsByDate[dateKey].length > 0;
-    },
-    [eventsByDate]
-  );
-
-  const getEventCount = useCallback(
-    (dateKey) => {
-      return eventsByDate[dateKey]?.length || 0;
-    },
-    [eventsByDate]
-  );
-
-  return {
-    eventsByDate,
-    getEventsForDate,
-    hasEvents,
-    getEventCount,
-  };
+  return { eventsByDate };
 };
