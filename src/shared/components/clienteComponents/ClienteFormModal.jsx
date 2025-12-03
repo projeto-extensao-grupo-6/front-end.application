@@ -36,7 +36,7 @@ import {
 
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
-import Api from "../../../axios/Api";
+import api from "../../../service/api";
 
 const TextMaskAdapter = React.forwardRef(function TextMaskAdapter(
   props,
@@ -62,6 +62,43 @@ TextMaskAdapter.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
+const CpfMaskAdapter = React.forwardRef(function CpfMaskAdapter(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      radix="."
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
+
+const CepMaskAdapter = React.forwardRef(function CepMaskAdapter(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000"
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
+
+CpfMaskAdapter.propTypes = {
+  name: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
+CepMaskAdapter.propTypes = {
+  name: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
 const getClienteInicial = () => ({
   nome: "",
   contato: "",
@@ -80,8 +117,7 @@ const getNovoServico = () => ({
   dataOrcamento: new Date().toISOString().split("T")[0],
   dataServico: "",
   formaPagamento: "N/A",
-  desconto: 0,
-  funcionario: "N/A",
+  desconto: 0.1
 });
 
 export default function ClienteFormModal({
@@ -93,25 +129,6 @@ export default function ClienteFormModal({
 }) {
   const [clienteData, setClienteData] = useState(getClienteInicial());
   const [historico, setHistorico] = useState([]);
-  
-  const [funcionarios, setFuncionarios] = useState([]);
-
-  useEffect(() => {
-    if (open) {
-      const fetchFuncionarios = async () => {
-        try {
-          const response = await Api.get("/funcionarios");
-          setFuncionarios(response.data);
-        } catch (error) {
-          console.error("Erro ao buscar funcionários:", error);
-        }
-      };
-      
-      fetchFuncionarios();
-    } else {
-      setFuncionarios([]); 
-    }
-  }, [open]); 
 
 useEffect(() => {
   if (modoEdicao && clienteInicial) {
@@ -178,29 +195,102 @@ useEffect(() => {
     setHistorico(novoHistorico);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     const dadosCompletos = {
       nome: clienteData.nome,
-      cpf: clienteData.cpf,
+      cpf: clienteData.cpf ? clienteData.cpf.replace(/\D/g, "") : undefined,
       email: clienteData.email,
-      telefone: clienteData.contato.replace(/\D/g, ""),
+      telefone: clienteData.contato ? clienteData.contato.replace(/\D/g, "") : undefined,
       status: clienteData.status,
-
       enderecos: [
         {
           rua: clienteData.rua,
           complemento: clienteData.complemento || "",
-          cep: clienteData.cep,
+          cep: clienteData.cep ? clienteData.cep.replace(/\D/g, "") : "",
           cidade: clienteData.cidade,
           bairro: clienteData.bairro,
           uf: clienteData.uf,
           pais: "Brasil",
+          numero: clienteData.numero || undefined,
         },
       ],
-
     };
-    onSubmit(dadosCompletos);
+
+    let createdCliente = null;
+    try {
+      const maybePromise = onSubmit(dadosCompletos);
+      if (maybePromise && typeof maybePromise.then === "function") {
+        createdCliente = await maybePromise;
+      } else {
+        createdCliente = maybePromise || clienteInicial || null;
+      }
+    } catch (err) {
+      createdCliente = clienteInicial || null;
+    }
+
+    // se onSubmit retornou um token (string) — não é o cliente criado
+    if (typeof createdCliente === "string") {
+      // log para debugging e fallback para clienteInicial
+      console.warn("onSubmit returned a string (possible token). Ignoring as createdCliente:", createdCliente);
+      createdCliente = clienteInicial || null;
+    }
+
+    const clienteId = createdCliente?.id || clienteInicial?.id || undefined;
+
+    if (historico && historico.length > 0) {
+      const formatDecimal = (val) => {
+        const n = parseFloat(val);
+        return isNaN(n) ? "0.00" : n.toFixed(2);
+      };
+
+      const pedidosToPost = historico.map((h) => {
+        const valor = formatDecimal(h.valor);
+        return {
+          valorTotal: valor,
+          ativo: true,
+          observacao: h.servico || h.observacao || "",
+          formaPagamento: h.formaPagamento || "N/A",
+          tipoPedido: null,
+          cliente: clienteId ? { id: clienteId } : {
+            nome: dadosCompletos.nome,
+            cpf: dadosCompletos.cpf,
+            email: dadosCompletos.email,
+            telefone: dadosCompletos.telefone,
+            status: dadosCompletos.status,
+            enderecos: dadosCompletos.enderecos,
+          },
+          status: { nome: "PENDENTE", tipo: "AGENDAMENTO" },
+          produtos: [],
+          servico: {
+            nome: h.servico || "",
+            descricao: h.descricao || h.servico || "",
+            precoBase: valor,
+            ativo: true,
+            etapa: { nome: h.etapaNome || "PENDENTE", tipo: "PEDIDO" },
+          },
+        };
+      });
+
+      console.log(pedidosToPost)
+
+      try {
+        for (const p of pedidosToPost) {
+          const payload = JSON.parse(JSON.stringify(p));
+          if (!payload) continue;
+          console.log("Criando pedido com payload:", payload);
+
+          const token = localStorage.getItem("token");
+          const headers = token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+
+          await api.post("/pedidos", payload, { headers });
+        }
+      } catch (err) {
+        console.error("Erro ao criar pedidos:", err);
+      }
+    }
+
     handleClose();
   };
 
@@ -262,9 +352,12 @@ useEffect(() => {
                     required
                     label="CPF"
                     name="cpf"
-                    placeholder="Ex: 123.456.789-00"
+                    placeholder="Ex: 12345678900"
                     value={clienteData.cpf || ""}
                     onChange={handleChange}
+                    InputProps={{
+                      inputComponent: CpfMaskAdapter,
+                    }}
                   />
 
                   <TextField
@@ -321,6 +414,9 @@ useEffect(() => {
                     placeholder="Ex: 80035010"
                     value={clienteData.cep || ""}
                     onChange={handleChange}
+                    InputProps={{
+                      inputComponent: CepMaskAdapter,
+                    }}
                   />
 
                   <TextField
@@ -522,36 +618,6 @@ useEffect(() => {
                               ),
                             }}
                           />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                          <TextField
-                            select 
-                            fullWidth
-                            label="Funcionário"
-                            value={hist.funcionario || "N/A"}
-                            onChange={(e) =>
-                              handleHistoricoChange(
-                                index,
-                                "funcionario",
-                                e.target.value
-                              )
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <BadgeOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          >
-                            <MenuItem value="N/A">N/A</MenuItem>
-                            {funcionarios.map((func) => (
-                              <MenuItem key={func.id} value={func.nome}>
-                                {func.nome}
-                              </MenuItem>
-                            ))}
-                          </TextField>
                         </Grid>
                       </Grid>
                     </Box>

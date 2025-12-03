@@ -462,126 +462,73 @@ export default function Clientes() {
                                       size="small"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setOpenRowId(openRowId === c.id ? null : c.id);
+                                        setClienteDetalhes(c);
+                                        setOpenDetails(true);
                                       }}
                                     >
-                                      {openRowId === c.id ? (
-                                        <KeyboardArrowUp />
-                                      ) : (
-                                        <KeyboardArrowDown />
-                                      )}
+                                      <KeyboardArrowDown />
                                     </IconButton>
                                   </div>
                                 </TableCell>
                               </TableRow>
 
-                              <TableRow>
-                                <TableCell colSpan={6} className="p-0">
-                                  <Collapse
-                                    in={openRowId === c.id}
-                                    timeout="auto"
-                                    unmountOnExit
-                                  >
-                                    <div className="m-4 p-4 bg-gray-50 rounded-lg border border-gray-200 flex flex-col items-center gap-4">
-                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full text-center">
-                                        <span className="font-semibold text-gray-900">
-                                          Endereço:{" "}
-                                          <span className="font-normal text-gray-600 block md:inline">
-                                            {getPrimaryAddress(c).rua}
-                                          </span>
-                                        </span>
-                                        <span className="font-semibold text-gray-900">
-                                          Cidade:{" "}
-                                          <span className="font-normal text-gray-600 block md:inline">
-                                            {getPrimaryAddress(c).cidade}
-                                          </span>
-                                        </span>
-                                        <span className="font-semibold text-gray-900">
-                                          UF:{" "}
-                                          <span className="font-normal text-gray-600 block md:inline">
-                                            {getPrimaryAddress(c).uf}
-                                          </span>
-                                        </span>
-                                      </div>
+                             </React.Fragment>
+                           );
+                         })
+                       )}
+                     </TableBody>
+                   </Table>
+                 </TableContainer>
+               </div>
+ 
+               {clientesFiltrados.length > 0 && (
+                 <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-4 border-t border-gray-200 gap-3">
+                   <span className="text-sm text-gray-600">
+                     Mostrando {indexPrimeiro + 1} a{" "}
+                     {Math.min(indexUltimo, clientesFiltrados.length)} de{" "}
+                     {clientesFiltrados.length} resultados
+                   </span>
+                   <div className="flex gap-2">
+                     <Button
+                       variant="outlined"
+                       size="small"
+                       onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
+                       disabled={pagina === 1}
+                       className="text-xs"
+                     >
+                       Anterior
+                     </Button>
+                     <Button
+                       variant="outlined"
+                       size="small"
+                       onClick={() =>
+                         setPagina((prev) => Math.min(prev + 1, totalPaginas))
+                       }
+                       disabled={pagina === totalPaginas}
+                       className="text-xs"
+                     >
+                       Próximo
+                     </Button>
+                   </div>
+                 </div>
+               )}
+             </div>
+           </div>
+         </main>
 
-                                      <Divider className="w-full" />
-
-                                      <div className="w-full">
-                                        <h3 className="text-center text-lg font-semibold mb-3">
-                                          Histórico de Serviços
-                                        </h3>
-
-                                        {hasHistory ? (
-                                          <div className="w-full flex flex-col gap-4">
-                                            {c.historicoServicos.map((hist) => (
-                                              <HistoryCard
-                                                hist={hist}
-                                                key={hist.id || Math.random()}
-                                              />
-                                            ))}
-                                          </div>
-                                        ) : (
-                                          <p className="text-center w-full text-gray-500">
-                                            Nenhum histórico de serviço encontrado.
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </Collapse>
-                                </TableCell>
-                              </TableRow>
-                            </React.Fragment>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </div>
-
-              {clientesFiltrados.length > 0 && (
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-4 border-t border-gray-200 gap-3">
-                  <span className="text-sm text-gray-600">
-                    Mostrando {indexPrimeiro + 1} a{" "}
-                    {Math.min(indexUltimo, clientesFiltrados.length)} de{" "}
-                    {clientesFiltrados.length} resultados
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
-                      disabled={pagina === 1}
-                      className="text-xs"
-                    >
-                      Anterior
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() =>
-                        setPagina((prev) => Math.min(prev + 1, totalPaginas))
-                      }
-                      disabled={pagina === totalPaginas}
-                      className="text-xs"
-                    >
-                      Próximo
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </main>
-
-        <ClienteFormModal
-          open={openForm}
-          onClose={() => setOpenForm(false)}
-          onSubmit={atualizarClientes}
-          modoEdicao={modoEdicao}
-          clienteInicial={clienteSelecionado}
+         <ClienteFormModal
+           open={openForm}
+           onClose={() => setOpenForm(false)}
+           onSubmit={atualizarClientes}
+           modoEdicao={modoEdicao}
+           clienteInicial={clienteSelecionado}
+         />
+        <ClienteDetailsModal
+          open={openDetails}
+          onClose={() => setOpenDetails(false)}
+          cliente={clienteDetalhes}
         />
-      </div>
-    </div>
-  );
-}
+       </div>
+     </div>
+   );
+ }
