@@ -26,14 +26,22 @@ const CalendarDashboard = () => {
       const data = response.data;
 
       const transformedTasks = data.map((agendamento) => {
-        let dataFormatada = agendamento.dataAgendamento;
-        if (agendamento.dataAgendamento && agendamento.dataAgendamento.includes("/")) {
-          const [dia, mes, ano] = agendamento.dataAgendamento.split("/");
-          dataFormatada = `${ano}-${mes}-${dia}`;
-        }
+        // Usar a data original da API (formato YYYY-MM-DD)
+        const dataFormatada = agendamento.dataAgendamento;
 
+        // Usar os horários originais da API (formato HH:mm:ss -> HH:mm)
         const startTime = agendamento.inicioAgendamento?.substring(0, 5) || "00:00";
         const endTime = agendamento.fimAgendamento?.substring(0, 5) || "00:00";
+
+        // Criar título completo para o modal usando código + nome do serviço
+        let fullTitle = "Agendamento";
+        if (agendamento.servico) {
+          const codigo = agendamento.servico.codigo || "";
+          const nome = agendamento.servico.nome || "";
+          fullTitle = `${codigo} ${nome}`.trim() || agendamento.tipoAgendamento || "Agendamento";
+        } else {
+          fullTitle = agendamento.tipoAgendamento || "Agendamento";
+        }
 
         let backgroundColor = "#3B82F6";
         if (agendamento.tipoAgendamento === "SERVICO") {
@@ -44,16 +52,13 @@ const CalendarDashboard = () => {
 
         return {
           id: agendamento.id,
-          title: agendamento.tipoAgendamento || "Agendamento",
+          title: agendamento.tipoAgendamento || "Agendamento", // Para o card no calendário
+          fullTitle: fullTitle, // Para o modal de detalhes
           date: dataFormatada,
           startTime: startTime,
           endTime: endTime,
           backgroundColor: backgroundColor,
-          observacao: agendamento.observacao,
-          endereco: agendamento.endereco,
-          funcionarios: agendamento.funcionarios,
-          pedido: agendamento.pedido,
-          statusAgendamento: agendamento.statusAgendamento,
+          // Manter todos os dados originais da API
           ...agendamento,
         };
       });
@@ -61,7 +66,7 @@ const CalendarDashboard = () => {
       setTasks(transformedTasks);
       localStorage.setItem("tasks", JSON.stringify(transformedTasks));
     } catch (error) {
-      console.error(" Erro ao carregar agendamentos:", error);
+      console.error("❌ Erro ao carregar agendamentos:", error);
     }
   };
 

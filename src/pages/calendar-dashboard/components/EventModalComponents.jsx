@@ -9,9 +9,6 @@ import {
 } from "lucide-react";
 import { getInitials } from "../utils/eventHelpers";
 
-/**
- * Componente genérico para linha de informação
- */
 export const EventInfoRow = ({ icon: Icon, title, content, className = "" }) => {
   if (!content) return null;
 
@@ -28,9 +25,6 @@ export const EventInfoRow = ({ icon: Icon, title, content, className = "" }) => 
   );
 };
 
-/**
- * Cabeçalho do modal de detalhes
- */
 export const EventHeader = ({ title, badges, onClose }) => {
   return (
     <div className="relative bg-white px-8 py-6 border-b border-gray-100">
@@ -59,7 +53,7 @@ export const EventHeader = ({ title, badges, onClose }) => {
         <h2 className="text-2xl font-bold text-gray-900">
           {title || "Sem título"}
         </h2>
-        
+        <br />
         {badges && badges.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {badges.map((badge, index) => (
@@ -77,10 +71,22 @@ export const EventHeader = ({ title, badges, onClose }) => {
   );
 };
 
-/**
- * Informações principais do evento
- */
-export const EventInfo = ({ date, startTime, endTime, pedido, endereco, cep }) => {
+export const EventInfo = ({ date, startTime, endTime, servico, endereco, produtos }) => {
+  const formatEndereco = (endereco) => {
+    if (!endereco) return "Endereço não informado";
+    
+    const parts = [
+      endereco.rua,
+      endereco.numero ? `nº ${endereco.numero}` : null,
+      endereco.complemento,
+      endereco.bairro,
+      endereco.cidade,
+      endereco.uf
+    ].filter(Boolean);
+    
+    return parts.join(", ");
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 gap-8 w-full">
@@ -99,14 +105,26 @@ export const EventInfo = ({ date, startTime, endTime, pedido, endereco, cep }) =
           </p>
         </div>
       </div>
-
+      <br />
       <div className="border-t border-gray-100"></div>
+      <br />
 
       <EventInfoRow
         icon={FileText}
-        title="Pedido Vinculado"
-        content={pedido}
+        title="Serviço"
+        content={
+          servico ? (
+            <div>
+              <p className="font-semibold">{servico.nome}</p>
+              <p className="text-xs text-gray-600 mt-1">{servico.descricao}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Código: {servico.codigo} | Valor: R$ {servico.precoBase?.toFixed(2)}
+              </p>
+            </div>
+          ) : "Serviço não informado"
+        }
       />
+      <br />
 
       <div className="space-y-1">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
@@ -114,19 +132,54 @@ export const EventInfo = ({ date, startTime, endTime, pedido, endereco, cep }) =
           Localização
         </p>
         <p className="text-sm font-medium text-gray-900 leading-relaxed">
-          {endereco}
+          {formatEndereco(endereco)}
         </p>
-        {cep && (
-          <p className="text-xs text-gray-500 mt-2.5">CEP: {cep}</p>
+        {endereco?.cep && (
+          <p className="text-xs text-gray-500 mt-2.5">CEP: {endereco.cep}</p>
         )}
       </div>
+      <br />
+      {/* Produtos utilizados */}
+      {produtos && produtos.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            Produtos
+          </p>
+          <div className="space-y-2">
+            {produtos.map((item, index) => (
+              <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-gray-900">{item.produto.nome}</p>
+                    <p className="text-xs text-gray-600 mt-1">{item.produto.descricao}</p>
+                    {item.produto.atributos && item.produto.atributos.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {item.produto.atributos.map((attr, attrIndex) => (
+                          <span key={attrIndex} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                            {attr.tipo}: {attr.valor}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right ml-3">
+                    <p className="text-xs text-gray-500">Qtd. Reservada</p>
+                    <p className="font-semibold text-sm">{item.quantidadeReservada}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <br />
+        </div>
+      )}
     </>
   );
 };
 
-/**
- * Equipe/Funcionários do evento
- */
 export const EventTeam = ({ funcionarios }) => {
   if (!funcionarios || funcionarios.length === 0) {
     return (
@@ -165,15 +218,12 @@ export const EventTeam = ({ funcionarios }) => {
     </div>
   );
 };
-
-/**
- * Observações do evento
- */
 export const EventObservations = ({ observacao }) => {
   if (!observacao) return null;
 
   return (
     <div className="space-y-2">
+      <br />
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
         <MessageSquare size={14} />
         Observações
@@ -185,9 +235,6 @@ export const EventObservations = ({ observacao }) => {
   );
 };
 
-/**
- * Rodapé com ações do modal
- */
 export const EventFooter = ({
   onDelete,
   onViewMap,
@@ -216,9 +263,6 @@ export const EventFooter = ({
   );
 };
 
-/**
- * Indicador de carregamento
- */
 export const LoadingState = () => {
   return (
     <div className="flex flex-col items-center justify-center py-16">
@@ -247,9 +291,6 @@ export const LoadingState = () => {
   );
 };
 
-/**
- * Mensagem de erro
- */
 export const ErrorMessage = ({ message }) => {
   if (!message) return null;
 

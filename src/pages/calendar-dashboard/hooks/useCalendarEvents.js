@@ -16,7 +16,19 @@ export const useEventDetails = (initialEvent) => {
       setError(null);
       try {
         const response = await Api.get(`/agendamentos/${initialEvent.id}`);
-        setDetails(response.data);
+        const apiData = response.data;
+        
+        // Mesclar dados da API com dados processados do initialEvent
+        const mergedDetails = {
+          ...apiData, // Dados completos da API
+          title: initialEvent.fullTitle || initialEvent.title, // Usar fullTitle para o modal
+          startTime: initialEvent.startTime, // Manter horário formatado
+          endTime: initialEvent.endTime, // Manter horário formatado
+          date: initialEvent.date, // Manter data processada
+          backgroundColor: initialEvent.backgroundColor // Manter cor processada
+        };
+        
+        setDetails(mergedDetails);
       } catch (err) {
         console.error("Erro ao buscar detalhes:", err);
         setError(err.message);

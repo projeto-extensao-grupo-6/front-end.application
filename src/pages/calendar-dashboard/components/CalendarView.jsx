@@ -138,10 +138,10 @@ const EventDetailsModal = ({ initialEvent, onClose, onGeoLocationClick, onEventD
     });
   }
 
-  const formattedDate = details.date
+  const formattedDate = details.dataAgendamento
     ? format(
         parseISO(
-          details.date.includes("T") ? details.date : `${details.date}T00:00:00`
+          details.dataAgendamento.includes("T") ? details.dataAgendamento : `${details.dataAgendamento}T00:00:00`
         ),
         "dd 'de' MMMM 'de' yyyy",
         { locale: ptBR }
@@ -157,51 +157,55 @@ const EventDetailsModal = ({ initialEvent, onClose, onGeoLocationClick, onEventD
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm"
             onClick={onClose}
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <EventHeader
-                title={details.title}
-                badges={badges}
-                onClose={onClose}
-              />
+            <div className="flex items-start justify-center min-h-screen pt-20 pb-10 px-4">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden border border-gray-200 flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EventHeader
+                  title={details.title}
+                  badges={badges}
+                  onClose={onClose}
+                />
 
-              <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-                {loading ? (
-                  <LoadingState />
-                ) : (
-                  <>
-                    <ErrorMessage message={error} />
-                    <EventInfo
-                      date={formattedDate}
-                      startTime={details.startTime}
-                      endTime={details.endTime}
-                      pedido={getPedidoLabel(details.pedido)}
-                      endereco={formatAddress(details.endereco)}
-                      cep={details.endereco?.cep}
-                    />
-                    <EventTeam funcionarios={details.funcionarios} />
-                    <EventObservations observacao={details.observacao} />
-                  </>
-                )}
-              </div>
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="p-6 space-y-6">
+                    {loading ? (
+                      <LoadingState />
+                    ) : (
+                      <>
+                        <ErrorMessage message={error} />
+                        <EventInfo
+                          date={formattedDate}
+                          startTime={details.startTime}
+                          endTime={details.endTime}
+                          servico={details.servico}
+                          endereco={details.endereco}
+                          produtos={details.produtos}
+                        />
+                        <EventTeam funcionarios={details.funcionarios} />
+                        <EventObservations observacao={details.observacao} />
+                      </>
+                    )}
+                  </div>
+                </div>
 
-              <EventFooter
-                onDelete={handleDeleteClick}
-                onViewMap={() => onGeoLocationClick?.(details.endereco)}
-                isDeleting={deleting}
-                isLoading={loading}
-                hasAddress={!!details.endereco}
-              />
-            </motion.div>
+                <EventFooter
+                  onDelete={handleDeleteClick}
+                  onViewMap={() => onGeoLocationClick?.(details.endereco)}
+                  isDeleting={deleting}
+                  isLoading={loading}
+                  hasAddress={!!details.endereco}
+                />
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
