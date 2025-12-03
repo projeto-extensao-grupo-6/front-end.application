@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { GoogleMap, Marker, LoadScript, DirectionsRenderer } from '@react-google-maps/api';
 import { Reorder, AnimatePresence } from 'framer-motion';
 import Header from '../../shared/components/header/header';
@@ -17,19 +18,16 @@ import {
 
 const MAPS_KEY = import.meta.env.VITE_MAPS_KEY;
 
-// Dimensões padrão para o contêiner do mapa
 const mapContainerStyle = {
   height: '100%',
   width: '100%',
 };
 
-// Coordenadas centrais utilizadas como ponto inicial padrão
 const defaultCenter = {
   lat: -23.64403375840359,
   lng: -46.783811794234204
 };
 
-// Máscara visual de CEP para o campo de entrada
 const maskCep = (value) => {
   if (!value) return "";
   let v = value.replace(/\D/g, "");
@@ -41,16 +39,16 @@ const maskCep = (value) => {
 };
 
 export default function RotasResponsivoCompacto() {
-  // Controle de exibição do menu lateral
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Controle da altura dinâmica do cabeçalho
   const [headerHeight, setHeaderHeight] = useState(80);
   const headerRef = useRef(null);
 
+  const location = useLocation();
+  const addressFromState = location.state?.address;
+
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // Recalcula a altura do cabeçalho em mudanças de tamanho da janela
   useEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
@@ -62,10 +60,8 @@ export default function RotasResponsivoCompacto() {
     return () => window.removeEventListener("resize", updateHeight);
   }, []);
 
-  // Indica se a API do Google Maps já foi carregada
   const [googleLoaded, setGoogleLoaded] = useState(false);
 
-  // Lista de endereços utilizados na rota, armazenada no sessionStorage
   const [addresses, setAddresses] = useState(() => {
     const savedAddresses = sessionStorage.getItem('routeAddresses');
     if (savedAddresses) {
@@ -76,27 +72,21 @@ export default function RotasResponsivoCompacto() {
     ];
   });
 
-  // Dados retornados pelo cálculo de rota do Google Maps
   const [directionsResponse, setDirectionsResponse] = useState(null);
 
-  // Métricas globais da rota
   const [totalTime, setTotalTime] = useState('0 min');
   const [totalDistance, setTotalDistance] = useState('0 km');
   const [finalPoint, setFinalPoint] = useState('N/A');
 
-  // ID do item que está sendo editado
   const [editingId, setEditingId] = useState(null);
 
-  // Referências dos campos de CEP e número
   const cepInputRef = useRef(null);
   const numeroInputRef = useRef(null);
 
-  // Mantém os endereços sincronizados com o sessionStorage
   useEffect(() => {
     sessionStorage.setItem('routeAddresses', JSON.stringify(addresses));
   }, [addresses]);
 
-  // Quando endereços ou a API do Google estiverem carregados, recalcula a rota
   useEffect(() => {
     if (!googleLoaded) return;
 
@@ -116,7 +106,35 @@ export default function RotasResponsivoCompacto() {
     }
   }, [addresses, googleLoaded]);
 
-  // Realiza o cálculo da rota utilizando a Directions API
+  useEffect(() => {
+    if (addressFromState && googleLoaded) {
+      const addAddressFromAgendamento = async () => {
+      
+        const addressExists = addresses.some(addr => 
+          addr.formatted && addr.formatted.toLowerCase().includes(addressFromState.toLowerCase())
+        );
+        
+        if (!addressExists) {
+          const result = await geoCodeAddress(addressFromState);
+          if (result) {
+            const newAddress = {
+              id: `agendamento-${Date.now()}`,
+              cep: '', 
+              numero: '',
+              formatted: result.formatted,
+              coords: result.location,
+              isFixed: false,
+              fromAgendamento: true 
+            };
+            setAddresses((prev) => [...prev, newAddress]);
+          }
+        }
+      };
+      
+      addAddressFromAgendamento();
+    }
+  }, [addressFromState, googleLoaded]);
+
   const calculateRoute = (currentMarkers) => {
     if (!window.google || !window.google.maps) return;
 
@@ -162,7 +180,25 @@ export default function RotasResponsivoCompacto() {
     );
   };
 
-  // Realiza geocodificação do endereço utilizando CEP + número
+  const geoCodeAddress = async (address) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${MAPS_KEY}`
+      );
+      const data = await response.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        return {
+          location: data.results[0].geometry.location,
+          formatted: data.results[0].formatted_address
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error("Erro ao geocodificar endereço:", err);
+      return null;
+    }
+  };
+
   const geoCodeCepNumero = async (cep, numero) => {
     try {
       const query = `${cep},${numero}`;
@@ -183,7 +219,6 @@ export default function RotasResponsivoCompacto() {
     }
   };
 
-  // Adiciona um novo endereço à lista de paradas
   const addCep = async (cep, numero) => {
     if (!cep) return;
     const cleanCep = cep.replace(/\D/g, "");
@@ -210,12 +245,10 @@ export default function RotasResponsivoCompacto() {
     }
   };
 
-  // Remove uma parada da lista
   const deleteAddress = (id) => {
     setAddresses(addresses.filter(a => a.id !== id));
   };
 
-  // Salva as alterações de edição de um endereço
   const saveEdit = async (id, newCep, newNumero) => {
     const cleanCep = newCep.replace(/\D/g, "");
     const result = await geoCodeCepNumero(cleanCep, newNumero);
@@ -228,12 +261,10 @@ export default function RotasResponsivoCompacto() {
     }
   };
 
-  // Reordena as paradas mantendo o ponto inicial fixo
   const handleReorder = (newOrder) => {
     setAddresses([addresses[0], ...newOrder]);
   };
 
-  // Separa item fixo das paradas arrastáveis
   const fixedItem = addresses[0];
   const draggableItems = addresses.slice(1);
 

@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import { X, Check, Trash2, CheckCircle, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-// ==================================================================================
-// --- COMPONENTES INTERNOS (UI) ---
-// ==================================================================================
+import Api from "../../../axios/Api";
 
 const Button = ({ children, variant = "primary", size = "md", className = "", onClick, disabled, type = "button" }) => {
   const baseClass = "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
@@ -95,40 +91,6 @@ const MultipleSelectCheckmarks = ({ options, value = [], onChange, placeholder, 
   );
 };
 
-// ==================================================================================
-// --- SERVICES ---
-// ==================================================================================
-
-const getAuthHeader = () => {
-  const token = 
-    localStorage.getItem("authToken") || 
-    sessionStorage.getItem("accessToken") ||
-    localStorage.getItem("token") || 
-    localStorage.getItem("access_token") ||
-    (localStorage.getItem("user") && JSON.parse(localStorage.getItem("user")).token);
-  
-  if (!token) {
-    console.error("❌ Token JWT não encontrado no localStorage/sessionStorage");
-    return { token: null, headers: {} };
-  }
-  
-  return { 
-    token, 
-    headers: { Authorization: `Bearer ${token}` } 
-  };
-};
-
-const agendamentosService = {
-  create: async (payload) => {
-    const { headers } = getAuthHeader();
-    return axios.post('http://localhost:3000/api/agendamentos', payload, { headers });
-  }
-};
-
-// ==================================================================================
-// --- MODAL PRINCIPAL ---
-// ==================================================================================
-
 const categoryOptions = [
   { value: "SERVICO", label: "Prestação de serviço", color: "#3B82F6" },
   { value: "ORCAMENTO", label: "Orçamento", color: "#FBBF24" },
@@ -140,7 +102,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     tipoAgendamento: "",
     pedido: null,
     funcionarios: [],
-    produtos: [], // { id, nome, quantidade }
+    produtos: [],
     eventDate: "",
     startTime: "",
     endTime: "",
@@ -160,45 +122,38 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const [step, setStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Estados de dados
   const [funcionariosOptions, setFuncionariosOptions] = useState([]);
   const [pedidoOptions, setPedidoOptions] = useState([]);
   const [produtosOptions, setProdutosOptions] = useState([]); 
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [selectedFuncionarios, setSelectedFuncionarios] = useState([]);
 
-  // --- CARREGAMENTO DE DADOS ---
-
-  // 1. Busca Funcionários
   const fetchFuncionarios = useCallback(async (tipoValue) => {
     if (!tipoValue) {
       setFuncionariosOptions([]);
       return;
     }
     try {
-      const { token, headers } = getAuthHeader();
-      if (!token) {
-        
-        return console.log("Token não encontrado ao buscar funcionários");
-      }
-
-      const response = await axios.get("http://localhost:3000/api/funcionarios", { headers });
-      const todosFuncionarios = response.data || [];
-      let funcionariosFiltrados = todosFuncionarios;
-
-      // Regra de Negócio para Funcionários
       if (tipoValue === "ORCAMENTO") {
-          const leandroEncontrado = todosFuncionarios.find(f => 
-            f.nome && f.nome.toUpperCase().includes("LEANDRO")
-          );
-          if (leandroEncontrado) {
-            funcionariosFiltrados = [leandroEncontrado];
-          } else {
-            funcionariosFiltrados = [{ id: "LEANDRO_FIXO", nome: "Leandro (Técnico)" }];
-          }
+        try {
+          const response = await Api.get("/funcionarios/1");
+          const funcionario = response.data;
+          
+          setFuncionariosOptions([{
+            value: funcionario.id,
+            label: funcionario.nome,
+          }]);
+        } catch (error) {
+          console.error("Erro ao buscar funcionário ID 1:", error);
+          setFuncionariosOptions([{ value: "LEANDRO_FIXO", label: "Leandro (Técnico)" }]);
+        }
+        return;
       }
 
-      setFuncionariosOptions(funcionariosFiltrados.map((func) => ({
+      const response = await Api.get("/funcionarios");
+      const todosFuncionarios = response.data || [];
+
+      setFuncionariosOptions(todosFuncionarios.map((func) => ({
         value: func.id,
         label: func.nome,
       })));
@@ -209,15 +164,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         return console.log("Erro de autenticação ao buscar funcionários");
       }
 
-      if (tipoValue === "ORCAMENTO") {
-        setFuncionariosOptions([{ value: "LEANDRO_FIXO", label: "Leandro (Técnico)" }]);
-      } else {
-        setFuncionariosOptions([]);
-      }
+      setFuncionariosOptions([]);
     }
   }, [navigate]);
 
-  // 2. Busca Pedidos (COM A CORREÇÃO DE ETAPA)
   const fetchOpcoesPedido = useCallback(async (tipoValue) => {
     if (!tipoValue) {
       setPedidoOptions([]);
@@ -225,27 +175,17 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     }
     setLoadingOptions(true);
     try {
-      const { token, headers } = getAuthHeader();
-      if (!token) {
-        
-        return console.log("Token não encontrado ao buscar pedidos");
-      }
-
-      // === CORREÇÃO AQUI: Regra de busca por Etapa ===
       let nomeEtapaParaBusca = "";
       
       if (tipoValue === "ORCAMENTO") {
-          // Se for orçamento, buscamos pedidos PENDENTES
           nomeEtapaParaBusca = "PENDENTE";
       } else if (tipoValue === "SERVICO") {
-          // Se for serviço, buscamos pedidos com ORÇAMENTO APROVADO
           nomeEtapaParaBusca = "ORÇAMENTO APROVADO";
       }
       
       console.log(`🔎 Buscando pedidos com etapa: ${nomeEtapaParaBusca}`);
 
-      const response = await axios.get(`http://localhost:3000/api/pedidos/findAllBy`, {
-        headers: headers,
+      const response = await Api.get("/pedidos/findAllBy", {
         params: { nome: nomeEtapaParaBusca }
       });
 
@@ -267,15 +207,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     }
   }, [navigate]);
 
-  // 3. Busca Produtos
   const fetchProdutos = useCallback(async () => {
     try {
-      const { token, headers } = getAuthHeader();
-      if (!token) {
-        return console.log("Token não encontrado ao buscar produtos");
-      }
-
-      const response = await axios.get("http://localhost:3000/api/produtos", { headers });
+      const response = await Api.get("/produtos");
       const dados = response.data || [];
       
       setProdutosOptions(dados.map(prod => ({
@@ -293,8 +227,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       setProdutosOptions([]);
     }
   }, [navigate]);
-
-  // --- HANDLERS ---
 
   const handleTypeChange = (selectedOption) => {
     const typeValue = selectedOption?.value || selectedOption;
@@ -360,7 +292,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     }));
   };
 
-  // --- INICIALIZAÇÃO ---
 
   useEffect(() => {
     if (isOpen) {
@@ -445,12 +376,10 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
       const tipoValor = formData.tipoAgendamento?.value || formData.tipoAgendamento;
       
-      // ✅ Buscar dados completos dos funcionários
       const funcionariosPayload = await Promise.all(
         selectedFuncionarios.map(async (id) => {
           try {
-            const { headers } = getAuthHeader();
-            const response = await axios.get(`http://localhost:3000/api/funcionarios/${id}`, { headers });
+            const response = await Api.get(`/funcionarios/${id}`);
             const func = response.data;
             
             return {
@@ -480,21 +409,29 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       
       const servicoPayload = pedidoCompleto?.servico 
         ? {
+            id: pedidoCompleto.servico.id || 0,
+            codigo: pedidoCompleto.servico.codigo || `codigo_${Date.now()}`,
             nome: pedidoCompleto.servico.nome || "",
             descricao: pedidoCompleto.servico.descricao || "",
-            precoBase: pedidoCompleto.servico.precoBase || 0,
+            precoBase: pedidoCompleto.servico.precoBase || 0.00,
             ativo: pedidoCompleto.servico.ativo !== undefined ? pedidoCompleto.servico.ativo : true,
+            createdAt: pedidoCompleto.servico.createdAt || new Date().toISOString().replace('T', ' ').substring(0, 19),
             etapa: {
+              id: pedidoCompleto.servico.etapa?.id || 0,
               tipo: pedidoCompleto.servico.etapa?.tipo || "SERVICO",
               nome: pedidoCompleto.servico.etapa?.nome || "PENDENTE"
             }
           }
         : {
+            id: 0,
+            codigo: `codigo_${Date.now()}`,
             nome: "",
             descricao: "",
-            precoBase: 0,
+            precoBase: 0.00,
             ativo: true,
+            createdAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
             etapa: {
+              id: 0,
               tipo: "SERVICO",
               nome: "PENDENTE"
             }
@@ -509,16 +446,16 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         .filter(p => p.id != null)
         .map(p => ({
           produtoId: parseInt(p.id, 10),
-          quantidadeUtilizada: 0,
-          quantidadeReservada: parseFloat(p.quantidade) || 0
+          quantidadeUtilizada: 0.00,
+          quantidadeReservada: parseFloat(p.quantidade) || 0.00
         }));
 
       const payload = {
         servico: servicoPayload,
         tipoAgendamento: tipoValor, 
         dataAgendamento: formatDateToISO(formData.eventDate),
-        inicioAgendamento: formatTimeToHHmmss(formData.startTime), // ✅ Formato string HH:mm:ss
-        fimAgendamento: formatTimeToHHmmss(formData.endTime), // ✅ Formato string HH:mm:ss
+        inicioAgendamento: formatTimeToHHmmss(formData.startTime),
+        fimAgendamento: formatTimeToHHmmss(formData.endTime),
         statusAgendamento: statusAgendamentoPayload,
         observacao: formData.observacao || "",
         endereco: {
@@ -535,11 +472,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
         produtos: produtosPayload
       };
 
-      console.log("📤 Payload enviado:", JSON.stringify(payload, null, 2));
       
-      const result = await agendamentosService.create(payload);
+      const result = await Api.post("/agendamentos", payload);
       
-      console.log("✅ Resposta do servidor:", result.data);
       setIsSuccess(true);
       
       onSave?.(result.data);
@@ -549,20 +484,20 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       }, 1500);
       
     } catch (error) {
-      console.error("❌ Erro detalhado:", error);
-      console.error("❌ Response data:", error.response?.data);
+      console.error(" Erro detalhado:", error);
+      console.error(" Response data:", error.response?.data);
       
       let errorMessage = "Erro ao salvar agendamento";
       
       if (error.response?.status === 500 || error.response?.status === 404) {
         if (error.response?.data?.message?.includes?.("Produto não encontrado")) {
-          errorMessage = "⚠️ Um ou mais produtos selecionados não foram encontrados.";
+          errorMessage = " Um ou mais produtos selecionados não foram encontrados.";
         } else if (error.response?.data?.message?.includes?.("Estoque insuficiente")) {
-          errorMessage = "⚠️ Estoque insuficiente para um ou mais produtos.";
+          errorMessage = " Estoque insuficiente para um ou mais produtos.";
         } else if (error.response?.data?.message?.includes?.("Estoque não encontrado")) {
-          errorMessage = "⚠️ Um ou mais produtos não possuem estoque cadastrado.";
+          errorMessage = " Um ou mais produtos não possuem estoque cadastrado.";
         } else if (error.response?.data?.message?.includes?.("Funcionário não encontrado")) {
-          errorMessage = "⚠️ Um ou mais funcionários não foram encontrados.";
+          errorMessage = " Um ou mais funcionários não foram encontrados.";
         } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         }
@@ -593,7 +528,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
       return;
     }
     
-    // ✅ Criar agendamento imediatamente ao finalizar
     await submitToBackend();
   };
 
@@ -604,7 +538,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   if (!isOpen) return null;
 
-  // TELA DE SUCESSO
   if (isSuccess) {
     return (
       <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={onClose}>
@@ -619,6 +552,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           <p className="text-gray-500 mb-8">
             O agendamento foi salvo com sucesso no sistema e os produtos foram reservados.
           </p>
+          <br />
           <div className="w-full">
             <Button variant="success" size="lg" className="w-full justify-center" onClick={onClose}>
               Concluir
@@ -675,7 +609,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex justify-between">
+                  <label className="text-sm font-semibold text-gray-700 mb-2 flex justify-between">
                     <span>Pedido Vinculado <span className="text-red-500">*</span></span>
                     {loadingOptions && <span className="text-xs text-blue-600 animate-pulse">Carregando...</span>}
                   </label>

@@ -8,9 +8,7 @@ import Icon from "../../shared/components/AppIcon";
 import Button from "../../shared/components/buttons/button.component";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:3000/api";
+import Api from "../../axios/Api";
 
 const CalendarDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,31 +20,10 @@ const CalendarDashboard = () => {
   const [modalInitialData, setModalInitialData] = useState({});
   const [tasks, setTasks] = useState([]);
 
-  const getToken = () => {
-    return (
-      localStorage.getItem("authToken") ||
-      sessionStorage.getItem("accessToken") ||
-      localStorage.getItem("token") ||
-      (localStorage.getItem("user") && JSON.parse(localStorage.getItem("user")).token)
-    );
-  };
-
   const fetchAgendamentos = async () => {
     try {
-      const token = getToken();
-      console.log("Token de autenticação:", token);
-      const response = await axios.get(`${API_BASE_URL}/agendamentos`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }, 
-      });
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const response = await Api.get("/agendamentos");
+      const data = response.data;
 
       const transformedTasks = data.map((agendamento) => {
         let dataFormatada = agendamento.dataAgendamento;
@@ -84,7 +61,7 @@ const CalendarDashboard = () => {
       setTasks(transformedTasks);
       localStorage.setItem("tasks", JSON.stringify(transformedTasks));
     } catch (error) {
-      console.error("❌ Erro ao carregar agendamentos:", error);
+      console.error(" Erro ao carregar agendamentos:", error);
     }
   };
 
@@ -98,25 +75,21 @@ const CalendarDashboard = () => {
       localStorage.setItem("tasks", JSON.stringify(next));
       return next;
     });
-    // opcional: sincronizar novamente
     setTimeout(fetchAgendamentos, 400);
   };
 
   const handleEventCreate = (data = {}) => {
-    // eventData.eventDate vem do CalendarView quando você clica num dia/slot
     let formattedDate =
       data?.eventDate ||
       data?.date ||
       selectedDate?.toISOString()?.split("T")?.[0];
-
-    // Garantir formato yyyy-MM-dd
     if (formattedDate && formattedDate.includes("/")) {
       const [dia, mes, ano] = formattedDate.split("/");
       formattedDate = `${ano}-${mes}-${dia}`;
     }
 
     setModalInitialData({
-      eventDate: formattedDate,           // ✅ pré-preenche a data
+      eventDate: formattedDate,           
       startTime: data?.startTime || "",
       endTime: data?.endTime || "",
       tipoAgendamento: data?.tipoAgendamento || "",
@@ -131,26 +104,24 @@ const CalendarDashboard = () => {
     const newTask = {
       id: Date.now(),
       ...taskData,
-      title: taskData?.category || "Agendamento", // adiciona título
+      title: taskData?.category || "Agendamento", 
       date: taskData.eventDate,
       startTime: taskData.startTime,
       endTime: taskData.endTime,
       createdAt: new Date().toISOString(),
-      backgroundColor: taskData.backgroundColor || "#3B82F6", // corrige aqui
-      color: taskData.backgroundColor, // se precisar também em color
+      backgroundColor: taskData.backgroundColor || "#3B82F6", 
+      color: taskData.backgroundColor, 
     };
-    console.log("Nova tarefa criada:", newTask); // debug
+    console.log("Nova tarefa criada:", newTask); 
     const updatedTasks = [...tasks, newTask];
     setTasks(updatedTasks);
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
 
-  // ✅ Adicionado: handler da seleção de data
   const handleDateSelect = (date) => {
     setSelectedDate(date);
   };
 
-  // ✅ Adicionado: evita erro em SharedCalendarList
   const handleCalendarToggle = (calendarId) => {
     console.log("Toggle calendário:", calendarId);
   };

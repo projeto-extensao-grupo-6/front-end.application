@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   format,
   addDays,
@@ -215,7 +216,6 @@ const EventDetailsModal = ({ initialEvent, onClose, onGeoLocationClick, onEventD
   );
 };
 
-// Visualização mensal do calendário com grid de dias
 const MonthView = ({ currentMonth, events, onDateClick, onEventClick }) => {
   const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 0 });
   const end = startOfWeek(addDays(endOfMonth(currentMonth), 6), { weekStartsOn: 0 });
@@ -305,7 +305,6 @@ const MonthView = ({ currentMonth, events, onDateClick, onEventClick }) => {
   );
 };
 
-// Calcula a posição vertical e altura do evento baseado nos horários de início e fim
 const calculateEventStyle = (startTime, endTime, startHour = 0) => {
   const [startH, startM] = startTime.split(':').map(Number);
   const [endH, endM] = endTime.split(':').map(Number);
@@ -318,41 +317,63 @@ const calculateEventStyle = (startTime, endTime, startHour = 0) => {
   };
 };
 
-// Detecta eventos sobrepostos e calcula a largura e posição de cada um para exibição lado a lado
 const calculateEventLayout = (events) => {
   if (!events || events.length === 0) return [];
-  const sortedEvents = [...events].sort((a, b) => {
+  
+  const validEvents = events.filter(event => 
+    event.startTime && event.endTime && 
+    typeof event.startTime === 'string' && typeof event.endTime === 'string' &&
+    event.startTime.includes(':') && event.endTime.includes(':')
+  );
+  
+  if (validEvents.length === 0) return [];
+  
+  const sortedEvents = [...validEvents].sort((a, b) => {
     const [aH, aM] = a.startTime.split(':').map(Number);
     const [bH, bM] = b.startTime.split(':').map(Number);
     return (aH * 60 + aM) - (bH * 60 + bM);
   });
+  
   const eventsWithLayout = [];
   const columns = [];
+  
   sortedEvents.forEach(event => {
     const [startH, startM] = event.startTime.split(':').map(Number);
     const [endH, endM] = event.endTime.split(':').map(Number);
     const eventStart = startH * 60 + startM;
     const eventEnd = endH * 60 + endM;
+    
     let columnIndex = 0;
     while (columnIndex < columns.length) {
       const lastEventInColumn = columns[columnIndex];
+      if (!lastEventInColumn || !lastEventInColumn.endTime) {
+        break;
+      }
       const [lastEndH, lastEndM] = lastEventInColumn.endTime.split(':').map(Number);
       const lastEnd = lastEndH * 60 + lastEndM;
       if (eventStart >= lastEnd) break;
       columnIndex++;
     }
+    
     if (columnIndex === columns.length) columns.push(event);
     else columns[columnIndex] = event;
+    
     const overlappingColumns = columns.filter(col => {
-      if (!col) return false;
+      if (!col || !col.startTime || !col.endTime) return false;
       const [colStartH, colStartM] = col.startTime.split(':').map(Number);
       const [colEndH, colEndM] = col.endTime.split(':').map(Number);
       const colStart = colStartH * 60 + colStartM;
       const colEnd = colEndH * 60 + colEndM;
       return !(eventEnd <= colStart || eventStart >= colEnd);
     }).length;
-    eventsWithLayout.push({ ...event, column: columnIndex, totalColumns: Math.max(overlappingColumns, columnIndex + 1) });
+    
+    eventsWithLayout.push({ 
+      ...event, 
+      column: columnIndex, 
+      totalColumns: Math.max(overlappingColumns, columnIndex + 1) 
+    });
   });
+  
   return eventsWithLayout;
 };
 
@@ -505,6 +526,7 @@ const CalendarView = ({
   const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
   const [viewType, setViewType] = useState("month");
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const navigate = useNavigate();
 
   const timeSlots = useMemo(() => {
     const slots = [];
@@ -700,7 +722,7 @@ const CalendarView = ({
                 endereco.rua, endereco.numero, endereco.complemento,
                 endereco.bairro, endereco.cidade, endereco.uf, endereco.cep
               ].filter(Boolean);
-              window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressParts.join(", "))}`, "_blank");
+              navigate("/geoLocalizacao", { state: { address: addressParts.join(", ") } });
             }}
             onEventDeleted={onEventDeleted}
           />
