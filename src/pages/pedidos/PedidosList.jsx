@@ -44,7 +44,6 @@ const formatDate = (dateString) => {
 
 const formatPedidoId = (id) => {
     if (!id) return '';
-    // Converter para string primeiro
     const idString = String(id);
     if (/^\d+$/.test(idString)) {
         return idString.padStart(3, '0');
@@ -69,16 +68,15 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
         setError(null);
         
         try {
-            // Usar o endpoint específico para pedidos de produtos
             const result = await PedidosService.buscarPedidosDeProduto();
             
             if (result.success) {
-                // Mapear dados do backend para o formato do frontend
+            
                 const pedidosMapeados = result.data.map(pedido => 
                     PedidosService.mapearParaFrontend(pedido)
                 );
                 
-                // Ordenar por ID (mais recentes primeiro)
+            
                 const pedidosOrdenados = [...pedidosMapeados].sort((a, b) => {
                     const idAisNum = /^\d+$/.test(a.id);
                     const idBisNum = /^\d+$/.test(b.id);
@@ -92,7 +90,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
             } else {
                 setError(result.error);
                 if (result.status === 204) {
-                    setPedidos([]); // Sem dados, mas não é erro
+                    setPedidos([]); 
                     setError(null);
                 }
             }
@@ -124,7 +122,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
-    // Lógica de Filtragem usando o serviço
+
     const listaFiltrada = useMemo(() => {
         return PedidosService.filtrarPedidos(pedidos, {
             busca,
@@ -133,7 +131,6 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
         });
     }, [busca, pedidos, statusFilter, paymentFilter]);
 
-    // Lógica de Paginação
     const totalPages = Math.max(1, Math.ceil(listaFiltrada.length / ITEMS_PER_PAGE));
     const start = (page - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
@@ -166,11 +163,11 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
             const result = await PedidosService.deletarPedido(targetId);
             
             if (result.success) {
-                // Remove o pedido da lista local
+               
                 setPedidos(pedidos.filter(p => p.id !== targetId));
                 fecharTodos();
                 
-                // Opcional: mostrar mensagem de sucesso
+                
                 console.log('Pedido excluído com sucesso');
             } else {
                 console.error('Erro ao excluir pedido:', result.error);
@@ -183,7 +180,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
     };
 
     const handleNovoPedidoSuccess = async (novoPedido) => {
-        // O modal já salvou o pedido na API, apenas recarregar a lista
+        
         await fetchData();
         setPage(1);
         console.log('Pedido criado com sucesso');
@@ -191,20 +188,20 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
 
     const handleEditarPedidoSuccess = async (pedidoAtualizado) => {
         try {
-            // Mapear dados do frontend para o formato do backend
+            
             const dadosMapeados = PedidosService.mapearParaBackend(pedidoAtualizado);
             
             const result = await PedidosService.atualizarPedido(pedidoAtualizado.id, dadosMapeados);
             
             if (result.success) {
-                // Recarregar a lista de pedidos
+                
                 await fetchData();
                 console.log('Pedido atualizado com sucesso');
             } else {
                 console.error('Erro ao atualizar pedido:', result.error);
                 alert(`Erro ao atualizar pedido: ${result.error}`);
                 
-                // Se houver erros de validação, podemos tratá-los
+                
                 if (result.validationErrors && Object.keys(result.validationErrors).length > 0) {
                     console.error('Erros de validação:', result.validationErrors);
                 }

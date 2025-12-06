@@ -245,7 +245,9 @@ class PedidosService {
                 descricao: dadosBackend.servico.descricao || '',
                 precoBase: dadosBackend.servico.precoBase || 0,
                 ativo: dadosBackend.servico.ativo,
-                etapa: etapaNome
+                etapa: etapaNome,
+                // IMPORTANTE: Preservar os agendamentos do backend
+                agendamentos: dadosBackend.servico.agendamentos || []
             };
             
             // Usar o nome do serviço como descrição principal
