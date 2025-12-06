@@ -35,3 +35,9 @@
   background-color: #f3f4f6;
   border-radius: 0.375rem;
 }
+
+/* Cursor pointer nos ícones nativos de date e time */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}

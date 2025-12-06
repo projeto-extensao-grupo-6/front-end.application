@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   format,
@@ -382,8 +382,34 @@ const calculateEventLayout = (events) => {
 };
 
 const WeekView = ({ currentDate, timeSlots, events, onEventClick, onTimeSlotClick }) => {
-  const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(start, i));
+  const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(start, i));
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Atualiza a cada minuto
+    return () => clearInterval(interval);
+  }, []);
+  
+  const getCurrentTimePosition = useCallback(() => {
+    const now = currentTime;
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    if (hours < 7 || hours >= 24) return null;
+    const slotIndex = hours - 7;
+    const minutePercent = minutes / 60;
+    return (slotIndex + minutePercent) * 70; // 70px por slot
+  }, [currentTime]);
+  
+  const isTimeSlotPast = useCallback((timeSlot, day) => {
+    if (!isToday(day)) return false;
+    const [hours] = timeSlot.split(':').map(Number);
+    const now = currentTime;
+    return hours < now.getHours();
+  }, [currentTime]);
+  
   const eventsByDay = useMemo(() => {
     const grouped = {};
     weekDays.forEach(day => {
@@ -402,8 +428,8 @@ const WeekView = ({ currentDate, timeSlots, events, onEventClick, onTimeSlotClic
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="grid grid-cols-8 border-b border-gray-200 bg-white shrink-0">
-        <div className="w-20 border-r border-gray-100"></div>
+      <div className="grid grid-cols-[80px_repeat(5,1fr)] border-b border-gray-200 bg-white shrink-0">
+        <div className="border-r border-gray-100"></div>
         {weekDays.map((day) => (
           <div key={day.toISOString()} className={`py-3 text-center border-r border-gray-100 flex flex-col items-center justify-center ${isToday(day) ? "bg-blue-50/30" : ""}`}>
             <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${isToday(day) ? "text-blue-600" : "text-gray-400"}`}>{format(day, "EEE", { locale: ptBR })}</div>
@@ -412,22 +438,41 @@ const WeekView = ({ currentDate, timeSlots, events, onEventClick, onTimeSlotClic
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-8 relative min-h-[1000px]">
-          <div className="w-20 flex flex-col border-r border-gray-100 bg-white sticky left-0 z-10">
+        <div className="grid grid-cols-[80px_repeat(5,1fr)] relative min-h-[1000px]">
+          <div className="flex flex-col border-r border-gray-100 bg-white sticky left-0 z-10">
             {timeSlots.map((t) => <div key={t} className="h-[70px] border-b border-gray-50 text-xs text-gray-400 font-medium text-right pr-3 pt-2">{t}</div>)}
           </div>
           {weekDays.map((day) => {
             const dayEvents = getEventsForDay(day);
             const eventsWithLayout = calculateEventLayout(dayEvents);
+            const currentTimePos = isToday(day) ? getCurrentTimePosition() : null;
             return (
               <div key={day.toISOString()} className="flex flex-col relative border-r border-gray-100 bg-white">
-                {timeSlots.map((t) => (
-                  <div
-                    key={t}
-                    className="h-[70px] border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer"
-                    onClick={() => onTimeSlotClick?.(day, t)}
-                  />
-                ))}
+                {timeSlots.map((t) => {
+                  const isPast = isTimeSlotPast(t, day);
+                  return (
+                    <div
+                      key={t}
+                      className={`h-[70px] border-b border-gray-50 transition-all ${
+                        isPast 
+                          ? 'bg-gray-200/60 opacity-40 cursor-not-allowed' 
+                          : 'hover:bg-gray-50/50 cursor-pointer'
+                      }`}
+                      onClick={() => !isPast && onTimeSlotClick?.(day, t)}
+                    />
+                  );
+                })}
+                {currentTimePos !== null && (
+                  <div 
+                    className="absolute left-0 right-0 z-10 pointer-events-none"
+                    style={{ top: `${currentTimePos}px` }}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full shadow-lg"></div>
+                      <div className="flex-1 h-0.5 bg-blue-500 shadow-sm"></div>
+                    </div>
+                  </div>
+                )}
                 <div className="absolute inset-0 p-1 pointer-events-none">
                   {eventsWithLayout.map((evt, index) => {
                     const eventStyle = calculateEventStyle(evt.startTime, evt.endTime);
@@ -467,6 +512,33 @@ const DayView = ({ currentDay, timeSlots, events, onEventClick, onTimeSlotClick 
     return eventDateKey === dayKey;
   }) || [];
   const eventsWithLayout = calculateEventLayout(dayEvents);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  const getCurrentTimePosition = () => {
+    if (!isToday(currentDay)) return null;
+    const now = currentTime;
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    if (hours < 7 || hours >= 24) return null;
+    const slotIndex = hours - 7;
+    const minutePercent = minutes / 60;
+    return (slotIndex + minutePercent) * 80; // 80px por slot
+  };
+  
+  const isTimeSlotPast = (timeSlot) => {
+    if (!isToday(currentDay)) return false;
+    const [hours] = timeSlot.split(':').map(Number);
+    return hours < currentTime.getHours();
+  };
+  
+  const currentTimePos = getCurrentTimePosition();
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -483,15 +555,33 @@ const DayView = ({ currentDay, timeSlots, events, onEventClick, onTimeSlotClick 
             {timeSlots.map((t) => <div key={t} className="h-20 border-b border-gray-50 text-sm text-gray-500 font-medium text-center pt-3">{t}</div>)}
           </div>
           <div className="relative bg-white">
-            {timeSlots.map((t) => (
-              <div
-                key={t}
-                className="h-20 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer relative"
-                onClick={() => onTimeSlotClick?.(currentDay, t)}
+            {timeSlots.map((t) => {
+              const isPast = isTimeSlotPast(t);
+              return (
+                <div
+                  key={t}
+                  className={`h-20 border-b border-gray-50 relative transition-all ${
+                    isPast 
+                      ? 'bg-gray-200/60 opacity-40 cursor-not-allowed' 
+                      : 'hover:bg-gray-50/50 cursor-pointer'
+                  }`}
+                  onClick={() => !isPast && onTimeSlotClick?.(currentDay, t)}
+                >
+                  <div className="absolute top-1/2 w-full border-t border-dotted border-gray-100 pointer-events-none" />
+                </div>
+              );
+            })}
+            {currentTimePos !== null && (
+              <div 
+                className="absolute left-0 right-0 z-10 pointer-events-none"
+                style={{ top: `${currentTimePos}px` }}
               >
-                <div className="absolute top-1/2 w-full border-t border-dotted border-gray-100 pointer-events-none" />
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full shadow-lg ml-2"></div>
+                  <div className="flex-1 h-0.5 bg-blue-500 shadow-sm"></div>
+                </div>
               </div>
-            ))}
+            )}
             {eventsWithLayout?.map((evt, i) => {
               const eventStyle = calculateEventStyle(evt.startTime, evt.endTime);
               const widthPercent = 100 / evt.totalColumns;
@@ -534,7 +624,7 @@ const CalendarView = ({
 
   const timeSlots = useMemo(() => {
     const slots = [];
-    for (let h = 0; h < 24; h++) {
+    for (let h = 7; h < 24; h++) {
       slots.push(`${String(h).padStart(2, "0")}:00`);
     }
     return slots;

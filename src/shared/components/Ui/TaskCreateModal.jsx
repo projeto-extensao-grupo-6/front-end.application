@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { X, Check, Trash2, CheckCircle, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Api from "../../../axios/Api";
+import { cepMask } from "../../../utils/masks";
 
 const Button = ({ children, variant = "primary", size = "md", className = "", onClick, disabled, type = "button" }) => {
   const baseClass = "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
@@ -127,6 +128,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const [produtosOptions, setProdutosOptions] = useState([]); 
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [selectedFuncionarios, setSelectedFuncionarios] = useState([]);
+  const [loadingCep, setLoadingCep] = useState(false);
 
   const fetchFuncionarios = useCallback(async (tipoValue) => {
     if (!tipoValue) {
@@ -257,6 +259,37 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors?.[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleCepChange = async (value) => {
+    const maskedValue = cepMask(value);
+    setFormData((prev) => ({ ...prev, cep: maskedValue }));
+    if (errors?.cep) setErrors((prev) => ({ ...prev, cep: "" }));
+
+    const cleanCep = maskedValue.replace(/\D/g, "");
+    
+    if (cleanCep.length === 8) {
+      setLoadingCep(true);
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await response.json();
+        
+        if (!data.erro) {
+          setFormData((prev) => ({
+            ...prev,
+            rua: data.logradouro || prev.rua,
+            bairro: data.bairro || prev.bairro,
+            cidade: data.localidade || prev.cidade,
+            uf: data.uf || prev.uf,
+            pais: "Brasil"
+          }));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+      } finally {
+        setLoadingCep(false);
+      }
+    }
   };
 
   const handleProdutosSelectChange = (selectedIds) => {
@@ -566,26 +599,35 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   return (
     <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white border border-gray-200 rounded-xl p-8 m-3 min-h-[650px] w-full max-w-4xl shadow-2xl flex flex-col overflow-hidden"
+        className="flex flex-col gap-6 bg-white border border-gray-200 rounded-xl p-5 m-3 w-full max-w-4xl shadow-2xl overflow-hidden"
         onClick={(e) => e?.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">Novo Agendamento</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X size={24} />
+        <div className="flex flex-row items-center justify-between border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900">Novo Agendamento</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} className="cursor-pointer">
+            <X size={20} />
           </Button>
         </div>
 
         {/* Steps Indicator */}
-        <div className="py-6 flex items-center justify-center gap-4">
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 1 ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}>1</div>
-          <div className={`h-1 w-12 rounded ${step >= 2 ? "bg-blue-600" : "bg-gray-200"}`}></div>
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}>2</div>
-          <div className={`h-1 w-12 rounded ${step >= 3 ? "bg-blue-600" : "bg-gray-200"}`}></div>
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}>3</div>
+        <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-col items-center gap-2">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 1 ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}>1</div>
+            <span className={`text-xs font-medium transition-colors ${step >= 1 ? "text-blue-600" : "text-gray-400"}`}>Agendamento</span>
+          </div>
+          <div className={`h-1 w-12 rounded ${step >= 2 ? "bg-blue-600" : "bg-gray-200"} -mt-5`}></div>
+          <div className="flex flex-col items-center gap-2">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}>2</div>
+            <span className={`text-xs font-medium transition-colors ${step >= 2 ? "text-blue-600" : "text-gray-400"}`}>Endereço</span>
+          </div>
+          <div className={`h-1 w-12 rounded ${step >= 3 ? "bg-blue-600" : "bg-gray-200"} -mt-5`}></div>
+          <div className="flex flex-col items-center gap-2">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${step >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"}`}>3</div>
+            <span className={`text-xs font-medium transition-colors ${step >= 3 ? "text-blue-600" : "text-gray-400"}`}>Produtos</span>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-6 overflow-y-auto px-2">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-6 overflow-y-auto px-2 pb-6">
           {errors?.submit && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm flex items-center">
               <X size={16} className="mr-2" />
@@ -667,8 +709,11 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">CEP <span className="text-red-500">*</span></label>
-                  <Input type="text" value={formData?.cep} onChange={(e) => handleInputChange("cep", e?.target?.value)} placeholder="00000-000" error={errors?.cep} maxLength={9} />
+                  <label className="flex text-sm font-semibold text-gray-700 mb-2 justify-between">
+                    <span>CEP <span className="text-red-500">*</span></span>
+                    {loadingCep && <span className="text-xs text-blue-600 animate-pulse">Buscando...</span>}
+                  </label>
+                  <Input type="text" value={formData?.cep} onChange={(e) => handleCepChange(e?.target?.value)} placeholder="00000-000" error={errors?.cep} maxLength={9} />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Rua <span className="text-red-500">*</span></label>
