@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Modal } from "@mui/material";
 
-import api from "../../../service/api";
+ import api from "../../../services/servicosService";
+
 
 const formatCurrency = (value) => {
   if (value == null || isNaN(value)) return "R$ 0,00";
