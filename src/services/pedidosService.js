@@ -238,6 +238,50 @@ class PedidosService {
             // Corrigir o mapeamento da etapa - agora vem de servico.etapa.nome
             const etapaNome = dadosBackend.servico.etapa?.nome || 'PENDENTE';
             
+            // **LÓGICA COMPLETA: Calcular etapa com base nos agendamentos**
+            let etapaCalculada = etapaNome;
+            
+            if (dadosBackend.servico.agendamentos && dadosBackend.servico.agendamentos.length > 0) {
+                const agendamentoOrcamento = dadosBackend.servico.agendamentos.find(
+                    ag => ag.tipoAgendamento === 'ORCAMENTO'
+                );
+                const agendamentoServico = dadosBackend.servico.agendamentos.find(
+                    ag => ag.tipoAgendamento === 'SERVICO'
+                );
+
+                // Prioridade 1: Verificar agendamento de SERVIÇO (mais prioritário)
+                if (agendamentoServico) {
+                    const statusServico = agendamentoServico.statusAgendamento?.nome;
+                    
+                    if (statusServico === 'CONCLUÍDO') {
+                        // SERVIÇO CONCLUÍDO → CONCLUÍDO (Etapa 7)
+                        etapaCalculada = 'CONCLUÍDO';
+                    } else if (statusServico === 'EM ANDAMENTO') {
+                        // SERVIÇO EM ANDAMENTO → SERVIÇO EM EXECUÇÃO (Etapa 6)
+                        etapaCalculada = 'SERVIÇO EM EXECUÇÃO';
+                    } else if (statusServico === 'PENDENTE') {
+                        // SERVIÇO PENDENTE → SERVIÇO AGENDADO (Etapa 5)
+                        etapaCalculada = 'SERVIÇO AGENDADO';
+                    }
+                } 
+                // Prioridade 2: Se não tem agendamento de serviço, verificar orçamento
+                else if (agendamentoOrcamento) {
+                    const statusOrcamento = agendamentoOrcamento.statusAgendamento?.nome;
+                    
+                    if (statusOrcamento === 'CONCLUÍDO') {
+                        // ORÇAMENTO CONCLUÍDO → ANÁLISE DO ORÇAMENTO (Etapa 3)
+                        etapaCalculada = 'ANÁLISE DO ORÇAMENTO';
+                    } else if (statusOrcamento === 'PENDENTE' || statusOrcamento === 'EM ANDAMENTO') {
+                        // ORÇAMENTO PENDENTE/EM ANDAMENTO → AGUARDANDO ORÇAMENTO (Etapa 2)
+                        etapaCalculada = 'AGUARDANDO ORÇAMENTO';
+                    }
+                }
+                // Se tem agendamento mas nenhum dos tipos acima, manter a etapa do backend
+            } else {
+                // SEM AGENDAMENTOS → PENDENTE (Etapa 1)
+                etapaCalculada = 'PENDENTE';
+            }
+            
             servicoInfo = {
                 id: dadosBackend.servico.id,
                 codigo: dadosBackend.servico.codigo,
@@ -245,7 +289,7 @@ class PedidosService {
                 descricao: dadosBackend.servico.descricao || '',
                 precoBase: dadosBackend.servico.precoBase || 0,
                 ativo: dadosBackend.servico.ativo,
-                etapa: etapaNome,
+                etapa: etapaCalculada,
                 // IMPORTANTE: Preservar os agendamentos do backend
                 agendamentos: dadosBackend.servico.agendamentos || []
             };
@@ -255,7 +299,7 @@ class PedidosService {
             itensCount = 1;
             
             // Mapear etapa para nome amigável e progresso
-            switch (etapaNome.toUpperCase()) {
+            switch (etapaCalculada.toUpperCase()) {
                 case 'PENDENTE':
                     etapaAtual = 'Pendente';
                     progressoValor = 1;
@@ -289,7 +333,7 @@ class PedidosService {
                     progressoValor = 0;
                     break;
                 default:
-                    etapaAtual = etapaNome;
+                    etapaAtual = etapaCalculada;
                     progressoValor = 1;
             }
         }

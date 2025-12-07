@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Wrench, X, Edit, Save, Calendar, ClipboardList, User, MapPin, Package, Users, Clock, Phone, Mail, CreditCard, FileText, CheckCircle, Building } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Api from "../../../axios/Api";
+import PedidosService from "../../../services/pedidosService";
 import EditarAgendamentoModal from "./EditarAgendamentoModal";
 
 const ETAPAS_SERVICO = [
@@ -30,10 +31,12 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     const [etapaAnterior, setEtapaAnterior] = useState("");
     const [agendamentoSelecionado, setAgendamentoSelecionado] = useState(null);
     const [mostrarEditarAgendamento, setMostrarEditarAgendamento] = useState(false);
+    const [mostrarModalExcluirAgendamentos, setMostrarModalExcluirAgendamentos] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         if (isOpen && servico) {
+            // Usar etapaOriginal se disponível, senão normalizar a etapa
             const etapaNormalizada = servico.etapaOriginal || servico.etapa?.toUpperCase().replace(/\s+/g, "_") || "PENDENTE";
             
             setFormData({
@@ -75,10 +78,40 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     };
 
     const handleSave = async () => {
+        // Verificar se houve downgrade para PENDENTE (Etapa 1)
+        const voltouParaPendente = etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
+        
+        if (voltouParaPendente && servico?.servico?.agendamentos && servico.servico.agendamentos.length > 0) {
+            // Mostrar modal de confirmação ao invés de window.confirm
+            setMostrarModalExcluirAgendamentos(true);
+            return;
+        }
+
+        // Se não voltou para PENDENTE ou não tem agendamentos, salvar normalmente
+        await salvarAlteracoes();
+    };
+
+    const salvarAlteracoes = async () => {
         setLoading(true);
         setError(null);
 
         try {
+            // Verificar se deve excluir agendamentos
+            const voltouParaPendente = etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
+            
+            if (voltouParaPendente && servico?.servico?.agendamentos && servico.servico.agendamentos.length > 0) {
+                console.log("🗑️ Excluindo agendamentos devido ao downgrade para PENDENTE...");
+                
+                const promisesExclusao = servico.servico.agendamentos.map(agendamento => 
+                    Api.delete(`/agendamentos/${agendamento.id}`)
+                        .then(() => console.log(`✅ Agendamento ${agendamento.id} excluído`))
+                        .catch(err => console.error(`❌ Erro ao excluir agendamento ${agendamento.id}:`, err))
+                );
+                
+                await Promise.all(promisesExclusao);
+                console.log("✅ Todos os agendamentos foram excluídos");
+            }
+
             const pedidoData = {
                 pedido: {
                     valorTotal: servico.valorTotal || 0.00,
@@ -135,6 +168,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                     });
                 }
                 setEtapaAnterior(formData.etapa);
+                setMostrarModalExcluirAgendamentos(false);
                 onClose();
             } else {
                 setError("Erro ao atualizar serviço");
@@ -146,6 +180,15 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const confirmarExclusaoAgendamentos = async () => {
+        await salvarAlteracoes();
+    };
+
+    const cancelarExclusaoAgendamentos = () => {
+        setMostrarModalExcluirAgendamentos(false);
+        setLoading(false);
     };
 
     const handleAgendarOrcamento = () => {
@@ -178,11 +221,44 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     };
 
     const handleAgendamentoEditadoSuccess = async () => {
-        if (onSuccess) {
-            await onSuccess(servico);
+        // Recarregar os dados do serviço após editar/excluir agendamento
+        try {
+            console.log("🔄 Recarregando dados do serviço após edição do agendamento...");
+            
+            // Buscar dados atualizados do serviço
+            const result = await PedidosService.buscarPorId(servico.id);
+            
+            if (result.success) {
+                // Mapear dados do backend para o formato do frontend
+                const servicoAtualizado = PedidosService.mapearParaFrontend(result.data);
+                
+                console.log("✅ Dados do serviço atualizados:", servicoAtualizado);
+                
+                // Atualizar o estado com os dados atualizados
+                if (onSuccess) {
+                    await onSuccess(servicoAtualizado);
+                }
+                
+                // Fechar o modal de edição de agendamento
+                setMostrarEditarAgendamento(false);
+                setAgendamentoSelecionado(null);
+                
+                // Fechar e reabrir o modal de serviço para forçar atualização
+                onClose();
+                
+                // Pequeno delay para garantir que o modal fechou
+                setTimeout(() => {
+                    // Reabrir com dados atualizados
+                    if (onSuccess) {
+                        onSuccess(servicoAtualizado);
+                    }
+                }, 100);
+            } else {
+                console.error("Erro ao recarregar serviço:", result.error);
+            }
+        } catch (error) {
+            console.error("Erro ao recarregar dados do serviço:", error);
         }
-        setMostrarEditarAgendamento(false);
-        setAgendamentoSelecionado(null);
     };
 
     const mostrarBotaoAgendarOrcamento = () => {
@@ -480,13 +556,18 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                                 }`}>
                                                                     {agendamento.tipoAgendamento === 'ORCAMENTO' ? 'Orçamento' : 'Execução'}
                                                                 </span>
-                                                                <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                                                                <span className={`px-3 py-1 text-sm font-medium rounded-full border ${
                                                                     agendamento.statusAgendamento?.nome === 'PENDENTE'
-                                                                        ? 'bg-yellow-100 text-yellow-700'
-                                                                        : agendamento.statusAgendamento?.nome === 'CONFIRMADO'
-                                                                        ? 'bg-green-100 text-green-700'
-                                                                        : 'bg-gray-100 text-gray-700'
+                                                                        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                                                        : agendamento.statusAgendamento?.nome === 'EM ANDAMENTO'
+                                                                        ? 'bg-blue-100 text-blue-700 border-blue-300'
+                                                                        : agendamento.statusAgendamento?.nome === 'CONCLUÍDO'
+                                                                        ? 'bg-green-100 text-green-700 border-green-300'
+                                                                        : 'bg-gray-100 text-gray-700 border-gray-300'
                                                                 }`}>
+                                                                    {agendamento.statusAgendamento?.nome === 'PENDENTE' && '🟡 '}
+                                                                    {agendamento.statusAgendamento?.nome === 'EM ANDAMENTO' && '🔵 '}
+                                                                    {agendamento.statusAgendamento?.nome === 'CONCLUÍDO' && '🟢 '}
                                                                     {agendamento.statusAgendamento?.nome || 'N/A'}
                                                                 </span>
                                                             </div>
@@ -757,6 +838,70 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 agendamento={agendamentoSelecionado}
                 onSuccess={handleAgendamentoEditadoSuccess}
             />
+
+            {/* Modal de Confirmação - Exclusão de Agendamentos */}
+            {mostrarModalExcluirAgendamentos && (
+                <div className="fixed inset-0 z-[9999] grid place-items-center bg-black/40 px-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) cancelarExclusaoAgendamentos(); }}>
+                    <div className="flex flex-col gap-4 w-full max-w-lg bg-white rounded-xl shadow-2xl p-6 animate-scaleIn">
+                        <div className="flex flex-col items-center text-center gap-3">
+                            <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
+                                <Calendar className="w-8 h-8 text-amber-500" />
+                            </div>
+                            <h2 className="text-xl font-bold text-slate-800">Excluir Todos os Agendamentos?</h2>
+                            <div className="text-slate-600 space-y-2">
+                                <p className="font-medium">
+                                    ⚠️ Ao voltar para a etapa <span className="font-bold text-amber-600">PENDENTE</span>, todos os agendamentos vinculados a este serviço serão <span className="font-bold text-red-600">EXCLUÍDOS PERMANENTEMENTE</span>.
+                                </p>
+                                <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded text-left mt-3">
+                                    <p className="text-sm text-amber-800 font-medium">
+                                        📋 Agendamentos que serão excluídos:
+                                    </p>
+                                    <ul className="mt-2 space-y-1 text-sm text-amber-700">
+                                        {servico?.servico?.agendamentos?.map((ag) => (
+                                            <li key={ag.id} className="flex items-center gap-2">
+                                                <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                                                <span className="font-mono">#AG{ag.id.toString().padStart(3, '0')}</span>
+                                                <span>-</span>
+                                                <span>{ag.tipoAgendamento === 'ORCAMENTO' ? '📊 Orçamento' : '🔧 Execução'}</span>
+                                                <span>-</span>
+                                                <span>{ag.dataAgendamento}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <p className="text-sm text-red-600 font-semibold mt-3">
+                                    ⚠️ Esta ação NÃO pode ser desfeita!
+                                </p>
+                            </div>
+                        </div>
+                        <div className="mt-4 flex gap-3">
+                            <button 
+                                onClick={cancelarExclusaoAgendamentos} 
+                                disabled={loading}
+                                className="flex-1 h-11 rounded-lg border-2 border-slate-300 bg-white text-slate-700 font-semibold cursor-pointer hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={confirmarExclusaoAgendamentos} 
+                                disabled={loading}
+                                className="flex-1 h-11 rounded-lg bg-red-600 text-white font-semibold cursor-pointer hover:bg-red-700 shadow-md disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        Excluindo...
+                                    </>
+                                ) : (
+                                    <>
+                                        Sim, Excluir Todos
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

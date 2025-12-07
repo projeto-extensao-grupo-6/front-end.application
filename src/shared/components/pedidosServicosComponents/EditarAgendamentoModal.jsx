@@ -2,12 +2,20 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Clock, X, Save, Trash2, MapPin, Users, Package, FileText, AlertCircle } from "lucide-react";
 import agendamentosService from "../../../services/agendamentosService";
 
+// Status disponíveis para agendamentos
+const STATUS_AGENDAMENTO = [
+    { id: 1, tipo: "AGENDAMENTO", nome: "PENDENTE", label: "Pendente", color: "yellow" },
+    { id: 2, tipo: "AGENDAMENTO", nome: "EM ANDAMENTO", label: "Em Andamento", color: "blue" },
+    { id: 3, tipo: "AGENDAMENTO", nome: "CONCLUÍDO", label: "Concluído", color: "green" }
+];
+
 const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => {
     const [formData, setFormData] = useState({
         dataAgendamento: "",
         inicioAgendamento: "",
         fimAgendamento: "",
         observacao: "",
+        statusId: null,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -20,6 +28,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                 inicioAgendamento: agendamento.inicioAgendamento || "",
                 fimAgendamento: agendamento.fimAgendamento || "",
                 observacao: agendamento.observacao || "",
+                statusId: agendamento.statusAgendamento?.id || 1,
             });
             setError(null);
         }
@@ -33,14 +42,38 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
         }));
     };
 
+    const getStatusColor = (statusNome) => {
+        switch (statusNome?.toUpperCase()) {
+            case 'PENDENTE':
+                return 'bg-yellow-100 text-yellow-700 border border-yellow-300';
+            case 'EM ANDAMENTO':
+                return 'bg-blue-100 text-blue-700 border border-blue-300';
+            case 'CONCLUÍDO':
+                return 'bg-green-100 text-green-700 border border-green-300';
+            default:
+                return 'bg-gray-100 text-gray-700 border border-gray-300';
+        }
+    };
+
+    const getStatusIcon = (statusNome) => {
+        switch (statusNome?.toUpperCase()) {
+            case 'PENDENTE':
+                return '🟡';
+            case 'EM ANDAMENTO':
+                return '🔵';
+            case 'CONCLUÍDO':
+                return '🟢';
+            default:
+                return '⚪';
+        }
+    };
+
     const handleSave = async () => {
-        
         if (!formData.dataAgendamento || !formData.inicioAgendamento || !formData.fimAgendamento) {
             setError("Por favor, preencha a data, horário de início e fim do agendamento.");
             return;
         }
 
-        
         if (formData.inicioAgendamento >= formData.fimAgendamento) {
             setError("O horário de fim deve ser posterior ao horário de início.");
             return;
@@ -50,18 +83,19 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
         setError(null);
 
         try {
-          
+            const statusSelecionado = STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId));
+            
+            // Montar dados no formato esperado pelo endpoint /agendamentos/dados-basicos/${id}
             const agendamentoData = {
                 tipoAgendamento: agendamento.tipoAgendamento,
                 dataAgendamento: formData.dataAgendamento,
                 inicioAgendamento: formData.inicioAgendamento,
                 fimAgendamento: formData.fimAgendamento,
-                observacao: formData.observacao,
-                statusAgendamento: agendamento.statusAgendamento,
-                endereco: agendamento.endereco,
-                funcionarios: agendamento.funcionarios || [],
-                produtos: agendamento.produtos || [],
-                servico: agendamento.servico ? { id: agendamento.servico.id } : null
+                statusAgendamento: {
+                    tipo: statusSelecionado.tipo,
+                    nome: statusSelecionado.nome
+                },
+                observacao: formData.observacao || ""
             };
 
             console.log("🔄 Atualizando agendamento:", agendamentoData);
@@ -107,6 +141,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
             inicioAgendamento: "",
             fimAgendamento: "",
             observacao: "",
+            statusId: null,
         });
         setError(null);
         setShowDeleteConfirm(false);
@@ -168,6 +203,33 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                     </h3>
                                 </div>
 
+                                {/* Status */}
+                                <div className="flex flex-col gap-2">
+                                    <label className="block text-sm font-semibold text-gray-700">
+                                        Status do Agendamento *
+                                    </label>
+                                    <select
+                                        name="statusId"
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={formData.statusId}
+                                        onChange={handleChange}
+                                    >
+                                        {STATUS_AGENDAMENTO.map((status) => (
+                                            <option key={status.id} value={status.id}>
+                                                {status.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-gray-500">
+                                        Status atual: <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                            STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId))?.nome
+                                        )}`}>
+                                            {STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId))?.label}
+                                        </span>
+                                    </p>
+                                </div>
+                                <br />
+
                                 {/* Data do Agendamento */}
                                 <div className="flex flex-col gap-2">
                                     <label className="block text-sm font-semibold text-gray-700">
@@ -182,7 +244,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                         min={new Date().toISOString().split("T")[0]}
                                     />
                                 </div>
-
+                                <br />
                                 {/* Horário de Início */}
                                 <div className="flex flex-col gap-2">
                                     <label className="block text-sm font-semibold text-gray-700">
@@ -199,7 +261,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                         />
                                     </div>
                                 </div>
-
+                                <br />
                                 {/* Horário de Fim */}
                                 <div className="flex flex-col gap-2">
                                     <label className="block text-sm font-semibold text-gray-700">
@@ -216,7 +278,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                         />
                                     </div>
                                 </div>
-
+                                <br />
                                 {/* Observações */}
                                 <div className="flex flex-col gap-2">
                                     <label className="block text-sm font-semibold text-gray-700">
@@ -241,20 +303,19 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                     </h3>
                                 </div>
 
-                                {/* Status */}
+                                {/* Status Atual (Read-only visual) */}
                                 <div className="bg-white border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-700">Status:</span>
-                                        <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                                            agendamento.statusAgendamento?.nome === 'PENDENTE'
-                                                ? 'bg-yellow-100 text-yellow-700'
-                                                : agendamento.statusAgendamento?.nome === 'CONFIRMADO'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-gray-100 text-gray-700'
-                                        }`}>
+                                        <span className="text-sm font-medium text-gray-700">Status Atual:</span>
+                                        <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(agendamento.statusAgendamento?.nome)}`}>
                                             {agendamento.statusAgendamento?.nome || 'N/A'}
                                         </span>
                                     </div>
+                                    <br />
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        altere o status no campo ao lado
+                                    </p>
+                                    <br />
                                 </div>
 
                                 {/* Endereço */}

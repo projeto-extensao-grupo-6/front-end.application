@@ -17,8 +17,7 @@ import {
   getQtdItensCriticos,
   getTaxaOcupacaoServicos,
   getEstoqueCritico,
-  getAgendamentosFuturos,
-  getQtdServicosHoje
+  getAgendamentosFuturos
 } from "../../services/dashboardService";
 
 const isToday = (date) => {
@@ -68,12 +67,11 @@ export default function PaginaInicial() {
   const [taxaOcupacaoServicos, setTaxaOcupacaoServicos] = useState(0.0);
   const [qtdItensCriticos, setQtdItensCriticos] = useState(0);
   const [agendamentosFuturos, setAgendamentosFuturos] = useState([]);
-  const [qtdServicosHoje, setQtdServicosHoje] = useState(0);
   const [loading, setLoading] = useState(true);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const handleEstoqueItemClick = (itemId) => {
-    navigate(`/estoque?item=${itemId}`);
+    navigate(`/estoque/${itemId}`);
   };
 
   const handleAgendamentoItemClick = (agendamentoId) => {
@@ -89,16 +87,14 @@ export default function PaginaInicial() {
           agendamentosFuturosRes,
           itensCriticosRes,
           taxaOcupacaoRes,
-          qtdItensCriticosRes,
-          qtdServicosHojeRes
+          qtdItensCriticosRes
         ] = await Promise.all([
           getQtdAgendamentosHoje(),
           getQtdAgendamentosFuturos(),
           getAgendamentosFuturos(),
           getEstoqueCritico(),
           getTaxaOcupacaoServicos(),
-          getQtdItensCriticos(),
-          getQtdServicosHoje()
+          getQtdItensCriticos()
         ]);
 
         setQtdAgendamentosHoje(qtdAgendamentosHojeRes.data.qtdAgendamentosHoje);
@@ -107,7 +103,6 @@ export default function PaginaInicial() {
         setTaxaOcupacaoServicos(taxaOcupacaoRes.data.taxaOcupacaoServicos);
         setAgendamentosFuturos(agendamentosFuturosRes.data);
         setItensCriticos(itensCriticosRes.data);
-        setQtdServicosHoje(qtdServicosHojeRes.data.qtdServicosHoje);
 
       } catch (error) {
         console.error("Erro ao carregar KPIs:", error);
@@ -129,7 +124,7 @@ export default function PaginaInicial() {
       title: "Agendamentos de Hoje",
       value: qtdAgendamentosHoje,
       icon: CalendarDays,
-      caption: `${qtdServicosHoje} serviço(s) hoje`
+      caption: `${qtdAgendamentosHoje} agendamento(s) hoje`
     },
     {
       title: "Taxa de Ocupação de Serviços",
@@ -143,7 +138,7 @@ export default function PaginaInicial() {
       icon: Clock,
       caption: `Próximos serviços`
     },
-  ], [itensCriticos, qtdAgendamentosHoje, taxaOcupacaoServicos, qtdAgendamentosFuturos, qtdServicosHoje]);
+  ], [qtdItensCriticos, qtdAgendamentosHoje, taxaOcupacaoServicos, qtdAgendamentosFuturos]);
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] font-[Inter]">
