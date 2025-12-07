@@ -36,7 +36,7 @@ import {
 
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
-import api from "../../../service/api";
+import api from "../../../axios/Api";
 
 const TextMaskAdapter = React.forwardRef(function TextMaskAdapter(
   props,
