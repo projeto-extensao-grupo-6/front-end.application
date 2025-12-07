@@ -41,3 +41,74 @@ input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
+
+#root {
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em; 
+}
+
+.read-the-docs {
+  color: #888; 
+}
+
+/* --- CORREÇÕES DO MODAL --- */
+
+/* 1. Força o Modal a ficar acima de TUDO (incluindo o Header fixo) */
+.modal-overlay-priority {
+  z-index: 9999 !important;
+}
+
+/* 2. Scroll interno suave para o modal */
+.modal-scroll-container {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Estilo do scroll para Chrome/Edge/Safari dentro do modal */
+.modal-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+.modal-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-scroll-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+.modal-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}

@@ -15,23 +15,25 @@ export const useEventDetails = (initialEvent) => {
       setLoading(true);
       setError(null);
       try {
+        console.log("🔍 Buscando detalhes do agendamento ID:", initialEvent.id);
         const response = await Api.get(`/agendamentos/${initialEvent.id}`);
         const apiData = response.data;
         
         // Mesclar dados da API com dados processados do initialEvent
         const mergedDetails = {
-          ...apiData, // Dados completos da API
-          title: initialEvent.fullTitle || initialEvent.title, // Usar fullTitle para o modal
-          startTime: initialEvent.startTime, // Manter horário formatado
-          endTime: initialEvent.endTime, // Manter horário formatado
-          date: initialEvent.date, // Manter data processada
-          backgroundColor: initialEvent.backgroundColor // Manter cor processada
+          ...apiData, 
+          title: initialEvent.fullTitle || initialEvent.title,
+          startTime: initialEvent.startTime, 
+          endTime: initialEvent.endTime, 
+          date: initialEvent.date, 
+          backgroundColor: initialEvent.backgroundColor 
         };
         
         setDetails(mergedDetails);
       } catch (err) {
-        console.error("Erro ao buscar detalhes:", err);
+        console.error("❌ Erro ao buscar detalhes:", err);
         setError(err.message);
+        // Fallback: mantém os dados iniciais se a API falhar
         setDetails(initialEvent);
       } finally {
         setLoading(false);
@@ -48,15 +50,34 @@ export const useDeleteAgendamento = (onSuccess) => {
   const [deleting, setDeleting] = useState(false);
 
   const deleteAgendamento = async (id) => {
-    if (!id) return false;
+    console.log("🗑️ Tentando excluir Agendamento ID:", id);
+
+    if (!id) {
+        console.error("❌ Erro: ID inválido ou undefined fornecido para exclusão.");
+        alert("Erro interno: ID do agendamento não encontrado.");
+        return false;
+    }
     
     setDeleting(true);
     try {
-      await Api.delete(`/agendamentos/${id}`);
-      onSuccess?.(id);
+      // Tenta deletar no endpoint de agendamentos
+      const response = await Api.delete(`/agendamentos/${id}`);
+      
+      console.log("✅ Sucesso na exclusão. Status:", response.status);
+      
+      if (onSuccess) {
+          onSuccess(id);
+      }
       return true;
+
     } catch (err) {
-      console.error("Erro ao excluir:", err);
+      console.error("❌ Erro fatal ao excluir:", err);
+      console.error("Detalhes do erro:", err.response?.data);
+
+      // Feedback visual para o usuário
+      const msgErro = err.response?.data?.message || "Erro desconhecido ao excluir.";
+      alert(`Falha ao excluir agendamento: ${msgErro}`);
+      
       return false;
     } finally {
       setDeleting(false);

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Wrench, X, Edit, Save, Calendar, ClipboardList, User, MapPin, Package, Users, Clock, Phone, Mail, CreditCard, FileText, CheckCircle, Building } from "lucide-react";
+import { Wrench, X, Edit, Save, Calendar, ClipboardList, User, MapPin, Phone, Mail, FileText, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Api from "../../../axios/Api";
 import PedidosService from "../../../services/pedidosService";
 import EditarAgendamentoModal from "./EditarAgendamentoModal";
 
+// Mantenha os valores EXATAMENTE iguais ao que está no banco de dados (nome da etapa)
 const ETAPAS_SERVICO = [
     { valor: "PENDENTE", label: "Pendente", progresso: 1 },
     { valor: "AGUARDANDO ORÇAMENTO", label: "Aguardando Orçamento", progresso: 2 },
@@ -34,21 +35,63 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     const [mostrarModalExcluirAgendamentos, setMostrarModalExcluirAgendamentos] = useState(false);
     const navigate = useNavigate();
 
+    // Helper para classes dinâmicas
+    const getInputClass = (isEditable) => {
+        return `w-full px-3 py-2 border rounded-lg transition-all duration-300 ${
+            isEditable 
+                ? "bg-white border-gray-300 text-gray-900 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                : "bg-gray-100 border-transparent text-gray-500 cursor-not-allowed opacity-75"
+        }`;
+    };
+
+    const getLockedClass = () => {
+        return "w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed opacity-60";
+    };
+
+    // --- FUNÇÃO AUXILIAR APENAS PARA LEITURA (Encontrar opção no dropdown) ---
+    // Remove acentos apenas para comparar strings de forma segura
+    const limparTextoParaComparacao = (texto) => {
+        if (!texto) return "";
+        return texto
+            .toUpperCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .replace(/ /g, "_"); // Troca espaços por _
+    };
+
+    // --- FUNÇÃO PARA CARREGAR: Tenta casar o que vem do back com o front ---
+    const encontrarEtapaCorrespondente = (etapaDoBackend) => {
+        if (!etapaDoBackend) return "PENDENTE";
+        
+        // Normaliza o que veio do backend para tentar achar na lista (defensivo)
+        const backendLimpo = limparTextoParaComparacao(etapaDoBackend);
+
+        // Procura na lista ETAPAS_SERVICO qual item tem estrutura similar
+        const etapaEncontrada = ETAPAS_SERVICO.find(e => limparTextoParaComparacao(e.valor) === backendLimpo);
+        
+        // Se achou, retorna o valor exato da constante (com acentos), senão retorna o próprio valor do back ou PENDENTE
+        return etapaEncontrada ? etapaEncontrada.valor : (etapaDoBackend || "PENDENTE");
+    };
+
     useEffect(() => {
         if (isOpen && servico) {
-            // Usar etapaOriginal se disponível, senão normalizar a etapa
-            const etapaNormalizada = servico.etapaOriginal || servico.etapa?.toUpperCase().replace(/\s+/g, "_") || "PENDENTE";
+            const rawEtapa = servico.etapaOriginal || servico.etapa || "PENDENTE";
             
+            // Usa a função para achar o valor correto para o dropdown
+            const etapaParaExibicao = encontrarEtapaCorrespondente(rawEtapa);
+            
+            // Achar o progresso baseado na etapa identificada
+            const etapaInfo = ETAPAS_SERVICO.find(e => e.valor === etapaParaExibicao);
+
             setFormData({
                 clienteNome: servico.clienteNome || "",
                 data: servico.data || "",
                 descricao: servico.descricao || "",
                 status: servico.status || "Ativo",
-                etapa: etapaNormalizada,
-                progressoValor: servico.progresso?.[0] || 1,
+                etapa: etapaParaExibicao,
+                progressoValor: etapaInfo ? etapaInfo.progresso : (servico.progresso?.[0] || 1),
                 progressoTotal: 7,
             });
-            setEtapaAnterior(etapaNormalizada);
+            setEtapaAnterior(etapaParaExibicao);
             setModoEdicao(false);
             setError(null);
         }
@@ -59,11 +102,6 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         
         if (name === "etapa") {
             const etapaInfo = ETAPAS_SERVICO.find(e => e.valor === value);
-            
-            if (etapaAnterior === "PENDENTE" && value === "AGUARDANDO ORÇAMENTO") {
-                setMostrarAgendamento(true);
-            }
-            
             setFormData((prev) => ({
                 ...prev,
                 [name]: value,
@@ -78,16 +116,11 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     };
 
     const handleSave = async () => {
-        // Verificar se houve downgrade para PENDENTE (Etapa 1)
         const voltouParaPendente = etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
-        
         if (voltouParaPendente && servico?.servico?.agendamentos && servico.servico.agendamentos.length > 0) {
-            // Mostrar modal de confirmação ao invés de window.confirm
             setMostrarModalExcluirAgendamentos(true);
             return;
         }
-
-        // Se não voltou para PENDENTE ou não tem agendamentos, salvar normalmente
         await salvarAlteracoes();
     };
 
@@ -96,21 +129,19 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         setError(null);
 
         try {
-            // Verificar se deve excluir agendamentos
             const voltouParaPendente = etapaAnterior !== "PENDENTE" && formData.etapa === "PENDENTE";
             
             if (voltouParaPendente && servico?.servico?.agendamentos && servico.servico.agendamentos.length > 0) {
                 console.log("🗑️ Excluindo agendamentos devido ao downgrade para PENDENTE...");
-                
                 const promisesExclusao = servico.servico.agendamentos.map(agendamento => 
                     Api.delete(`/agendamentos/${agendamento.id}`)
-                        .then(() => console.log(`✅ Agendamento ${agendamento.id} excluído`))
-                        .catch(err => console.error(`❌ Erro ao excluir agendamento ${agendamento.id}:`, err))
                 );
-                
                 await Promise.all(promisesExclusao);
-                console.log("✅ Todos os agendamentos foram excluídos");
             }
+
+            // CORREÇÃO: Envia a etapa EXATAMENTE como está no formData (com acentos e espaços)
+            // O Backend espera "ANÁLISE DO ORÇAMENTO", não "ANALISE_DO_ORCAMENTO"
+            const etapaParaBackend = formData.etapa;
 
             const pedidoData = {
                 pedido: {
@@ -143,17 +174,19 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                     }
                 },
                 servico: {
+                    id: servico.servico?.id, 
                     nome: servico.servicoNome || servico.servico?.nome || "Serviço",
                     descricao: formData.descricao || "",
                     precoBase: servico.servico?.precoBase || 0.00,
                     ativo: true,
                     etapa: {
-                        tipo: "PEDIDO",
-                        nome: formData.etapa
+                        tipo: "PEDIDO", 
+                        nome: etapaParaBackend // Enviando COM acento e espaço, igual ao banco
                     }
                 }
             };
 
+            console.log('📤 Enviando para backend:', etapaParaBackend);
             const response = await Api.put(`/pedidos/${servico.id}`, pedidoData);
             
             if (response.status === 200 || response.status === 204) {
@@ -162,8 +195,8 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                         ...servico,
                         descricao: formData.descricao,
                         status: formData.status,
-                        etapa: formData.etapa,
-                        etapaOriginal: formData.etapa,
+                        etapa: formData.etapa, 
+                        etapaOriginal: etapaParaBackend,
                         progresso: [parseInt(formData.progressoValor), 7],
                     });
                 }
@@ -221,64 +254,123 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     };
 
     const handleAgendamentoEditadoSuccess = async () => {
-        // Recarregar os dados do serviço após editar/excluir agendamento
         try {
-            console.log("🔄 Recarregando dados do serviço após edição do agendamento...");
-            
-            // Buscar dados atualizados do serviço
             const result = await PedidosService.buscarPorId(servico.id);
-            
             if (result.success) {
-                // Mapear dados do backend para o formato do frontend
                 const servicoAtualizado = PedidosService.mapearParaFrontend(result.data);
                 
-                console.log("✅ Dados do serviço atualizados:", servicoAtualizado);
+                // Mapeia o que veio do backend para o formato do frontend
+                const etapaRaw = servicoAtualizado.etapaOriginal || servicoAtualizado.etapa;
+                const etapaCalculada = encontrarEtapaCorrespondente(etapaRaw);
+                const etapaAtualFrontend = encontrarEtapaCorrespondente(servico.etapaOriginal || servico.etapa);
                 
-                // Atualizar o estado com os dados atualizados
-                if (onSuccess) {
-                    await onSuccess(servicoAtualizado);
+                console.log(`📊 Verificando: Atual="${etapaAtualFrontend}" | Nova="${etapaCalculada}"`);
+                
+                if (etapaCalculada !== etapaAtualFrontend) {
+                    // CORREÇÃO: Envia direto o valor calculado, sem limpar acentos
+                    const etapaParaBackend = etapaCalculada;
+                    
+                    const pedidoData = {
+                        pedido: {
+                            valorTotal: servicoAtualizado.valorTotal || 0.00,
+                            ativo: servicoAtualizado.status === "Ativo",
+                            formaPagamento: servicoAtualizado.formaPagamento || "A negociar",
+                            observacao: servicoAtualizado.descricao || "",
+                            cliente: {
+                                id: servicoAtualizado.clienteId || servicoAtualizado.clienteInfo?.id,
+                                nome: servicoAtualizado.clienteNome || servicoAtualizado.clienteInfo?.nome || "",
+                                cpf: servicoAtualizado.clienteInfo?.cpf || "",
+                                email: servicoAtualizado.clienteInfo?.email || "",
+                                telefone: servicoAtualizado.clienteInfo?.telefone || "",
+                                status: "Ativo",
+                                enderecos: servicoAtualizado.clienteInfo?.endereco ? [{
+                                    id: servicoAtualizado.clienteInfo.endereco.id || 0,
+                                    rua: servicoAtualizado.clienteInfo.endereco.rua || "",
+                                    complemento: servicoAtualizado.clienteInfo.endereco.complemento || "",
+                                    cep: servicoAtualizado.clienteInfo.endereco.cep || "",
+                                    cidade: servicoAtualizado.clienteInfo.endereco.cidade || "",
+                                    bairro: servicoAtualizado.clienteInfo.endereco.bairro || "",
+                                    uf: servicoAtualizado.clienteInfo.endereco.uf || "",
+                                    pais: servicoAtualizado.clienteInfo.endereco.pais || "Brasil",
+                                    numero: servicoAtualizado.clienteInfo.endereco.numero || 0
+                                }] : [],
+                            },
+                            status: {
+                                tipo: "PEDIDO",
+                                nome: servicoAtualizado.status.toUpperCase()
+                            }
+                        },
+                        servico: {
+                            id: servico.servico?.id,
+                            nome: servicoAtualizado.servicoNome || servicoAtualizado.servico?.nome || "Serviço",
+                            descricao: servicoAtualizado.descricao || "",
+                            precoBase: servicoAtualizado.servico?.precoBase || 0.00,
+                            ativo: true,
+                            etapa: {
+                                tipo: "PEDIDO",
+                                nome: etapaParaBackend // Enviando com acentos
+                            }
+                        }
+                    };
+                    
+                    await Api.put(`/pedidos/${servico.id}`, pedidoData);
+                    console.log("✅ Etapa atualizada automaticamente");
+                    
+                    // Recarrega final
+                    const resultFinal = await PedidosService.buscarPorId(servico.id);
+                    if (resultFinal.success) {
+                        const servicoFinal = PedidosService.mapearParaFrontend(resultFinal.data);
+                        const etapaFinal = encontrarEtapaCorrespondente(servicoFinal.etapaOriginal || servicoFinal.etapa);
+                        
+                        setFormData({
+                            clienteNome: servicoFinal.clienteNome || "",
+                            data: servicoFinal.data || "",
+                            descricao: servicoFinal.descricao || "",
+                            status: servicoFinal.status || "Ativo",
+                            etapa: etapaFinal,
+                            progressoValor: servicoFinal.progresso?.[0] || 1,
+                            progressoTotal: 7,
+                        });
+                        setEtapaAnterior(etapaFinal);
+                        if (onSuccess) await onSuccess(servicoFinal);
+                    }
+                } else {
+                    setFormData({
+                        clienteNome: servicoAtualizado.clienteNome || "",
+                        data: servicoAtualizado.data || "",
+                        descricao: servicoAtualizado.descricao || "",
+                        status: servicoAtualizado.status || "Ativo",
+                        etapa: etapaCalculada,
+                        progressoValor: servicoAtualizado.progresso?.[0] || 1,
+                        progressoTotal: 7,
+                    });
+                    setEtapaAnterior(etapaCalculada);
+                    if (onSuccess) await onSuccess(servicoAtualizado);
                 }
                 
-                // Fechar o modal de edição de agendamento
                 setMostrarEditarAgendamento(false);
                 setAgendamentoSelecionado(null);
-                
-                // Fechar e reabrir o modal de serviço para forçar atualização
                 onClose();
-                
-                // Pequeno delay para garantir que o modal fechou
-                setTimeout(() => {
-                    // Reabrir com dados atualizados
-                    if (onSuccess) {
-                        onSuccess(servicoAtualizado);
-                    }
-                }, 100);
-            } else {
-                console.error("Erro ao recarregar serviço:", result.error);
             }
         } catch (error) {
-            console.error("Erro ao recarregar dados do serviço:", error);
+            console.error("Erro ao recarregar dados:", error);
         }
     };
 
     const mostrarBotaoAgendarOrcamento = () => {
         const etapaAtual = formData.etapa?.toUpperCase();
-        console.log("Debug - Etapa atual:", etapaAtual, "| Modo edição:", modoEdicao);
-        console.log("Debug - Servico completo:", servico);
-        console.log("Debug - Mostrar botão orçamento:", etapaAtual === "PENDENTE" && !modoEdicao);
         return etapaAtual === "PENDENTE" && !modoEdicao;
     };
 
     const mostrarBotaoAgendarServico = () => {
         const etapaAtual = formData.etapa?.toUpperCase();
-        console.log("Debug - Mostrar botão serviço:", etapaAtual === "ORÇAMENTO APROVADO" && !modoEdicao);
         return etapaAtual === "ORÇAMENTO APROVADO" && !modoEdicao;
     };
 
     if (!isOpen || !servico) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[1300]">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden">
                 {/* Header Modernizado */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 text-white">
@@ -315,7 +407,6 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6">
-                        {/* Layout em 2 colunas */}
                         <div className="grid grid-cols-12 gap-6">
                             {/* Coluna Esquerda - Informações Principais */}
                             <div className="col-span-5 space-y-6">
@@ -335,21 +426,18 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                 R$ {servico?.valorTotal?.toFixed(2) || '0,00'}
                                             </span>
                                         </div>
-                                        
                                         <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                             <span className="text-gray-600 font-medium">Forma de Pagamento:</span>
                                             <span className="text-gray-900 font-medium">
                                                 {servico?.formaPagamento || 'A negociar'}
                                             </span>
                                         </div>
-                                        
                                         <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                             <span className="text-gray-600 font-medium">Tipo:</span>
                                             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                                                 {servico?.tipoPedido || 'Serviço'}
                                             </span>
                                         </div>
-                                        
                                         <div className="flex justify-between items-center py-2">
                                             <span className="text-gray-600 font-medium">Status:</span>
                                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -372,7 +460,6 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                             </div>
                                             <h3 className="text-lg font-semibold text-gray-900">Cliente</h3>
                                         </div>
-                                        
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-3">
                                                 <User className="w-4 h-4 text-gray-500" />
@@ -381,22 +468,18 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                     <p className="text-sm text-gray-600">CPF: {servico.cliente.cpf || 'Não informado'}</p>
                                                 </div>
                                             </div>
-                                            
                                             {servico.cliente.email && (
                                                 <div className="flex items-center gap-3">
                                                     <Mail className="w-4 h-4 text-gray-500" />
                                                     <span className="text-gray-700">{servico.cliente.email}</span>
                                                 </div>
                                             )}
-                                            
                                             {servico.cliente.telefone && (
                                                 <div className="flex items-center gap-3">
                                                     <Phone className="w-4 h-4 text-gray-500" />
                                                     <span className="text-gray-700">{servico.cliente.telefone}</span>
                                                 </div>
                                             )}
-                                            
-                                            {/* Endereço compacto */}
                                             {servico.cliente.enderecos && servico.cliente.enderecos.length > 0 && (
                                                 <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                                                     <div className="flex items-center gap-2 mb-2">
@@ -426,11 +509,12 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                     </div>
                                     
                                     <div className="space-y-4">
+                                        {/* Campos Read-Only permanentes */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">Nome</label>
                                             <input
                                                 type="text"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
+                                                className={getLockedClass()}
                                                 value={servico?.servico?.nome || servico?.servicoNome || 'Serviço não especificado'}
                                                 readOnly
                                             />
@@ -442,7 +526,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
                                                     <input
                                                         type="text"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                                                        className={getLockedClass()}
                                                         value={servico.servico.codigo || 'Não informado'}
                                                         readOnly
                                                     />
@@ -451,7 +535,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Preço Base</label>
                                                     <input
                                                         type="text"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                                                        className={getLockedClass()}
                                                         value={`R$ ${servico.servico.precoBase?.toFixed(2) || '0,00'}`}
                                                         readOnly
                                                     />
@@ -459,14 +543,13 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                             </div>
                                         )}
 
+                                        {/* Campos Editáveis */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
                                             <textarea
                                                 name="descricao"
                                                 rows={3}
-                                                className={`w-full px-3 py-2 border border-gray-300 rounded-lg resize-none ${
-                                                    modoEdicao ? "bg-white" : "bg-gray-50"
-                                                }`}
+                                                className={getInputClass(modoEdicao) + " resize-none"}
                                                 value={formData.descricao}
                                                 onChange={handleChange}
                                                 readOnly={!modoEdicao}
@@ -474,14 +557,11 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                             />
                                         </div>
 
-                                        {/* Etapa e Progresso */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">Etapa Atual</label>
                                             <select
                                                 name="etapa"
-                                                className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${
-                                                    modoEdicao ? "bg-white" : "bg-gray-50"
-                                                }`}
+                                                className={getInputClass(modoEdicao)}
                                                 value={formData.etapa}
                                                 onChange={handleChange}
                                                 disabled={!modoEdicao}
@@ -551,8 +631,8 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                             <div className="flex items-center gap-3">
                                                                 <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
                                                                     agendamento.tipoAgendamento === 'ORCAMENTO' 
-                                                                        ? 'bg-blue-100 text-blue-700'
-                                                                        : 'bg-green-100 text-green-700'
+                                                                    ? 'bg-blue-100 text-blue-700'
+                                                                    : 'bg-green-100 text-green-700'
                                                                 }`}>
                                                                     {agendamento.tipoAgendamento === 'ORCAMENTO' ? 'Orçamento' : 'Execução'}
                                                                 </span>
@@ -594,7 +674,6 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                                 </div>
                                                                 <p className="text-gray-900 font-semibold">{agendamento.dataAgendamento}</p>
                                                             </div>
-                                                            
                                                             <div className="bg-gray-50 rounded-lg p-3">
                                                                 <div className="flex items-center gap-2 mb-1">
                                                                     <Clock className="w-4 h-4 text-gray-500" />
@@ -636,95 +715,6 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                                                     <span className="text-sm font-medium text-yellow-800">Observações</span>
                                                                 </div>
                                                                 <p className="text-sm text-yellow-700">{agendamento.observacao}</p>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Funcionários */}
-                                                        {agendamento.funcionarios && agendamento.funcionarios.length > 0 ? (
-                                                            <div className="mb-4">
-                                                                <div className="flex items-center gap-2 mb-3">
-                                                                    <Users className="w-4 h-4 text-gray-600" />
-                                                                    <span className="text-sm font-medium text-gray-700">
-                                                                        Equipe Designada ({agendamento.funcionarios.length})
-                                                                    </span>
-                                                                </div>
-                                                                <div className="space-y-2">
-                                                                    {agendamento.funcionarios.map((funcionario) => (
-                                                                        <div key={funcionario.id} className="bg-green-50 rounded-lg p-3">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <div>
-                                                                                    <p className="font-semibold text-green-800">{funcionario.nome}</p>
-                                                                                    <p className="text-sm text-green-600">{funcionario.funcao}</p>
-                                                                                </div>
-                                                                                <div className="text-right text-sm text-green-600">
-                                                                                    <p>{funcionario.telefone}</p>
-                                                                                    <p className="text-xs">{funcionario.contrato}</p>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="mb-4">
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <Users className="w-4 h-4 text-gray-400" />
-                                                                    <span className="text-sm text-gray-500">Nenhuma equipe designada</span>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Produtos */}
-                                                        {agendamento.produtos && agendamento.produtos.length > 0 ? (
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-3">
-                                                                    <Package className="w-4 h-4 text-gray-600" />
-                                                                    <span className="text-sm font-medium text-gray-700">
-                                                                        Produtos Utilizados ({agendamento.produtos.length})
-                                                                    </span>
-                                                                </div>
-                                                                <div className="space-y-2">
-                                                                    {agendamento.produtos.map((item, prodIndex) => (
-                                                                        <div key={prodIndex} className="bg-purple-50 rounded-lg p-3">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <div className="flex-1">
-                                                                                    <p className="font-semibold text-purple-800">{item.produto.nome}</p>
-                                                                                    <p className="text-sm text-purple-600">{item.produto.descricao}</p>
-                                                                                    <p className="text-xs text-purple-500 mt-1">
-                                                                                        Unidade: {item.produto.unidademedida}
-                                                                                    </p>
-                                                                                </div>
-                                                                                <div className="text-right ml-4">
-                                                                                    <div className="text-sm text-purple-700">
-                                                                                        <div className="flex justify-between gap-4">
-                                                                                            <span>Reservado:</span>
-                                                                                            <span className="font-medium">{item.quantidadeReservada}</span>
-                                                                                        </div>
-                                                                                        <div className="flex justify-between gap-4">
-                                                                                            <span>Utilizado:</span>
-                                                                                            <span className="font-medium">{item.quantidadeUtilizada}</span>
-                                                                                        </div>
-                                                                                        <div className="border-t border-purple-200 pt-1 mt-1">
-                                                                                            <div className="flex justify-between gap-4">
-                                                                                                <span>Preço:</span>
-                                                                                                <span className="font-bold text-purple-800">
-                                                                                                    R$ {item.produto.preco?.toFixed(2)}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <Package className="w-4 h-4 text-gray-400" />
-                                                                    <span className="text-sm text-gray-500">Nenhum produto definido</span>
-                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>
@@ -782,12 +772,16 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                     <button
                                         onClick={() => {
                                             setModoEdicao(false);
+                                            // Normaliza na mão para cancelar (reseta estado)
+                                            const rawEtapa = servico.etapaOriginal || servico.etapa || "PENDENTE";
+                                            const etapaNormalizada = encontrarEtapaCorrespondente(rawEtapa);
+
                                             setFormData({
                                                 clienteNome: servico.clienteNome || "",
                                                 data: servico.data || "",
                                                 descricao: servico.descricao || "",
                                                 status: servico.status || "Ativo",
-                                                etapa: etapaAnterior,
+                                                etapa: etapaNormalizada,
                                                 progressoValor: servico.progresso?.[0] || 1,
                                                 progressoTotal: 7,
                                             });
@@ -828,7 +822,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 </div>
             </div>
 
-            {/* Modal de Edição de Agendamento */}
+            {/* Modais de Suporte (Agendamento e Exclusão) */}
             <EditarAgendamentoModal
                 isOpen={mostrarEditarAgendamento}
                 onClose={() => {
@@ -839,7 +833,6 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 onSuccess={handleAgendamentoEditadoSuccess}
             />
 
-            {/* Modal de Confirmação - Exclusão de Agendamentos */}
             {mostrarModalExcluirAgendamentos && (
                 <div className="fixed inset-0 z-[9999] grid place-items-center bg-black/40 px-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) cancelarExclusaoAgendamentos(); }}>
                     <div className="flex flex-col gap-4 w-full max-w-lg bg-white rounded-xl shadow-2xl p-6 animate-scaleIn">

@@ -6,6 +6,7 @@ import {
   Calendar,
   Clock,
   MessageSquare,
+  Edit // Adicionei o ícone de edição
 } from "lucide-react";
 import { getInitials } from "../utils/eventHelpers";
 
@@ -218,6 +219,7 @@ export const EventTeam = ({ funcionarios }) => {
     </div>
   );
 };
+
 export const EventObservations = ({ observacao }) => {
   if (!observacao) return null;
 
@@ -238,6 +240,7 @@ export const EventObservations = ({ observacao }) => {
 export const EventFooter = ({
   onDelete,
   onViewMap,
+  onEdit, // NOVA PROP AQUI
   isDeleting,
   isLoading,
   hasAddress,
@@ -249,12 +252,23 @@ export const EventFooter = ({
         disabled={isLoading || isDeleting}
         className="px-5 py-2.5 rounded-lg font-medium text-red-600 hover:bg-red-50 border border-red-200 hover:border-red-300 text-sm disabled:opacity-50 transition-colors"
       >
-        Excluir
+        Cancelar
       </button>
+
+      {/* NOVO BOTÃO DE EDITAR */}
+      <button
+        onClick={onEdit}
+        disabled={isLoading}
+        className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 py-2.5 px-4 rounded-lg font-medium text-sm transition-colors shadow-sm"
+      >
+        <Edit size={16} />
+        Editar
+      </button>
+
       <button
         onClick={onViewMap}
         disabled={!hasAddress || isLoading}
-        className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors shadow-sm"
       >
         <MapPin size={16} />
         Ver no Mapa

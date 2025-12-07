@@ -53,7 +53,7 @@ const NOVO_FORM = () => ({
     status: "Ativo",
     etapa: "Aguardando orçamento",
     progressoValor: 1,
-    progressoTotal: 6,
+    progressoTotal: 7,
 });
 
 export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRegistroHandled, statusFilter, etapaFilter }) {
@@ -94,6 +94,15 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                 });
                 
                 setServicos(servicosOrdenados);
+
+                // --- CORREÇÃO AQUI ---
+                // Se houver um modal aberto (current existe), atualiza os dados dele também
+                if (current) {
+                    const updatedCurrent = servicosOrdenados.find(s => s.id === current.id);
+                    if (updatedCurrent) {
+                        setCurrent(updatedCurrent);
+                    }
+                }
             } else {
                 setError(result.error);
                 if (result.status === 204) {
@@ -160,7 +169,10 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
     const proxima = () => page < totalPages && setPage((p) => p + 1);
     const anterior = () => page > 1 && setPage((p) => p - 1);
 
-    const fecharTodos = () => setModal({ confirm: false, view: false, form: false, novo: false, editar: false });
+    const fecharTodos = () => {
+        setModal({ confirm: false, view: false, form: false, novo: false, editar: false });
+        setCurrent(null); // Limpa o current ao fechar
+    };
 
     const abrirEditar = (item) => {
         setCurrent(item);
@@ -202,7 +214,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
 
     const handleEditarServicoSuccess = async (servicoAtualizado) => {
         // O modal EditarServicoModal já faz a chamada correta para a API
-        // Apenas recarregar a lista de serviços
+        // Apenas recarregar a lista de serviços para atualizar a UI
         await fetchData();
         console.log('Serviço atualizado com sucesso');
     };
@@ -318,23 +330,6 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
                     </article>
                 ))}
             </div>
-
-            {/* Paginação */}
-            {!loading && !error && listaFiltrada.length > 0 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
-                    <div className="text-sm text-slate-500">
-                        Mostrando <span className="font-medium text-slate-800">{start + 1}</span> a <span className="font-medium text-slate-800">{Math.min(end, listaFiltrada.length)}</span> de {listaFiltrada.length}
-                    </div>
-                    <div className="flex gap-2">
-                        <button onClick={anterior} disabled={page === 1} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                            Anterior
-                        </button>
-                        <button onClick={proxima} disabled={page === totalPages} className="px-4 py-2 text-sm font-medium text-white bg-[#007EA7] rounded-md cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                            Próximo
-                        </button>
-                    </div>
-                </div>
-            )}
 
             {/* MODAL CONFIRMAÇÃO */}
             {modal.confirm && (

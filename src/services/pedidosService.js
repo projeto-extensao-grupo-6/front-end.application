@@ -232,53 +232,52 @@ class PedidosService {
         let servicoInfo = null;
         let etapaAtual = 'Aguardando orçamento';
         let progressoValor = 1;
-        let progressoTotal = 6;
+        let progressoTotal = 7;
         
+        // CORREÇÃO: Declarar etapaCalculada FORA do if para ser acessível no return
+        let etapaCalculada = 'PENDENTE';
+
         if (isServico && dadosBackend.servico) {
-            // Corrigir o mapeamento da etapa - agora vem de servico.etapa.nome
+            // Etapa original do backend
             const etapaNome = dadosBackend.servico.etapa?.nome || 'PENDENTE';
             
-            // **LÓGICA COMPLETA: Calcular etapa com base nos agendamentos**
-            let etapaCalculada = etapaNome;
+            // Inicia com o valor do backend
+            etapaCalculada = etapaNome;
             
-            if (dadosBackend.servico.agendamentos && dadosBackend.servico.agendamentos.length > 0) {
-                const agendamentoOrcamento = dadosBackend.servico.agendamentos.find(
+            // Filtra apenas agendamentos VÁLIDOS (não cancelados/deletados)
+            const agendamentosTodos = dadosBackend.servico.agendamentos || [];
+            const agendamentosAtivos = agendamentosTodos.filter(ag => 
+                ag.statusAgendamento?.nome && 
+                ag.statusAgendamento.nome !== 'CANCELADO' && 
+                ag.statusAgendamento.nome !== 'INATIVO'
+            );
+            
+            // Se tiver agendamentos ATIVOS, calculamos a etapa baseada neles
+            if (agendamentosAtivos.length > 0) {
+                const agendamentoOrcamento = agendamentosAtivos.find(
                     ag => ag.tipoAgendamento === 'ORCAMENTO'
                 );
-                const agendamentoServico = dadosBackend.servico.agendamentos.find(
+                const agendamentoServico = agendamentosAtivos.find(
                     ag => ag.tipoAgendamento === 'SERVICO'
                 );
 
-                // Prioridade 1: Verificar agendamento de SERVIÇO (mais prioritário)
+                // 1. Prioridade: Serviço
                 if (agendamentoServico) {
                     const statusServico = agendamentoServico.statusAgendamento?.nome;
-                    
-                    if (statusServico === 'CONCLUÍDO') {
-                        // SERVIÇO CONCLUÍDO → CONCLUÍDO (Etapa 7)
-                        etapaCalculada = 'CONCLUÍDO';
-                    } else if (statusServico === 'EM ANDAMENTO') {
-                        // SERVIÇO EM ANDAMENTO → SERVIÇO EM EXECUÇÃO (Etapa 6)
-                        etapaCalculada = 'SERVIÇO EM EXECUÇÃO';
-                    } else if (statusServico === 'PENDENTE') {
-                        // SERVIÇO PENDENTE → SERVIÇO AGENDADO (Etapa 5)
-                        etapaCalculada = 'SERVIÇO AGENDADO';
-                    }
+                    if (statusServico === 'CONCLUÍDO') etapaCalculada = 'CONCLUÍDO';
+                    else if (statusServico === 'EM ANDAMENTO') etapaCalculada = 'SERVIÇO EM EXECUÇÃO';
+                    else etapaCalculada = 'SERVIÇO AGENDADO';
                 } 
-                // Prioridade 2: Se não tem agendamento de serviço, verificar orçamento
+                // 2. Prioridade: Orçamento
                 else if (agendamentoOrcamento) {
                     const statusOrcamento = agendamentoOrcamento.statusAgendamento?.nome;
-                    
-                    if (statusOrcamento === 'CONCLUÍDO') {
-                        // ORÇAMENTO CONCLUÍDO → ANÁLISE DO ORÇAMENTO (Etapa 3)
-                        etapaCalculada = 'ANÁLISE DO ORÇAMENTO';
-                    } else if (statusOrcamento === 'PENDENTE' || statusOrcamento === 'EM ANDAMENTO') {
-                        // ORÇAMENTO PENDENTE/EM ANDAMENTO → AGUARDANDO ORÇAMENTO (Etapa 2)
-                        etapaCalculada = 'AGUARDANDO ORÇAMENTO';
-                    }
+                    if (statusOrcamento === 'CONCLUÍDO') etapaCalculada = 'ANÁLISE DO ORÇAMENTO';
+                    else if (statusOrcamento === 'ORÇAMENTO APROVADO') etapaCalculada = 'ORÇAMENTO APROVADO';
+                    else etapaCalculada = 'AGUARDANDO ORÇAMENTO';
                 }
-                // Se tem agendamento mas nenhum dos tipos acima, manter a etapa do backend
             } else {
-                // SEM AGENDAMENTOS → PENDENTE (Etapa 1)
+                // SEM AGENDAMENTOS ATIVOS -> FORÇA PENDENTE
+                // Isso garante que se deletar tudo, ele volta para Etapa 1
                 etapaCalculada = 'PENDENTE';
             }
             
@@ -289,16 +288,14 @@ class PedidosService {
                 descricao: dadosBackend.servico.descricao || '',
                 precoBase: dadosBackend.servico.precoBase || 0,
                 ativo: dadosBackend.servico.ativo,
-                etapa: etapaCalculada,
-                // IMPORTANTE: Preservar os agendamentos do backend
-                agendamentos: dadosBackend.servico.agendamentos || []
+                etapa: etapaCalculada, // Usa a etapa calculada
+                agendamentos: agendamentosTodos // Mantém todos no histórico
             };
             
-            // Usar o nome do serviço como descrição principal
             produtosDesc = servicoInfo.nome;
             itensCount = 1;
             
-            // Mapear etapa para nome amigável e progresso
+            // Mapear para texto amigável e valor da barra de progresso
             switch (etapaCalculada.toUpperCase()) {
                 case 'PENDENTE':
                     etapaAtual = 'Pendente';
@@ -342,20 +339,11 @@ class PedidosService {
         let statusMapeado = statusNome;
         
         switch (statusNome.toUpperCase()) {
-            case 'ATIVO':
-                statusMapeado = 'Ativo';
-                break;
-            case 'FINALIZADO':
-                statusMapeado = 'Finalizado';
-                break;
-            case 'PENDENTE':
-                statusMapeado = 'Em Andamento';
-                break;
-            case 'CANCELADO':
-                statusMapeado = 'Cancelado';
-                break;
-            default:
-                statusMapeado = statusNome;
+            case 'ATIVO': statusMapeado = 'Ativo'; break;
+            case 'FINALIZADO': statusMapeado = 'Finalizado'; break;
+            case 'PENDENTE': statusMapeado = 'Em Andamento'; break;
+            case 'CANCELADO': statusMapeado = 'Cancelado'; break;
+            default: statusMapeado = statusNome;
         }
 
         let dataCompra = dadosBackend.dataCompra;
@@ -367,7 +355,6 @@ class PedidosService {
             dataCompra = new Date().toISOString().slice(0, 10);
         }
 
-        // Garantir que o cliente seja "Não informado" quando não existe ou está vazio
         const clienteNome = dadosBackend.cliente?.nome;
         const clienteNomeFinal = (clienteNome && clienteNome.trim()) ? clienteNome : 'Não informado';
 
@@ -393,9 +380,10 @@ class PedidosService {
             ativo: dadosBackend.ativo !== false,
             tipoPedido: dadosBackend.tipoPedido || (isProduto ? 'produto' : 'servico'),
             
-            // Para serviços, adicionar campos específicos
+            // Dados calculados para o modal e barra de progresso
             etapa: etapaAtual,
-            etapaOriginal: isServico ? dadosBackend.servico.etapa?.nome : null, // Manter etapa original para edição
+            // Agora etapaOriginal vai receber etapaCalculada, que está no escopo correto
+            etapaOriginal: isServico ? etapaCalculada : null, 
             progresso: [progressoValor, progressoTotal],
             servicoNome: servicoInfo?.nome || null,
             

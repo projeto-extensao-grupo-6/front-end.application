@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import TaskCreateModal from "../../shared/components/Ui/TaskCreateModal";
+import AgendamentoNotification from "../../shared/components/Ui/AgendamentoNotification";
 import MiniCalendar from "./components/MiniCalendar";
 import SharedCalendarList from "./components/SharedCalendar";
 import CalendarView from "./components/CalendarView";
@@ -9,6 +10,9 @@ import Button from "../../shared/components/buttons/button.component";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
 import Api from "../../axios/Api";
+import { useAgendamentoNotifications } from "./hooks/useAgendamentoNotifications";
+import EditarAgendamentoSimples from "../../shared/components/pedidosServicosComponents/EditarAgendamentoSimples";
+import agendamentosService from "../../services/agendamentosService";
 
 const CalendarDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,6 +23,11 @@ const CalendarDashboard = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
   const [tasks, setTasks] = useState([]);
+  const [showReagendarModal, setShowReagendarModal] = useState(false);
+  const [agendamentoToReagendar, setAgendamentoToReagendar] = useState(null);
+
+  // Hook de notificações
+  const { currentNotification, dismissNotification, resetNotifications } = useAgendamentoNotifications(tasks);
 
   const fetchAgendamentos = async () => {
     try {
@@ -35,10 +44,16 @@ const CalendarDashboard = () => {
 
         // Criar título completo para o modal usando código + nome do serviço
         let fullTitle = "Agendamento";
+        let calendarTitle = `#${String(agendamento.id).padStart(3, '0')}`; // Título curto para o calendário
+        
         if (agendamento.servico) {
           const codigo = agendamento.servico.codigo || "";
           const nome = agendamento.servico.nome || "";
           fullTitle = `${codigo} ${nome}`.trim() || agendamento.tipoAgendamento || "Agendamento";
+          // Se tem código de serviço, usar no calendário
+          if (codigo) {
+            calendarTitle = codigo;
+          }
         } else {
           fullTitle = agendamento.tipoAgendamento || "Agendamento";
         }
@@ -52,7 +67,7 @@ const CalendarDashboard = () => {
 
         return {
           id: agendamento.id,
-          title: agendamento.tipoAgendamento || "Agendamento", // Para o card no calendário
+          title: calendarTitle, // Mostra apenas o código/número no calendário
           fullTitle: fullTitle, // Para o modal de detalhes
           date: dataFormatada,
           startTime: startTime,
@@ -129,6 +144,63 @@ const CalendarDashboard = () => {
 
   const handleCalendarToggle = (calendarId) => {
     console.log("Toggle calendário:", calendarId);
+  };
+
+  // Handlers para notificações de agendamento
+  const handleReagendarFromNotification = async (agendamento) => {
+    dismissNotification();
+    setAgendamentoToReagendar(agendamento);
+    setShowReagendarModal(true);
+  };
+
+  const handleCancelarFromNotification = async (agendamento) => {
+    try {
+      const confirmar = window.confirm(
+        `Tem certeza que deseja cancelar o agendamento #${String(agendamento.id).padStart(3, '0')}?`
+      );
+      
+      if (!confirmar) return;
+
+      await agendamentosService.delete(agendamento.id);
+      dismissNotification();
+      fetchAgendamentos();
+      
+      alert('Agendamento cancelado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento:', error);
+      alert('Erro ao cancelar agendamento. Tente novamente.');
+    }
+  };
+
+  const handleIniciarFromNotification = async (agendamento) => {
+    try {
+      const agendamentoData = {
+        tipoAgendamento: agendamento.tipoAgendamento,
+        dataAgendamento: agendamento.dataAgendamento,
+        inicioAgendamento: agendamento.inicioAgendamento,
+        fimAgendamento: agendamento.fimAgendamento,
+        statusAgendamento: {
+          tipo: "AGENDAMENTO",
+          nome: "EM ANDAMENTO"
+        },
+        observacao: agendamento.observacao || ""
+      };
+
+      await agendamentosService.update(agendamento.id, agendamentoData);
+      dismissNotification();
+      fetchAgendamentos();
+      
+      alert('Agendamento marcado como "Em Andamento"!');
+    } catch (error) {
+      console.error('Erro ao atualizar agendamento:', error);
+      alert('Erro ao atualizar agendamento. Tente novamente.');
+    }
+  };
+
+  const handleReagendarSuccess = () => {
+    setShowReagendarModal(false);
+    setAgendamentoToReagendar(null);
+    fetchAgendamentos();
   };
 
   return (
@@ -244,6 +316,28 @@ const CalendarDashboard = () => {
           onSave={handleTaskSave}
           initialData={modalInitialData}
         />
+
+        {/* Modal de Reagendamento */}
+        <EditarAgendamentoSimples
+          isOpen={showReagendarModal}
+          onClose={() => {
+            setShowReagendarModal(false);
+            setAgendamentoToReagendar(null);
+          }}
+          agendamento={agendamentoToReagendar}
+          onSuccess={handleReagendarSuccess}
+        />
+
+        {/* Notificação de Agendamento Próximo */}
+        {currentNotification && (
+          <AgendamentoNotification
+            agendamento={currentNotification}
+            onReagendar={handleReagendarFromNotification}
+            onCancelar={handleCancelarFromNotification}
+            onIniciar={handleIniciarFromNotification}
+            onClose={dismissNotification}
+          />
+        )}
       </div>
     </>
   );

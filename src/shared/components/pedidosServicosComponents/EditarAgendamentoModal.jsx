@@ -83,7 +83,8 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
         setError(null);
 
         try {
-            const statusSelecionado = STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId));
+            // Verifica se é orçamento para enviar apenas data e horários
+            const isOrcamento = agendamento.tipoAgendamento === 'ORCAMENTO';
             
             // Montar dados no formato esperado pelo endpoint /agendamentos/dados-basicos/${id}
             const agendamentoData = {
@@ -91,12 +92,17 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                 dataAgendamento: formData.dataAgendamento,
                 inicioAgendamento: formData.inicioAgendamento,
                 fimAgendamento: formData.fimAgendamento,
-                statusAgendamento: {
+            };
+
+            // Adiciona status e observação apenas se NÃO for orçamento
+            if (!isOrcamento) {
+                const statusSelecionado = STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId));
+                agendamentoData.statusAgendamento = {
                     tipo: statusSelecionado.tipo,
                     nome: statusSelecionado.nome
-                },
-                observacao: formData.observacao || ""
-            };
+                };
+                agendamentoData.observacao = formData.observacao || "";
+            }
 
             console.log("🔄 Atualizando agendamento:", agendamentoData);
 
@@ -150,6 +156,9 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
 
     if (!isOpen || !agendamento) return null;
 
+    // Verifica se é um agendamento de orçamento para limitar edição
+    const isOrcamento = agendamento.tipoAgendamento === 'ORCAMENTO';
+
     return (
         <>
             <div
@@ -161,7 +170,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+                    <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-linear-to-r from-blue-600 to-blue-700">
                         <div className="flex items-center gap-3">
                             <div className="bg-white/20 p-2 rounded-xl">
                                 <Calendar className="w-6 h-6 text-white" />
@@ -183,10 +192,21 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                         </button>
                     </div>
 
+                    {/* Info Alert para Orçamentos */}
+                    {isOrcamento && (
+                        <div className="mx-6 mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-blue-800 text-sm font-semibold">Agendamento de Orçamento</p>
+                                <p className="text-blue-700 text-sm mt-1">Para agendamentos de orçamento, você pode editar apenas a data e horário.</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Error Alert */}
                     {error && (
                         <div className="mx-6 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                             <p className="text-red-800 text-sm font-medium">{error}</p>
                         </div>
                     )}
@@ -203,32 +223,36 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                     </h3>
                                 </div>
 
-                                {/* Status */}
-                                <div className="flex flex-col gap-2">
-                                    <label className="block text-sm font-semibold text-gray-700">
-                                        Status do Agendamento *
-                                    </label>
-                                    <select
-                                        name="statusId"
-                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        value={formData.statusId}
-                                        onChange={handleChange}
-                                    >
-                                        {STATUS_AGENDAMENTO.map((status) => (
-                                            <option key={status.id} value={status.id}>
-                                                {status.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <p className="text-xs text-gray-500">
-                                        Status atual: <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                            STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId))?.nome
-                                        )}`}>
-                                            {STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId))?.label}
-                                        </span>
-                                    </p>
-                                </div>
-                                <br />
+                                {/* Status - Desabilitado para Orçamentos */}
+                                {!isOrcamento && (
+                                    <>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="block text-sm font-semibold text-gray-700">
+                                                Status do Agendamento *
+                                            </label>
+                                            <select
+                                                name="statusId"
+                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                value={formData.statusId}
+                                                onChange={handleChange}
+                                            >
+                                                {STATUS_AGENDAMENTO.map((status) => (
+                                                    <option key={status.id} value={status.id}>
+                                                        {status.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <p className="text-xs text-gray-500">
+                                                Status atual: <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                                    STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId))?.nome
+                                                )}`}>
+                                                    {STATUS_AGENDAMENTO.find(s => s.id === parseInt(formData.statusId))?.label}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <br />
+                                    </>
+                                )}
 
                                 {/* Data do Agendamento */}
                                 <div className="flex flex-col gap-2">
@@ -279,20 +303,34 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                     </div>
                                 </div>
                                 <br />
-                                {/* Observações */}
-                                <div className="flex flex-col gap-2">
-                                    <label className="block text-sm font-semibold text-gray-700">
-                                        Observações
-                                    </label>
-                                    <textarea
-                                        name="observacao"
-                                        rows={4}
-                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Adicione informações adicionais sobre o agendamento..."
-                                        value={formData.observacao}
-                                        onChange={handleChange}
-                                    />
-                                </div>
+                                {/* Observações - Desabilitado para Orçamentos */}
+                                {!isOrcamento && (
+                                    <div className="flex flex-col gap-2">
+                                        <label className="block text-sm font-semibold text-gray-700">
+                                            Observações
+                                        </label>
+                                        <textarea
+                                            name="observacao"
+                                            rows={4}
+                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Adicione informações adicionais sobre o agendamento..."
+                                            value={formData.observacao}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Visualização somente leitura para Orçamentos */}
+                                {isOrcamento && formData.observacao && (
+                                    <div className="flex flex-col gap-2">
+                                        <label className="block text-sm font-semibold text-gray-700">
+                                            Observações (somente leitura)
+                                        </label>
+                                        <div className="w-full px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600">
+                                            {formData.observacao}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Coluna Direita - Informações */}
@@ -385,7 +423,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                             className="px-4 py-2.5 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2 font-medium disabled:opacity-50"
                         >
                             <Trash2 className="w-4 h-4" />
-                            Excluir
+                            Cancelar Agendamento
                         </button>
 
                         <div className="flex gap-3">
@@ -395,7 +433,7 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                 disabled={loading}
                                 className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
                             >
-                                Cancelar
+                                Fechar
                             </button>
                             <button
                                 type="button"
@@ -420,22 +458,22 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                 </div>
             </div>
 
-            {/* Modal de Confirmação de Exclusão */}
+            {/* Modal de Confirmação de Cancelamento */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center px-4 z-[60]">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center px-4 z-60">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
                                 <Trash2 className="w-6 h-6 text-red-600" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900">Excluir Agendamento</h3>
+                                <h3 className="text-lg font-bold text-gray-900">Cancelar Agendamento</h3>
                                 <p className="text-sm text-gray-600">Esta ação não pode ser desfeita</p>
                             </div>
                         </div>
                         
                         <p className="text-gray-700 mb-6">
-                            Tem certeza que deseja excluir o agendamento <span className="font-bold">#{agendamento.id?.toString().padStart(3, '0')}</span>?
+                            Tem certeza que deseja cancelar o agendamento <span className="font-bold">#{agendamento.id?.toString().padStart(3, '0')}</span>?
                         </p>
 
                         <div className="flex gap-3">
@@ -444,14 +482,14 @@ const EditarAgendamentoModal = ({ isOpen, onClose, agendamento, onSuccess }) => 
                                 disabled={loading}
                                 className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
                             >
-                                Cancelar
+                                Voltar
                             </button>
                             <button
                                 onClick={handleDelete}
                                 disabled={loading}
                                 className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50"
                             >
-                                {loading ? 'Excluindo...' : 'Sim, Excluir'}
+                                {loading ? 'Cancelando...' : 'Sim, Cancelar'}
                             </button>
                         </div>
                     </div>
