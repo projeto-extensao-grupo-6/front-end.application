@@ -21,8 +21,8 @@ import {
   AccountCircleOutlined
 } from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
-import UserImg from "../../../assets/User.png"; // Imagem padrão (fallback)
-
+import DefaultAvatar from '../../../assets/Avatar.png';
+  
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -32,17 +32,25 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
   const [userEmail, setUserEmail] = useState("carregando@leovidros.com");
   
   // 1. NOVO ESTADO PARA A FOTO
-  const [userPhoto, setUserPhoto] = useState(UserImg); 
+  const [userPhoto, setUserPhoto] = useState(DefaultAvatar); 
   
   useEffect(() => {
     const storedName = sessionStorage.getItem('loggedUserName');
     const storedEmail = sessionStorage.getItem('loggedUserEmail');
     
+    const userId = sessionStorage.getItem('userId');
+
     // 2. LÓGICA DE CARREGAMENTO DA FOTO
-    const localPhoto = localStorage.getItem('leoVidros_userPhoto');
-    if (localPhoto) {
-      setUserPhoto(localPhoto);
-    } 
+    if (userId) {
+      const localPhoto = localStorage.getItem(`leoVidros_userPhoto_${userId}`);
+      if (localPhoto) 
+        setUserPhoto(localPhoto);
+      else
+        setUserPhoto(DefaultAvatar);
+    } else {
+        setUserPhoto(Logo);
+
+    }
 
     if (storedName) {
       setUserName(storedName);

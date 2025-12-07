@@ -3,7 +3,7 @@ import Api from '../../axios/Api';
 import { User, MapPin, Lock, Save, Edit2, Camera, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import Sidebar from '../../shared/components/sidebar/sidebar';
 import Header from '../../shared/components/header/header';
-import UserImg from '../../assets/User.png'; 
+import DefaultAvatar from '../../assets/Avatar.png';
 
 // Componente InputField (mantido inalterado)
 const InputField = ({ label, name, value, onChange, type = "text", disabled = false, className = "", showPasswordToggle = false, onTogglePassword, showPassword }) => (
@@ -77,8 +77,17 @@ export default function Perfil() {
     });
     
     // NOVOS ESTADOS E REFS PARA FOTO DE PERFIL
-    const [userPhoto, setUserPhoto] = useState(UserImg); // Inicializa com a imagem padrão
+    const [userPhoto, setUserPhoto] = useState(DefaultAvatar); // Inicializa com a imagem padrão
     const fileInputRef = useRef(null); // Referência para o input de arquivo
+
+    const getUserId = () => {
+        const userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            console.error("ID do usuário não encontrado no sessionStorage.");
+            return null;
+        }
+        return userId;
+    };
 
     // FUNÇÕES DE UPLOAD DE FOTO (MODIFICADAS)
     
@@ -99,6 +108,13 @@ export default function Perfil() {
     };
 
     const previewProfilePhoto = (file) => {
+        const userId = getUserId();
+        if (!userId) {
+            setLoading(false); // Certifique-se de remover o estado de loading se não houver userId
+            setMessage({ type: 'error', text: 'Erro: ID do usuário não encontrado.' });
+            return;
+        }
+
         setLoading(true);
         setMessage({ type: '', text: 'Pré-visualizando foto de perfil...' });
 
@@ -107,7 +123,7 @@ export default function Perfil() {
         reader.onloadend = () => {
             const base64Url = reader.result;
             // Define a userPhoto como a URL base64 do arquivo
-            localStorage.setItem('leoVidros_userPhoto', base64Url);
+            localStorage.setItem(`leoVidros_userPhoto_${userId}`, base64Url);
             setUserPhoto(base64Url); 
             setMessage({ type: 'success', text: 'Pré-visualização da foto carregada!' });
             setLoading(false);
@@ -122,14 +138,14 @@ export default function Perfil() {
     };
 
     useEffect(() => {
-        const userId = sessionStorage.getItem('userId');
+        const userId = getUserId();
 
         if (!userId) {
             console.error("ID do usuário não encontrado no sessionStorage.");
             return;
         }
 
-        const localPhoto = localStorage.getItem('leoVidros_userPhoto');
+        const localPhoto = localStorage.getItem(`leoVidros_userPhoto_${userId}`);
          if (localPhoto) {
             setUserPhoto(localPhoto);
         }
@@ -144,7 +160,7 @@ export default function Perfil() {
                     if (userData.fotoUrl) {
                         setUserPhoto(userData.fotoUrl);
                     } else {
-                        setUserPhoto(UserImg);
+                        setUserPhoto(DefaultAvatar);
                     }
                 }
                 // *****************************************
