@@ -255,105 +255,128 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
     const handleAgendamentoEditadoSuccess = async () => {
         try {
+            // 1️⃣ Primeiro: Recarrega os dados do backend
             const result = await PedidosService.buscarPorId(servico.id);
-            if (result.success) {
-                const servicoAtualizado = PedidosService.mapearParaFrontend(result.data);
-                
-                // Mapeia o que veio do backend para o formato do frontend
-                const etapaRaw = servicoAtualizado.etapaOriginal || servicoAtualizado.etapa;
-                const etapaCalculada = encontrarEtapaCorrespondente(etapaRaw);
-                const etapaAtualFrontend = encontrarEtapaCorrespondente(servico.etapaOriginal || servico.etapa);
-                
-                console.log(`📊 Verificando: Atual="${etapaAtualFrontend}" | Nova="${etapaCalculada}"`);
-                
-                if (etapaCalculada !== etapaAtualFrontend) {
-                    // CORREÇÃO: Envia direto o valor calculado, sem limpar acentos
-                    const etapaParaBackend = etapaCalculada;
-                    
-                    const pedidoData = {
-                        pedido: {
-                            valorTotal: servicoAtualizado.valorTotal || 0.00,
-                            ativo: servicoAtualizado.status === "Ativo",
-                            formaPagamento: servicoAtualizado.formaPagamento || "A negociar",
-                            observacao: servicoAtualizado.descricao || "",
-                            cliente: {
-                                id: servicoAtualizado.clienteId || servicoAtualizado.clienteInfo?.id,
-                                nome: servicoAtualizado.clienteNome || servicoAtualizado.clienteInfo?.nome || "",
-                                cpf: servicoAtualizado.clienteInfo?.cpf || "",
-                                email: servicoAtualizado.clienteInfo?.email || "",
-                                telefone: servicoAtualizado.clienteInfo?.telefone || "",
-                                status: "Ativo",
-                                enderecos: servicoAtualizado.clienteInfo?.endereco ? [{
-                                    id: servicoAtualizado.clienteInfo.endereco.id || 0,
-                                    rua: servicoAtualizado.clienteInfo.endereco.rua || "",
-                                    complemento: servicoAtualizado.clienteInfo.endereco.complemento || "",
-                                    cep: servicoAtualizado.clienteInfo.endereco.cep || "",
-                                    cidade: servicoAtualizado.clienteInfo.endereco.cidade || "",
-                                    bairro: servicoAtualizado.clienteInfo.endereco.bairro || "",
-                                    uf: servicoAtualizado.clienteInfo.endereco.uf || "",
-                                    pais: servicoAtualizado.clienteInfo.endereco.pais || "Brasil",
-                                    numero: servicoAtualizado.clienteInfo.endereco.numero || 0
-                                }] : [],
-                            },
-                            status: {
-                                tipo: "PEDIDO",
-                                nome: servicoAtualizado.status.toUpperCase()
-                            }
-                        },
-                        servico: {
-                            id: servico.servico?.id,
-                            nome: servicoAtualizado.servicoNome || servicoAtualizado.servico?.nome || "Serviço",
-                            descricao: servicoAtualizado.descricao || "",
-                            precoBase: servicoAtualizado.servico?.precoBase || 0.00,
-                            ativo: true,
-                            etapa: {
-                                tipo: "PEDIDO",
-                                nome: etapaParaBackend // Enviando com acentos
-                            }
-                        }
-                    };
-                    
-                    await Api.put(`/pedidos/${servico.id}`, pedidoData);
-                    console.log("✅ Etapa atualizada automaticamente");
-                    
-                    // Recarrega final
-                    const resultFinal = await PedidosService.buscarPorId(servico.id);
-                    if (resultFinal.success) {
-                        const servicoFinal = PedidosService.mapearParaFrontend(resultFinal.data);
-                        const etapaFinal = encontrarEtapaCorrespondente(servicoFinal.etapaOriginal || servicoFinal.etapa);
-                        
-                        setFormData({
-                            clienteNome: servicoFinal.clienteNome || "",
-                            data: servicoFinal.data || "",
-                            descricao: servicoFinal.descricao || "",
-                            status: servicoFinal.status || "Ativo",
-                            etapa: etapaFinal,
-                            progressoValor: servicoFinal.progresso?.[0] || 1,
-                            progressoTotal: 7,
-                        });
-                        setEtapaAnterior(etapaFinal);
-                        if (onSuccess) await onSuccess(servicoFinal);
-                    }
-                } else {
-                    setFormData({
-                        clienteNome: servicoAtualizado.clienteNome || "",
-                        data: servicoAtualizado.data || "",
-                        descricao: servicoAtualizado.descricao || "",
-                        status: servicoAtualizado.status || "Ativo",
-                        etapa: etapaCalculada,
-                        progressoValor: servicoAtualizado.progresso?.[0] || 1,
-                        progressoTotal: 7,
-                    });
-                    setEtapaAnterior(etapaCalculada);
-                    if (onSuccess) await onSuccess(servicoAtualizado);
-                }
-                
-                setMostrarEditarAgendamento(false);
-                setAgendamentoSelecionado(null);
-                onClose();
+            if (!result.success) {
+                console.error("❌ Erro ao recarregar dados:", result.error);
+                return;
             }
+
+            const servicoAtualizado = PedidosService.mapearParaFrontend(result.data);
+            
+            // 2️⃣ Normaliza a etapa que veio do backend
+            const etapaRawDoBackend = servicoAtualizado.etapaOriginal || servicoAtualizado.etapa || "PENDENTE";
+            const etapaCalculada = encontrarEtapaCorrespondente(etapaRawDoBackend);
+            
+            // 3️⃣ Pega a etapa ORIGINAL que veio no objeto servico (antes de qualquer mudança)
+            const etapaOriginalRaw = servico.etapaOriginal || servico.etapa || "PENDENTE";
+            const etapaAtualFrontend = encontrarEtapaCorrespondente(etapaOriginalRaw);
+            
+            console.log(`📊 Comparação de Etapas:`);
+            console.log(`   Etapa Anterior (estado): "${etapaAnterior}"`);
+            console.log(`   Etapa Atual (props): "${etapaAtualFrontend}"`);
+            console.log(`   Etapa Nova (backend): "${etapaCalculada}"`);
+            console.log(`   Etapa Raw Backend: "${etapaRawDoBackend}"`);
+            
+            // 4️⃣ Verifica se houve mudança de etapa
+            const houveAlteracaoDeEtapa = etapaCalculada !== etapaAnterior;
+            
+            if (houveAlteracaoDeEtapa) {
+                console.log(`🔄 Etapa mudou de "${etapaAnterior}" para "${etapaCalculada}"`);
+                
+                // 5️⃣ Atualiza a etapa no backend se necessário
+                const etapaParaBackend = etapaCalculada;
+                
+                const pedidoData = {
+                    pedido: {
+                        valorTotal: servicoAtualizado.valorTotal || 0.00,
+                        ativo: servicoAtualizado.status === "Ativo",
+                        formaPagamento: servicoAtualizado.formaPagamento || "A negociar",
+                        observacao: servicoAtualizado.descricao || "",
+                        cliente: {
+                            id: servicoAtualizado.clienteId || servicoAtualizado.clienteInfo?.id,
+                            nome: servicoAtualizado.clienteNome || servicoAtualizado.clienteInfo?.nome || "",
+                            cpf: servicoAtualizado.clienteInfo?.cpf || "",
+                            email: servicoAtualizado.clienteInfo?.email || "",
+                            telefone: servicoAtualizado.clienteInfo?.telefone || "",
+                            status: "Ativo",
+                            enderecos: servicoAtualizado.clienteInfo?.endereco ? [{
+                                id: servicoAtualizado.clienteInfo.endereco.id || 0,
+                                rua: servicoAtualizado.clienteInfo.endereco.rua || "",
+                                complemento: servicoAtualizado.clienteInfo.endereco.complemento || "",
+                                cep: servicoAtualizado.clienteInfo.endereco.cep || "",
+                                cidade: servicoAtualizado.clienteInfo.endereco.cidade || "",
+                                bairro: servicoAtualizado.clienteInfo.endereco.bairro || "",
+                                uf: servicoAtualizado.clienteInfo.endereco.uf || "",
+                                pais: servicoAtualizado.clienteInfo.endereco.pais || "Brasil",
+                                numero: servicoAtualizado.clienteInfo.endereco.numero || 0
+                            }] : [],
+                        },
+                        status: {
+                            tipo: "PEDIDO",
+                            nome: servicoAtualizado.status.toUpperCase()
+                        }
+                    },
+                    servico: {
+                        id: servico.servico?.id,
+                        nome: servicoAtualizado.servicoNome || servicoAtualizado.servico?.nome || "Serviço",
+                        descricao: servicoAtualizado.descricao || "",
+                        precoBase: servicoAtualizado.servico?.precoBase || 0.00,
+                        ativo: true,
+                        etapa: {
+                            tipo: "PEDIDO",
+                            nome: etapaParaBackend
+                        }
+                    }
+                };
+                
+                console.log(`📤 Atualizando etapa no backend para: "${etapaParaBackend}"`);
+                await Api.put(`/pedidos/${servico.id}`, pedidoData);
+                console.log("✅ Etapa atualizada no backend com sucesso");
+            } else {
+                console.log(`ℹ️ Etapa não mudou, mantendo: "${etapaCalculada}"`);
+            }
+            
+            // 6️⃣ SEMPRE recarrega os dados finais do backend após qualquer operação
+            const resultFinal = await PedidosService.buscarPorId(servico.id);
+            if (resultFinal.success) {
+                const servicoFinal = PedidosService.mapearParaFrontend(resultFinal.data);
+                const etapaFinalRaw = servicoFinal.etapaOriginal || servicoFinal.etapa || "PENDENTE";
+                const etapaFinal = encontrarEtapaCorrespondente(etapaFinalRaw);
+                
+                const etapaInfo = ETAPAS_SERVICO.find(e => e.valor === etapaFinal);
+                
+                console.log(`✅ Dados finais carregados. Etapa: "${etapaFinal}"`);
+                
+                // 7️⃣ Atualiza o estado local
+                setFormData({
+                    clienteNome: servicoFinal.clienteNome || "",
+                    data: servicoFinal.data || "",
+                    descricao: servicoFinal.descricao || "",
+                    status: servicoFinal.status || "Ativo",
+                    etapa: etapaFinal,
+                    progressoValor: etapaInfo ? etapaInfo.progresso : (servicoFinal.progresso?.[0] || 1),
+                    progressoTotal: 7,
+                });
+                setEtapaAnterior(etapaFinal);
+                
+                // 8️⃣ Notifica o componente pai
+                if (onSuccess) {
+                    await onSuccess({
+                        ...servicoFinal,
+                        etapa: etapaFinal,
+                        etapaOriginal: etapaFinalRaw
+                    });
+                }
+            }
+            
+            // 9️⃣ Fecha os modais
+            setMostrarEditarAgendamento(false);
+            setAgendamentoSelecionado(null);
+            
         } catch (error) {
-            console.error("Erro ao recarregar dados:", error);
+            console.error("❌ Erro ao recarregar dados:", error);
+            setError("Erro ao atualizar informações. Recarregue a página.");
         }
     };
 

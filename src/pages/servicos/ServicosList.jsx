@@ -213,10 +213,15 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
     };
 
     const handleEditarServicoSuccess = async (servicoAtualizado) => {
-        // O modal EditarServicoModal já faz a chamada correta para a API
-        // Apenas recarregar a lista de serviços para atualizar a UI
+        console.log('📥 Serviço atualizado recebido:', servicoAtualizado);
+        
+        // Atualiza o objeto current IMEDIATAMENTE com os dados recebidos
+        setCurrent(servicoAtualizado);
+        
+        // Recarrega a lista completa do backend
         await fetchData();
-        console.log('Serviço atualizado com sucesso');
+        
+        console.log('✅ Serviço e lista atualizados com sucesso');
     };
 
     return (
@@ -360,6 +365,7 @@ export default function ServicosList({ busca = "", triggerNovoRegistro, onNovoRe
             />
 
             <EditarServicoModal 
+                key={current?.id ? `servico-${current.id}-${current.etapa}-${current.servico?.agendamentos?.length || 0}` : 'servico-modal'}
                 isOpen={modal.editar}
                 onClose={fecharTodos}
                 servico={current}

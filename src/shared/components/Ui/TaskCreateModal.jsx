@@ -422,6 +422,15 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     setFormData(prev => ({ ...prev, produtos: prev.produtos.filter(p => p.id !== id) }));
   };
 
+  const handleProdutoQuantidadeChange = (id, quantidade) => {
+    setFormData(prev => ({
+      ...prev,
+      produtos: prev.produtos.map(p => 
+        p.id === id ? { ...p, quantidade: parseFloat(quantidade) || 1 } : p
+      )
+    }));
+  };
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -755,7 +764,18 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                       {formData.produtos.map((prod) => (
                         <div key={prod.id} className="grid grid-cols-12 gap-4 items-center px-4 py-3 hover:bg-white transition-colors bg-white">
                           <div className="col-span-7 text-sm font-medium text-gray-900 text-left truncate" title={prod.nome}>{prod.nome}</div>
-                          <div className="col-span-4"><button type="button" className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-full transition-colors" onClick={() => handleRemoveProduto(prod.id)}><Trash2 size={16} /></button></div>
+                          <div className="col-span-4">
+                            <Input
+                              type="number"
+                              value={prod.quantidade}
+                              onChange={(e) => handleProdutoQuantidadeChange(prod.id, e.target.value)}
+                              className="text-center"
+                              min={1}
+                            />
+                          </div>
+                          <div className="col-span-1 text-center">
+                            <button type="button" className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-full transition-colors" onClick={() => handleRemoveProduto(prod.id)}><Trash2 size={16} /></button>
+                          </div>
                         </div>
                       ))}
                     </div>

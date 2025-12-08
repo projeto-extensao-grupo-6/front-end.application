@@ -261,23 +261,33 @@ class PedidosService {
                     ag => ag.tipoAgendamento === 'SERVICO'
                 );
 
-                // 1. Prioridade: Serviço
+                // 1. Prioridade: Serviço (tem agendamento de serviço)
                 if (agendamentoServico) {
                     const statusServico = agendamentoServico.statusAgendamento?.nome;
                     if (statusServico === 'CONCLUÍDO') etapaCalculada = 'CONCLUÍDO';
                     else if (statusServico === 'EM ANDAMENTO') etapaCalculada = 'SERVIÇO EM EXECUÇÃO';
-                    else etapaCalculada = 'SERVIÇO AGENDADO';
+                    else etapaCalculada = 'SERVIÇO AGENDADO'; // PENDENTE
                 } 
-                // 2. Prioridade: Orçamento
+                // 2. Prioridade: Orçamento (tem agendamento de orçamento, mas NÃO tem serviço)
                 else if (agendamentoOrcamento) {
                     const statusOrcamento = agendamentoOrcamento.statusAgendamento?.nome;
-                    if (statusOrcamento === 'CONCLUÍDO') etapaCalculada = 'ANÁLISE DO ORÇAMENTO';
-                    else if (statusOrcamento === 'ORÇAMENTO APROVADO') etapaCalculada = 'ORÇAMENTO APROVADO';
-                    else etapaCalculada = 'AGUARDANDO ORÇAMENTO';
+                    
+                    // Se orçamento está CONCLUÍDO → ANÁLISE DO ORÇAMENTO (etapa 3)
+                    // A etapa 4 (ORÇAMENTO APROVADO) só vem manualmente pelo usuário
+                    if (statusOrcamento === 'CONCLUÍDO') {
+                        // Verifica se o backend já tem ORÇAMENTO APROVADO (mudança manual)
+                        if (etapaNome === 'ORÇAMENTO APROVADO') {
+                            etapaCalculada = 'ORÇAMENTO APROVADO';
+                        } else {
+                            etapaCalculada = 'ANÁLISE DO ORÇAMENTO';
+                        }
+                    }
+                    else if (statusOrcamento === 'EM ANDAMENTO' || statusOrcamento === 'PENDENTE') {
+                        etapaCalculada = 'AGUARDANDO ORÇAMENTO';
+                    }
                 }
             } else {
-                // SEM AGENDAMENTOS ATIVOS -> FORÇA PENDENTE
-                // Isso garante que se deletar tudo, ele volta para Etapa 1
+                // SEM AGENDAMENTOS ATIVOS → FORÇA PENDENTE
                 etapaCalculada = 'PENDENTE';
             }
             
