@@ -1,53 +1,40 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import agendamentosService from "../../../services/agendamentosService";
-import { groupEventsByDate } from "../utils/eventHelpers";
+import { useState, useEffect, useMemo } from "react";
+import { format } from "date-fns";
+import { getEventDate } from "../utils/eventHelpers";
+import Api from "../../../axios/Api";
 
-/**
- * Hook para gerenciar detalhes de um evento/agendamento
- * @param {Object} initialEvent - Evento inicial
- * @returns {Object} - Estado e funções do evento
- */
 export const useEventDetails = (initialEvent) => {
-  const [details, setDetails] = useState(initialEvent);
+  const [details, setDetails] = useState(initialEvent || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!initialEvent?.id) return;
+    
     const fetchDetails = async () => {
-      if (!initialEvent?.id) {
-        setDetails(initialEvent);
-        return;
-      }
-
       setLoading(true);
       setError(null);
-
       try {
-        const response = await fetch(
-          `http://localhost:3000/api/agendamentos/${initialEvent.id}`
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          // Mescla dados da API com dados iniciais, preservando funcionários
-          const merged = {
-            ...initialEvent,
-            ...data,
-            funcionarios: data.funcionarios?.length
-              ? data.funcionarios
-              : initialEvent.funcionarios || [],
-          };
-          
-          setDetails(merged);
-        } else {
-          setDetails(initialEvent);
-          setError("Não foi possível carregar os detalhes completos");
-        }
+        console.log("🔍 Buscando detalhes do agendamento ID:", initialEvent.id);
+        const response = await Api.get(`/agendamentos/${initialEvent.id}`);
+        const apiData = response.data;
+        
+        // Mesclar dados da API com dados processados do initialEvent
+        const mergedDetails = {
+          ...apiData, 
+          title: initialEvent.fullTitle || initialEvent.title,
+          startTime: initialEvent.startTime, 
+          endTime: initialEvent.endTime, 
+          date: initialEvent.date, 
+          backgroundColor: initialEvent.backgroundColor 
+        };
+        
+        setDetails(mergedDetails);
       } catch (err) {
-        console.error("Erro ao buscar detalhes do evento:", err);
+        console.error("❌ Erro ao buscar detalhes:", err);
+        setError(err.message);
+        // Fallback: mantém os dados iniciais se a API falhar
         setDetails(initialEvent);
-        setError("Erro ao carregar detalhes");
       } finally {
         setLoading(false);
       }
@@ -56,91 +43,61 @@ export const useEventDetails = (initialEvent) => {
     fetchDetails();
   }, [initialEvent]);
 
-  return {
-    details,
-    loading,
-    error,
-    setError,
-  };
+  return { details, loading, error };
 };
 
-/**
- * Hook para deletar agendamento
- * @param {Function} onSuccess - Callback de sucesso
- * @returns {Object} - Estado e função de delete
- */
 export const useDeleteAgendamento = (onSuccess) => {
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState(null);
 
-  const deleteAgendamento = useCallback(
-    async (id) => {
-      if (!id) {
-        setError("ID do agendamento não fornecido");
+  const deleteAgendamento = async (id) => {
+    console.log("🗑️ Tentando excluir Agendamento ID:", id);
+
+    if (!id) {
+        console.error("❌ Erro: ID inválido ou undefined fornecido para exclusão.");
+        alert("Erro interno: ID do agendamento não encontrado.");
         return false;
+    }
+    
+    setDeleting(true);
+    try {
+      // Tenta deletar no endpoint de agendamentos
+      const response = await Api.delete(`/agendamentos/${id}`);
+      
+      console.log("✅ Sucesso na exclusão. Status:", response.status);
+      
+      if (onSuccess) {
+          onSuccess(id);
       }
+      return true;
 
-      setDeleting(true);
-      setError(null);
+    } catch (err) {
+      console.error("❌ Erro fatal ao excluir:", err);
+      console.error("Detalhes do erro:", err.response?.data);
 
-      try {
-        await agendamentosService.delete(id);
-        onSuccess?.(id);
-        return true;
-      } catch (err) {
-        console.error("Erro ao deletar agendamento:", err);
-        setError("Erro ao excluir agendamento. Tente novamente.");
-        return false;
-      } finally {
-        setDeleting(false);
-      }
-    },
-    [onSuccess]
-  );
-
-  return {
-    deleteAgendamento,
-    deleting,
-    error,
-    setError,
+      // Feedback visual para o usuário
+      const msgErro = err.response?.data?.message || "Erro desconhecido ao excluir.";
+      alert(`Falha ao excluir agendamento: ${msgErro}`);
+      
+      return false;
+    } finally {
+      setDeleting(false);
+    }
   };
+
+  return { deleteAgendamento, deleting };
 };
 
-/**
- * Hook para agrupar eventos por data
- * @param {Array} events - Lista de eventos
- * @returns {Object} - Eventos agrupados por data
- */
 export const useEventsByDate = (events) => {
   const eventsByDate = useMemo(() => {
-    return groupEventsByDate(events);
+    const grouped = {};
+    events?.forEach((evt) => {
+      const dateKey = getEventDate(evt);
+      if (!dateKey) return;
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(evt);
+    });
+    return grouped;
   }, [events]);
 
-  const getEventsForDate = useCallback(
-    (dateKey) => {
-      return eventsByDate[dateKey] || [];
-    },
-    [eventsByDate]
-  );
-
-  const hasEvents = useCallback(
-    (dateKey) => {
-      return eventsByDate[dateKey] && eventsByDate[dateKey].length > 0;
-    },
-    [eventsByDate]
-  );
-
-  const getEventCount = useCallback(
-    (dateKey) => {
-      return eventsByDate[dateKey]?.length || 0;
-    },
-    [eventsByDate]
-  );
-
-  return {
-    eventsByDate,
-    getEventsForDate,
-    hasEvents,
-    getEventCount,
-  };
+  return { eventsByDate };
 };

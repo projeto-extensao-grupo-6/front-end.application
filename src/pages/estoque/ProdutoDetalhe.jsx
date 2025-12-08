@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ArrowLeft, Package, TrendingUp, TrendingDown, Edit2, Check, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+import { ArrowLeft, Package, TrendingUp, TrendingDown, Edit2, Check, ChevronDown, ChevronUp, Plus, X, Eye } from 'lucide-react';
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
+import MovimentacaoDetalheModal from "../../shared/components/modalEstoque/MovimentacaoDetalheModal";
 import Api from '../../axios/Api.jsx';
 
 export default function ProductDetailPage() {
@@ -16,6 +17,10 @@ export default function ProductDetailPage() {
   const [editing, setEditing] = useState({});
   const [chartData, setChartData] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Estados para o modal de detalhes da movimentação
+  const [isMovimentacaoModalOpen, setIsMovimentacaoModalOpen] = useState(false);
+  const [selectedMovimento, setSelectedMovimento] = useState(null);
   
   const [sectionsOpen, setSectionsOpen] = useState({
     kpis: true,
@@ -289,6 +294,17 @@ export default function ProductDetailPage() {
     navigate('/estoque');
   };
 
+  // Funções para controlar o modal de detalhes da movimentação
+  const handleOpenMovimentacaoModal = (movimento) => {
+    setSelectedMovimento(movimento);
+    setIsMovimentacaoModalOpen(true);
+  };
+
+  const handleCloseMovimentacaoModal = () => {
+    setIsMovimentacaoModalOpen(false);
+    setSelectedMovimento(null);
+  };
+
   if (loading) {
     return (
       <div className="flex bg-gray-50 min-h-screen items-center justify-center">
@@ -372,7 +388,7 @@ export default function ProductDetailPage() {
 
                   <div className="bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
                     <p className="text-sm text-white font-bold mb-2">Disponível</p>
-                    <p className="text-2xl font-bold text-white">{estoque.quantidadeDisponivel - estoque.reservado}</p>
+                    <p className="text-2xl font-bold text-white">{Math.max(0, estoque.quantidadeDisponivel - estoque.reservado)}</p>
                     <p className="text-xs text-blue-100 mt-2">Pronto para uso</p>
                   </div>
 
@@ -597,7 +613,6 @@ export default function ProductDetailPage() {
                         <XAxis 
                           dataKey="date" 
                           stroke="#6b7280"
-                          reversed
                           style={{ fontSize: '12px' }}
                         />
                         <YAxis 
@@ -654,6 +669,7 @@ export default function ProductDetailPage() {
                           <th className="py-3 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Quantidade Atual</th>
                           <th className="py-3 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Observação</th>
                           <th className="py-3 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Usuário</th>
+                          <th className="py-3 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Detalhe</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -686,6 +702,15 @@ export default function ProductDetailPage() {
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-800 text-center">{movimento.observacao || 'N/A'}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">{movimento.usuario?.nome || 'N/A'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 text-center">
+                              <button
+                                onClick={() => handleOpenMovimentacaoModal(movimento)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                              >
+                                <Eye className="w-3 h-3" />
+                                Ver Detalhe
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -697,6 +722,14 @@ export default function ProductDetailPage() {
           </div>
         </main>
       </div>
+
+      {/* Modal de Detalhes da Movimentação */}
+      <MovimentacaoDetalheModal
+        isOpen={isMovimentacaoModalOpen}
+        onClose={handleCloseMovimentacaoModal}
+        movimento={selectedMovimento}
+        produto={produto}
+      />
     </div>
   );
 }

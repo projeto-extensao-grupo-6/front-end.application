@@ -34,9 +34,7 @@ export default function NovaSenha() {
         }
     }, [idUsuario]);
 
-
-    const [showNovaSenha, setShowNovaSenha] = useState(false);
-    const [showConfirmaSenha, setShowConfirmaSenha] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); 
 
     // --- Dados e Cores ---
     const primaryDarkColor = "#003d6b";
@@ -50,13 +48,8 @@ export default function NovaSenha() {
 
     const isFormValid = is8Chars && isUppercase && isNumber && passwordsMatch;
 
-    // Handler para alternar a visibilidade
-    const handleToggleShowPassword = (field) => {
-        if (field === 'novaSenha') {
-            setShowNovaSenha((prev) => !prev);
-        } else if (field === 'confirmaSenha') {
-            setShowConfirmaSenha((prev) => !prev);
-        }
+    const handleToggleShowPassword = () => {
+        setShowPassword(prev => !prev);
     };
 
     // --- Handler de Submissão ---
@@ -126,7 +119,7 @@ export default function NovaSenha() {
                             <label htmlFor="novaSenha" className="block text-gray-700 font-medium mb-3 text-base">Nova senha:</label>
                             <TextField
                                 fullWidth
-                                type={showNovaSenha ? 'text' : 'password'}
+                                type={showPassword ? 'text' : 'password'}
                                 id="novaSenha"
                                 placeholder="********"
                                 value={novaSenha}
@@ -152,10 +145,12 @@ export default function NovaSenha() {
                                         <InputAdornment position="end">
                                             <IconButton
                                                 aria-label="toggle password visibility"
-                                                onClick={() => handleToggleShowPassword('novaSenha')}
+                                                // ✅ Ambos chamam a mesma função sem parâmetro
+                                                onClick={handleToggleShowPassword}
                                                 edge="end"
                                             >
-                                                {showNovaSenha ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-500" />}
+                                                {/* ✅ Ambos checam o mesmo estado 'showPassword' */}
+                                                {showPassword ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-500" />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -167,7 +162,7 @@ export default function NovaSenha() {
                             <label htmlFor="confirmaSenha" className="block text-gray-700 font-medium mb-3 text-base">Digite a senha novamente:</label>
                             <TextField
                                 fullWidth
-                                type={showConfirmaSenha ? 'text' : 'password'}
+                                type={showPassword ? 'text' : 'password'}
                                 id="confirmaSenha"
                                 placeholder="********"
                                 value={confirmaSenha}
@@ -192,10 +187,12 @@ export default function NovaSenha() {
                                         <InputAdornment position="end">
                                             <IconButton
                                                 aria-label="toggle password visibility"
-                                                onClick={() => handleToggleShowPassword('confirmaSenha')}
+                                                // ✅ Ambos chamam a mesma função sem parâmetro
+                                                onClick={handleToggleShowPassword}
                                                 edge="end"
                                             >
-                                                {showConfirmaSenha ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-500" />}
+                                                {/* ✅ Ambos checam o mesmo estado 'showPassword' */}
+                                                {showPassword ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-500" />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),

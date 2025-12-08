@@ -2,130 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FaBox, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
 import { BiSolidPencil } from "react-icons/bi";
 import SkeletonLoader from '../../shared/components/skeleton/SkeletonLoader';
-import NovoPedidoModal from '../../shared/components/pedidosServicosComponents/NovoPedidoModal';
+import NovoPedidoProdutoModal from '../../shared/components/pedidosServicosComponents/NovoPedidoProdutoModal';
 import EditarPedidoModal from '../../shared/components/pedidosServicosComponents/EditarPedidoModal';
-// import Api from '../../axios/Api';
-
-// ===== DADOS MOCADOS =====
-const MOCK_PEDIDOS = [
-    {
-        id: "1",
-        clienteNome: "João Silva",
-        produtosDesc: "Vidros temperados",
-        descricao: "Vidro temperado 8mm para janela — 1,20m x 1,00m",
-        dataCompra: "2025-11-20",
-        data: "2025-11-20",
-        formaPagamento: "Pix",
-        itensCount: 2,
-        valorTotal: 480.00,
-        status: "Ativo",
-        produtos: [
-            { nome: "Vidro Temperado 8mm", quantidade: 1, preco: 400.00 },
-            { nome: "Kit de Fixação", quantidade: 1, preco: 80.00 }
-        ],
-        observacoes: "Entrega urgente"
-    },
-    {
-        id: "2",
-        clienteNome: "Maria Santos",
-        produtosDesc: "Ferragens para vidro",
-        descricao: "Kit de roldanas para porta de correr + puxadores",
-        dataCompra: "2025-11-18",
-        data: "2025-11-18",
-        formaPagamento: "Cartão de crédito",
-        itensCount: 6,
-        valorTotal: 265.90,
-        status: "Finalizado",
-        produtos: [
-            { nome: "Roldanas", quantidade: 4, preco: 45.00 },
-            { nome: "Puxadores", quantidade: 2, preco: 42.95 }
-        ],
-        observacoes: ""
-    },
-    {
-        id: "3",
-        clienteNome: "Cliente não informado",
-        produtosDesc: "Espelhos",
-        descricao: "Espelho 4mm lapidado — 1,50m x 0,60m",
-        dataCompra: "2025-11-25",
-        data: "2025-11-25",
-        formaPagamento: "Dinheiro",
-        itensCount: 1,
-        valorTotal: 350.00,
-        status: "Ativo",
-        produtos: [
-            { nome: "Espelho 4mm Lapidado", quantidade: 1, preco: 350.00 }
-        ],
-        observacoes: "Cliente preferiu não se identificar"
-    },
-    {
-        id: "4",
-        clienteNome: "Ana Costa",
-        produtosDesc: "Box para banheiro",
-        descricao: "Box de vidro temperado 8mm — modelo de correr, cor incolor",
-        dataCompra: "2025-11-15",
-        data: "2025-11-15",
-        formaPagamento: "Boleto",
-        itensCount: 1,
-        valorTotal: 780.00,
-        status: "Ativo",
-        produtos: [
-            { nome: "Box Vidro Temperado 8mm", quantidade: 1, preco: 780.00 }
-        ],
-        observacoes: "Instalação agendada para próxima semana"
-    },
-    {
-        id: "5",
-        clienteNome: "Pedro Almeida",
-        produtosDesc: "Vidros laminados",
-        descricao: "Vidro laminado 3+3mm — 2 chapas 2,00m x 1,00m",
-        dataCompra: "2025-11-22",
-        data: "2025-11-22",
-        formaPagamento: "Pix",
-        itensCount: 2,
-        valorTotal: 560.75,
-        status: "Ativo",
-        produtos: [
-            { nome: "Vidro Laminado 3+3mm", quantidade: 2, preco: 280.375 }
-        ],
-        observacoes: "Medidas exatas - sem margem de erro"
-    },
-    {
-        id: "6",
-        clienteNome: "Carlos Oliveira",
-        produtosDesc: "Acessórios",
-        descricao: "Fechos, dobradiças e suportes para prateleiras de vidro",
-        dataCompra: "2025-11-12",
-        data: "2025-11-12",
-        formaPagamento: "Cartão de crédito",
-        itensCount: 10,
-        valorTotal: 312.00,
-        status: "Finalizado",
-        produtos: [
-            { nome: "Fechos", quantidade: 4, preco: 25.00 },
-            { nome: "Dobradiças", quantidade: 4, preco: 35.00 },
-            { nome: "Suportes", quantidade: 2, preco: 56.00 }
-        ],
-        observacoes: ""
-    },
-    {
-        id: "7",
-        clienteNome: "Cliente não informado",
-        produtosDesc: "Prateleiras de vidro",
-        descricao: "Prateleiras em vidro 10mm — kit com 3 unidades",
-        dataCompra: "2025-11-26",
-        data: "2025-11-26",
-        formaPagamento: "Pix",
-        itensCount: 3,
-        valorTotal: 450.00,
-        status: "Ativo",
-        produtos: [
-            { nome: "Prateleira Vidro 10mm", quantidade: 3, preco: 150.00 }
-        ],
-        observacoes: "Retirada no local"
-    },
-];
-// ===== FIM DADOS MOCADOS =====
+import PedidosService from '../../services/pedidosService';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -143,6 +22,8 @@ function StatusBadge({ status }) {
     const styles = {
         Ativo: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#bfdbfe] text-[#1e3a8a]",
         Finalizado: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#d1fae5] text-[#065f46]",
+        "Em Andamento": "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fef3c7] text-[#92400e]",
+        Cancelado: "inline-flex items-center px-2.5 py-1 rounded-2xl text-[11px] font-medium uppercase tracking-wide bg-[#fecaca] text-[#991b1b]",
     };
     return <span className={styles[status] || styles.Ativo}>{status}</span>;
 }
@@ -163,15 +44,17 @@ const formatDate = (dateString) => {
 
 const formatPedidoId = (id) => {
     if (!id) return '';
-    if (/^\d+$/.test(id)) {
-        return id.padStart(3, '0');
+    const idString = String(id);
+    if (/^\d+$/.test(idString)) {
+        return idString.padStart(3, '0');
     }
-    return id;
+    return idString;
 }
 
 export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoRegistroHandled, statusFilter, paymentFilter }) {
     const [pedidos, setPedidos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [modal, setModal] = useState({ confirm: false, view: false, form: false, novo: false, editar: false });
     const [mode, setMode] = useState("new");
@@ -182,44 +65,42 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
 
     const fetchData = async () => {
         setLoading(true);
-        // Simulação de delay
-        setTimeout(() => {
-            const sortedPedidos = [...MOCK_PEDIDOS].sort((a, b) => {
-                const idAisNum = /^\d+$/.test(a.id);
-                const idBisNum = /^\d+$/.test(b.id);
-                if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
-                if (a.id < b.id) return 1;
-                if (a.id > b.id) return -1;
-                return 0;
-            });
-            setPedidos(sortedPedidos);
-            setLoading(false);
-        }, 500);
+        setError(null);
         
-        /* INTEGRAÇÃO COM API - COMENTADO
         try {
-            const response = await Api.get('/pedidos', { skipAuthRedirect: true });
-            const pedidosData = response.data || [];
+            const result = await PedidosService.buscarPedidosDeProduto();
             
-            const sortedPedidos = [...pedidosData].sort((a, b) => {
-                const idAisNum = /^\d+$/.test(a.id);
-                const idBisNum = /^\d+$/.test(b.id);
-                if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
-                if (a.id < b.id) return 1;
-                if (a.id > b.id) return -1;
-                return 0;
-            });
-            setPedidos(sortedPedidos);
-        } catch (error) {
-            console.error('Erro ao buscar pedidos:', error);
-            if (error.response?.status === 403 || error.response?.status === 401) {
-                console.warn('Sem permissão para acessar pedidos. Verifique se está logado.');
+            if (result.success) {
+            
+                const pedidosMapeados = result.data.map(pedido => 
+                    PedidosService.mapearParaFrontend(pedido)
+                );
+                
+            
+                const pedidosOrdenados = [...pedidosMapeados].sort((a, b) => {
+                    const idAisNum = /^\d+$/.test(a.id);
+                    const idBisNum = /^\d+$/.test(b.id);
+                    if (idAisNum && idBisNum) return parseInt(b.id, 10) - parseInt(a.id, 10);
+                    if (a.id < b.id) return 1;
+                    if (a.id > b.id) return -1;
+                    return 0;
+                });
+                
+                setPedidos(pedidosOrdenados);
+            } else {
+                setError(result.error);
+                if (result.status === 204) {
+                    setPedidos([]); 
+                    setError(null);
+                }
             }
+        } catch (error) {
+            console.error('Erro inesperado ao buscar pedidos de produto:', error);
+            setError('Erro inesperado ao carregar pedidos de produto');
             setPedidos([]);
         } finally {
             setLoading(false);
         }
-        */
     };
 
     useEffect(() => {
@@ -241,35 +122,15 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
-    // Lógica de Filtragem
+
     const listaFiltrada = useMemo(() => {
-        let lista = pedidos;
-        const t = String(busca).toLowerCase().trim();
-
-        if (t) {
-            lista = lista.filter((p) =>
-                [formatPedidoId(p.id), p.produtosDesc, p.descricao, p.formaPagamento].join(" ").toLowerCase().includes(t)
-            );
-        }
-
-        if (statusFilter && statusFilter !== "Todos") {
-            const statusArray = Array.isArray(statusFilter) ? statusFilter : [statusFilter];
-            if (statusArray.length > 0 && !statusArray.includes("Todos")) {
-                lista = lista.filter(p => statusArray.includes(p.status));
-            }
-        }
-
-        if (paymentFilter && paymentFilter !== "Todos") {
-            const paymentArray = Array.isArray(paymentFilter) ? paymentFilter : [paymentFilter];
-            if (paymentArray.length > 0 && !paymentArray.includes("Todos")) {
-                lista = lista.filter(p => paymentArray.includes(p.formaPagamento));
-            }
-        }
-
-        return lista;
+        return PedidosService.filtrarPedidos(pedidos, {
+            busca,
+            status: statusFilter,
+            pagamento: paymentFilter
+        });
     }, [busca, pedidos, statusFilter, paymentFilter]);
 
-    // Lógica de Paginação
     const totalPages = Math.max(1, Math.ceil(listaFiltrada.length / ITEMS_PER_PAGE));
     const start = (page - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
@@ -297,54 +158,58 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
 
     const confirmarExclusao = async () => {
         if (!targetId) return;
-        setPedidos(pedidos.filter(p => p.id !== targetId));
-        fecharTodos();
         
-        /* INTEGRAÇÃO COM API - COMENTADO
         try {
-            await Api.delete(`/pedidos/${targetId}`);
-            setPedidos(pedidos.filter(p => p.id !== targetId));
-            fecharTodos();
+            const result = await PedidosService.deletarPedido(targetId);
+            
+            if (result.success) {
+               
+                setPedidos(pedidos.filter(p => p.id !== targetId));
+                fecharTodos();
+                
+                
+                console.log('Pedido excluído com sucesso');
+            } else {
+                console.error('Erro ao excluir pedido:', result.error);
+                alert(`Erro ao excluir pedido: ${result.error}`);
+            }
         } catch (error) {
-            console.error('Erro ao excluir pedido:', error);
-            alert('Erro ao excluir pedido. Tente novamente.');
+            console.error('Erro inesperado ao excluir pedido:', error);
+            alert('Erro inesperado ao excluir pedido. Tente novamente.');
         }
-        */
     };
 
-    const handleNovoPedidoSuccess = (novoPedido) => {
-        const newId = String(Math.max(...pedidos.map(p => parseInt(p.id) || 0)) + 1);
-        const pedidoCompleto = {
-            id: newId,
-            clienteNome: novoPedido.clienteNome,
-            produtosDesc: novoPedido.produtos?.map(p => p.nome).join(", ") || "Produtos",
-            descricao: novoPedido.descricao || "",
-            dataCompra: novoPedido.data,
-            formaPagamento: novoPedido.formaPagamento,
-            itensCount: novoPedido.itensCount || 0,
-            valorTotal: novoPedido.valorTotal || 0,
-            produtos: novoPedido.produtos || [],
-            observacoes: novoPedido.observacoes || "",
-            status: "Ativo"
-        };
-        setPedidos([pedidoCompleto, ...pedidos]);
-        setPage(1);
+    const handleNovoPedidoSuccess = async (novoPedido) => {
         
-        /* INTEGRAÇÃO COM API - COMENTADO
-        fetchData();
+        await fetchData();
         setPage(1);
-        */
+        console.log('Pedido criado com sucesso');
     };
 
-    const handleEditarPedidoSuccess = (pedidoAtualizado) => {
-        const updatedPedidos = pedidos.map(p =>
-            p.id === pedidoAtualizado.id ? pedidoAtualizado : p
-        );
-        setPedidos(updatedPedidos);
-        
-        /* INTEGRAÇÃO COM API - COMENTADO
-        fetchData();
-        */
+    const handleEditarPedidoSuccess = async (pedidoAtualizado) => {
+        try {
+            
+            const dadosMapeados = PedidosService.mapearParaBackend(pedidoAtualizado);
+            
+            const result = await PedidosService.atualizarPedido(pedidoAtualizado.id, dadosMapeados);
+            
+            if (result.success) {
+                
+                await fetchData();
+                console.log('Pedido atualizado com sucesso');
+            } else {
+                console.error('Erro ao atualizar pedido:', result.error);
+                alert(`Erro ao atualizar pedido: ${result.error}`);
+                
+                
+                if (result.validationErrors && Object.keys(result.validationErrors).length > 0) {
+                    console.error('Erros de validação:', result.validationErrors);
+                }
+            }
+        } catch (error) {
+            console.error('Erro inesperado ao atualizar pedido:', error);
+            alert('Erro inesperado ao atualizar pedido. Tente novamente.');
+        }
     };
 
     return (
@@ -352,13 +217,29 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
             <div className="flex flex-col gap-4 w-full py-4">
                 {loading && <SkeletonLoader count={ITEMS_PER_PAGE} />}
 
-                {!loading && pagina.length === 0 && (
-                    <div className="text-center py-10 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-                        Nenhum pedido encontrado com os filtros atuais.
+                {!loading && error && (
+                    <div className="text-center py-10 text-red-500 bg-red-50 rounded-lg border border-red-200">
+                        <p className="font-medium">Erro ao carregar pedidos</p>
+                        <p className="text-sm mt-1">{error}</p>
+                        <button 
+                            onClick={fetchData}
+                            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                        >
+                            Tentar Novamente
+                        </button>
                     </div>
                 )}
 
-                {!loading && pagina.map((item) => (
+                {!loading && !error && pagina.length === 0 && (
+                    <div className="text-center py-10 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                        {listaFiltrada.length === 0 && pedidos.length === 0 
+                            ? "Nenhum pedido cadastrado ainda." 
+                            : "Nenhum pedido encontrado com os filtros atuais."
+                        }
+                    </div>
+                )}
+
+                {!loading && !error && pagina.map((item) => (
                     <article key={item.id} className={`flex flex-col gap-4 rounded-lg border p-5 w-full shadow-sm transition-all hover:shadow-md ${item.status === 'Finalizado' ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-slate-200"}`}>
                         {/* HEADER DO CARD */}
                         <header className="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -396,15 +277,21 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                                     {formatCurrency(item.valorTotal)}
                                 </span>
                             </div>
+                            <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
+                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Pagamento</span>
+                                <span className={`text-md font-medium text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`}>
+                                    {item.formaPagamento}
+                                </span>
+                            </div>
 
-                            <div className="md:col-span-3 flex flex-col items-start justify-start gap-1">
+                            <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
                                 <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Produtos</span>
                                 <span className={`text-md font-medium truncate w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`} title={item.produtosDesc}>
                                     {item.produtosDesc}
                                 </span>
                             </div>
 
-                            <div className="md:col-span-3 flex flex-col items-start justify-start gap-1">
+                            <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
                                 <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Descrição</span>
                                 <p className={`text-md line-clamp-2 leading-snug w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-600'}`} title={item.descricao}>
                                     {item.descricao || '-'}
@@ -412,11 +299,12 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                             </div>
 
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
-                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Pagamento</span>
-                                <span className={`text-md font-medium text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`}>
-                                    {item.formaPagamento}
+                                <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Cliente</span>
+                                <span className={`text-md font-medium truncate w-full text-left ${item.status === 'Finalizado' ? 'text-gray-500' : 'text-slate-700'}`} title={item.clienteNome}>
+                                    {item.clienteNome}
                                 </span>
                             </div>
+
 
                             <div className="md:col-span-2 flex flex-col items-start justify-start gap-1">
                                 <span className={`text-md font-bold ${item.status === 'Finalizado' ? 'text-gray-400' : 'text-slate-500'}`}>Data da Compra</span>
@@ -431,7 +319,7 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
             </div>
 
             {/* Paginação */}
-            {!loading && listaFiltrada.length > 0 && (
+            {!loading && !error && listaFiltrada.length > 0 && (
                 <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
                     <div className="text-sm text-slate-500">
                         Mostrando <span className="font-medium text-slate-800">{start + 1}</span> a <span className="font-medium text-slate-800">{Math.min(end, listaFiltrada.length)}</span> de {listaFiltrada.length}
@@ -468,10 +356,11 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
                 </div>
             )}  
 
-            <NovoPedidoModal
+            <NovoPedidoProdutoModal
                 isOpen={modal.novo}
                 onClose={fecharTodos}
                 onSuccess={handleNovoPedidoSuccess}
+                tipoInicial="produto"
             />
 
             <EditarPedidoModal

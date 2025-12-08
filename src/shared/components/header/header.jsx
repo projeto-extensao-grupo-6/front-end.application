@@ -17,24 +17,40 @@ import {
 import {
   Menu as MenuIcon,
   ExpandMore,
-  SettingsOutlined,
   LogoutOutlined,
   AccountCircleOutlined
 } from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
-import UserImg from "../../../assets/User.png";
+import DefaultAvatar from '../../../assets/Avatar.png';
 
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const navigate = useNavigate(); // Adicione esta linha
+  const navigate = useNavigate();
 
   const [userName, setUserName] = useState("Carregando...");
   const [userEmail, setUserEmail] = useState("carregando@leovidros.com");
   
+  // 1. NOVO ESTADO PARA A FOTO
+  const [userPhoto, setUserPhoto] = useState(DefaultAvatar); 
+  
   useEffect(() => {
     const storedName = sessionStorage.getItem('loggedUserName');
     const storedEmail = sessionStorage.getItem('loggedUserEmail');
+    
+    const userId = sessionStorage.getItem('userId');
+
+    // 2. LÓGICA DE CARREGAMENTO DA FOTO
+    if (userId) {
+      const localPhoto = localStorage.getItem(`leoVidros_userPhoto_${userId}`);
+      if (localPhoto) 
+        setUserPhoto(localPhoto);
+      else
+        setUserPhoto(DefaultAvatar);
+    } else {
+        setUserPhoto(DefaultAvatar);
+
+    }
 
     if (storedName) {
       setUserName(storedName);
@@ -112,8 +128,9 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
             <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">{userName}</p>
             <p className="text-[11px] sm:text-xs text-gray-300">Admin</p>
           </div>
+          {/* 3. SUBSTITUIÇÃO: Usa userPhoto no Avatar principal */}
           <Avatar
-            src={UserImg}
+            src={userPhoto} 
             className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border-2 border-white group-hover:border-gray-300 transition-colors"
           />
           <ExpandMore
@@ -145,8 +162,9 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
         >
           {/* Seção de Perfil Destacada */}
           <Box className="flex items-center px-4 py-5 gap-3">
+             {/* 3. SUBSTITUIÇÃO: Usa userPhoto no Avatar do Menu */}
              <Avatar
-               src={UserImg}
+               src={userPhoto}
                className="w-12 h-12 border-2 border-white"
              />
              <div>

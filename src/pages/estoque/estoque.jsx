@@ -155,14 +155,20 @@ export default function Estoque() {
       items = items.filter((item) => {
         const quantidade = item.quantidadeDisponivel;
         const estoqueMinimo = item.produto.estoqueMinimo;
-        
-        const situacao =
-          quantidade === 0
-            ? "Fora de estoque"
-            : quantidade < estoqueMinimo
-            ? "Abaixo do normal"
-            : "Disponível";
-            
+        const reservado = item.reservado;
+    
+        let situacao = "";
+    
+        if (quantidade === 0 && reservado > 0) {
+          situacao = "Reservado";
+        } else if (quantidade === 0) {
+          situacao = "Fora de estoque";
+        } else if (quantidade < estoqueMinimo) {
+          situacao = "Abaixo do normal";
+        } else {
+          situacao = "Disponível";
+        }
+    
         return situacaoFilters.includes(situacao);
       });
     }
@@ -255,6 +261,22 @@ const handleSaveItem = useCallback(async (itemData) => {
     alert("Erro ao salvar item. Tente novamente.");
   }
 }, [editingItem, fetchEstoque, parseCurrency]);
+
+// Novo callback para lidar com o sucesso do modal de produto
+const handleProductSuccess = useCallback(async (savedProduct) => {
+  console.log("Produto salvo com sucesso:", savedProduct);
+  
+  // Recarregar o estoque para mostrar o novo produto
+  await fetchEstoque();
+  
+  // Fechar modal e mostrar sucesso
+  setIsNovoItemModalOpen(false);
+  setIsSuccessModalOpen(true);
+  
+  setTimeout(() => {
+    setIsSuccessModalOpen(false);
+  }, 3000);
+}, [fetchEstoque]);
 
   const handleViewDetails = useCallback((estoqueId) => {
     console.log("🔍 Navegando para estoque ID:", estoqueId);
@@ -395,13 +417,19 @@ const handleSaveItem = useCallback(async (itemData) => {
     return paginationData.items.map((item) => {
       const quantidade = item.quantidadeDisponivel;
       const estoqueMinimo = item.produto.estoqueMinimo;
+      const reservado = item.reservado;
       
-      const situacao =
-        quantidade === 0
-          ? "Fora de estoque"
-          : quantidade < estoqueMinimo
-          ? "Abaixo do normal"
-          : "Disponível";
+      let situacao = "";
+      
+      if (quantidade === 0 && reservado > 0) {
+        situacao = "Reservado";
+      } else if (quantidade === 0) {
+        situacao = "Fora de estoque";
+      } else if (quantidade < estoqueMinimo) {
+        situacao = "Abaixo do normal";
+      } else {
+        situacao = "Disponível";
+      }
     
       return {
         ...item,
@@ -618,6 +646,7 @@ const handleSaveItem = useCallback(async (itemData) => {
         isOpen={isNovoItemModalOpen}
         onClose={() => setIsNovoItemModalOpen(false)}
         onSave={handleSaveItem}
+        onSuccess={handleProductSuccess}
         item={editingItem}
       />
 

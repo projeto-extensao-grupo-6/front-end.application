@@ -18,13 +18,11 @@ import {
   MenuItem,
   Divider,
   Checkbox,
-  Collapse,
 } from "@mui/material";
 import {
   Edit,
   FileDownloadOutlined,
   KeyboardArrowDown,
-  KeyboardArrowUp,
   VisibilityOutlined,
 } from "@mui/icons-material";
 import ClienteFormModal from "../../shared/components/clienteComponents/ClienteFormModal";
@@ -40,14 +38,12 @@ const formatPhone = (phoneStr) => {
   if (!phoneStr) return "N/A";
   const cleaned = phoneStr.replace(/\D/g, "");
   if (cleaned.length === 11) {
-    // Formato (XX) XXXXX-XXXX
     return `(${cleaned.substring(0, 2)}) ${cleaned.substring(
       2,
       7
     )}-${cleaned.substring(7, 11)}`;
   }
   if (cleaned.length === 10) {
-    // Formato (XX) XXXX-XXXX
     return `(${cleaned.substring(0, 2)}) ${cleaned.substring(
       2,
       6
@@ -56,7 +52,6 @@ const formatPhone = (phoneStr) => {
   return phoneStr;
 };
 
-// Função para obter o primeiro endereço do cliente
 const getPrimaryAddress = (cliente) => {
   if (!cliente.enderecos || !Array.isArray(cliente.enderecos) || cliente.enderecos.length === 0) {
     return { rua: "N/A", cidade: "N/A", uf: "N/A" };
@@ -119,10 +114,11 @@ export default function Clientes() {
   const [openDetails, setOpenDetails] = useState(false);
   const [clienteDetalhes, setClienteDetalhes] = useState(null);
 
+  const [pedidos, setPedidos] = useState([]);
+
   const fetchClientes = async () => {
     try {
       const response = await Api.get("/clientes");
-      // Garantindo que sempre seja um array
       const data = Array.isArray(response.data) ? response.data : [];
       setClientes(data);
     } catch (error) {
@@ -131,12 +127,23 @@ export default function Clientes() {
     }
   };
 
+  const fetchPedidos = async () => {
+    try {
+      const response = await Api.get("/pedidos");
+      const data = Array.isArray(response.data) ? response.data : [];
+      setPedidos(data);
+    } catch (error) {
+      console.error("Erro ao buscar pedidos:", error);
+      setPedidos([]);
+    }
+  };
+
   useEffect(() => {
     fetchClientes();
+    fetchPedidos();
   }, []);
 
   const clientesFiltrados = useMemo(() => {
-    // Garantindo que clientes seja sempre um array antes de usar filter
     const clientesArray = Array.isArray(clientes) ? clientes : [];
     
     let filtered = clientesArray.filter((c) =>
@@ -233,6 +240,7 @@ export default function Clientes() {
 
     const simplifiedData = dataToExport.map((c) => {
       const enderecoPrimario = getPrimaryAddress(c);
+      const qtdPedidos = pedidos.filter((p) => p.cliente?.id === c.id).length;
       return {
         Nome: c.nome,
         Telefone: c.telefone,
@@ -241,7 +249,7 @@ export default function Clientes() {
         Endereco: enderecoPrimario.rua,
         Cidade: enderecoPrimario.cidade,
         UF: enderecoPrimario.uf,
-        Serviços_Registrados: c.historicoServicos ? c.historicoServicos.length : 0,
+        Serviços_Registrados: qtdPedidos,
       };
     });
 
@@ -255,24 +263,25 @@ export default function Clientes() {
     setClienteDetalhes(cliente);
     setOpenDetails(true);
   };
-
+  
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
+    <div className={`w-full min-h-screen bg-[#F9FAFB] flex ${sidebarOpen ? '' : ''}`}>
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <div className={`flex-1 flex flex-col min-h-screen overflow-hidden ${sidebarOpen ? 'md:ml-[280px]' : ''}`}>
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
         <div className="h-[80px]" />
 
-        <main className="flex-1 p-8 overflow-hidden">
-          <div className="max-w-[1800px] mx-auto h-full flex flex-col">
-            <div className="mb-10 text-center">
-              <h1 className="text-3xl font-bold text-gray-800">Clientes</h1>
-              <p className="text-gray-500 text-lg">
-                Visualize todos os clientes de sua empresa
-              </p>
-            </div>
+        {/* Page title container (replicates .page-title-container) */}
+        <div className={`w-full bg-white border-b border-gray-200 box-border sticky top-0 z-10 px-8 pt-6 pb-4 ${sidebarOpen ? 'md:ml-[280px]' : ''}`}>
+          <div className="mb-0 text-center">
+            <h1 className="font-sans font-bold text-[24px] text-[#1F2937] m-0">Clientes</h1>
+            <p className="text-[#6B7280] text-lg mt-1">Visualize todos os clientes de sua empresa</p>
+          </div>
+        </div>
 
+        <main className="flex-1 px-8 pt-8 pb-12 overflow-hidden">
+          <div className="max-w-[1800px] mx-auto h-full flex flex-col">
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col flex-1 overflow-hidden">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
                 <Button
@@ -376,9 +385,6 @@ export default function Clientes() {
                         </TableRow>
                       ) : (
                         clientesPagina.map((c) => {
-                          const hasHistory =
-                            c.historicoServicos && c.historicoServicos.length > 0;
-
                           const isItemSelected = isSelected(c.id);
 
                           return (
@@ -462,126 +468,74 @@ export default function Clientes() {
                                       size="small"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setOpenRowId(openRowId === c.id ? null : c.id);
+                                        setClienteDetalhes(c);
+                                        setOpenDetails(true);
                                       }}
                                     >
-                                      {openRowId === c.id ? (
-                                        <KeyboardArrowUp />
-                                      ) : (
-                                        <KeyboardArrowDown />
-                                      )}
+                                      <KeyboardArrowDown />
                                     </IconButton>
                                   </div>
                                 </TableCell>
                               </TableRow>
 
-                              <TableRow>
-                                <TableCell colSpan={6} className="p-0">
-                                  <Collapse
-                                    in={openRowId === c.id}
-                                    timeout="auto"
-                                    unmountOnExit
-                                  >
-                                    <div className="m-4 p-4 bg-gray-50 rounded-lg border border-gray-200 flex flex-col items-center gap-4">
-                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full text-center">
-                                        <span className="font-semibold text-gray-900">
-                                          Endereço:{" "}
-                                          <span className="font-normal text-gray-600 block md:inline">
-                                            {getPrimaryAddress(c).rua}
-                                          </span>
-                                        </span>
-                                        <span className="font-semibold text-gray-900">
-                                          Cidade:{" "}
-                                          <span className="font-normal text-gray-600 block md:inline">
-                                            {getPrimaryAddress(c).cidade}
-                                          </span>
-                                        </span>
-                                        <span className="font-semibold text-gray-900">
-                                          UF:{" "}
-                                          <span className="font-normal text-gray-600 block md:inline">
-                                            {getPrimaryAddress(c).uf}
-                                          </span>
-                                        </span>
-                                      </div>
+                             </React.Fragment>
+                           );
+                         })
+                       )}
+                     </TableBody>
+                   </Table>
+                 </TableContainer>
+               </div>
+ 
+               {clientesFiltrados.length > 0 && (
+                 <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-4 border-t border-gray-200 gap-3">
+                   <span className="text-sm text-gray-600">
+                     Mostrando {indexPrimeiro + 1} a{" "}
+                     {Math.min(indexUltimo, clientesFiltrados.length)} de{" "}
+                     {clientesFiltrados.length} resultados
+                   </span>
+                   <div className="flex gap-2">
+                     <Button
+                       variant="outlined"
+                       size="small"
+                       onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
+                       disabled={pagina === 1}
+                       className="text-xs"
+                     >
+                       Anterior
+                     </Button>
+                     <Button
+                       variant="outlined"
+                       size="small"
+                       onClick={() =>
+                         setPagina((prev) => Math.min(prev + 1, totalPaginas))
+                       }
+                       disabled={pagina === totalPaginas}
+                       className="text-xs"
+                     >
+                       Próximo
+                     </Button>
+                   </div>
+                 </div>
+               )}
+             </div>
+           </div>
+         </main>
 
-                                      <Divider className="w-full" />
-
-                                      <div className="w-full">
-                                        <h3 className="text-center text-lg font-semibold mb-3">
-                                          Histórico de Serviços
-                                        </h3>
-
-                                        {hasHistory ? (
-                                          <div className="w-full flex flex-col gap-4">
-                                            {c.historicoServicos.map((hist) => (
-                                              <HistoryCard
-                                                hist={hist}
-                                                key={hist.id || Math.random()}
-                                              />
-                                            ))}
-                                          </div>
-                                        ) : (
-                                          <p className="text-center w-full text-gray-500">
-                                            Nenhum histórico de serviço encontrado.
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </Collapse>
-                                </TableCell>
-                              </TableRow>
-                            </React.Fragment>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </div>
-
-              {clientesFiltrados.length > 0 && (
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-4 border-t border-gray-200 gap-3">
-                  <span className="text-sm text-gray-600">
-                    Mostrando {indexPrimeiro + 1} a{" "}
-                    {Math.min(indexUltimo, clientesFiltrados.length)} de{" "}
-                    {clientesFiltrados.length} resultados
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
-                      disabled={pagina === 1}
-                      className="text-xs"
-                    >
-                      Anterior
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() =>
-                        setPagina((prev) => Math.min(prev + 1, totalPaginas))
-                      }
-                      disabled={pagina === totalPaginas}
-                      className="text-xs"
-                    >
-                      Próximo
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </main>
-
-        <ClienteFormModal
-          open={openForm}
-          onClose={() => setOpenForm(false)}
-          onSubmit={atualizarClientes}
-          modoEdicao={modoEdicao}
-          clienteInicial={clienteSelecionado}
+         <ClienteFormModal
+           open={openForm}
+           onClose={() => setOpenForm(false)}
+           onSubmit={atualizarClientes}
+           modoEdicao={modoEdicao}
+           clienteInicial={clienteSelecionado}
+         />
+        <ClienteDetailsModal
+          open={openDetails}
+          onClose={() => setOpenDetails(false)}
+          cliente={clienteDetalhes}
+          servicos={Array.isArray(pedidos) ? pedidos : []}
         />
-      </div>
-    </div>
-  );
-}
+       </div>
+     </div>
+   );
+ }

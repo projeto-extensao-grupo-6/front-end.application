@@ -1,9 +1,60 @@
+import React, { useEffect, useState } from "react";
 import { Modal } from "@mui/material";
+import api from "../../../axios/Api";
 
-export default function ClienteDetailsModal({ open, onClose, cliente }) {
+const formatCurrency = (value) => {
+  if (value == null || isNaN(value)) return "R$ 0,00";
+  return `R$ ${parseFloat(value).toFixed(2).replace(".", ",")}`;
+};
+
+export default function ClienteDetailsModal({ open, onClose, cliente, servicos: servicosProp }) {
+
   if (!cliente) return null;
 
-  const endereco = cliente?.enderecos?.[0] || {};
+  const PEDIDOS_URL = "/pedidos";
+  const [servicos, setServicos] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const endereco =
+    cliente?.enderecos?.[0] ||
+    servicosProp?.find((p) => p.cliente)?.cliente?.enderecos?.[0] ||
+    undefined;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (Array.isArray(servicosProp) && servicosProp.length > 0) {
+      const filtered = servicosProp.filter((p) => p.cliente?.id === cliente.id);
+      setServicos(filtered);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const fetchServicosPorCliente = async () => {
+      if (!open || !cliente?.id) {
+        setServicos([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await api.get(`${PEDIDOS_URL}?clienteId=${cliente.id}`);
+        const data = Array.isArray(response.data) ? response.data : [];
+        if (isMounted) setServicos(data);
+      } catch (err) {
+        if (isMounted) setServicos([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchServicosPorCliente();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open, cliente, servicosProp]);
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -26,7 +77,7 @@ export default function ClienteDetailsModal({ open, onClose, cliente }) {
             <input
               type="text"
               className="border border-gray-300 rounded-md p-3 w-full font-normal"
-              value={cliente.nome}
+              value={cliente.nome || (cliente?.cliente?.nome) || "N/A"}
               readOnly
             />
           </div>
@@ -36,7 +87,7 @@ export default function ClienteDetailsModal({ open, onClose, cliente }) {
             <input
               type="text"
               className="border border-gray-300 rounded-md p-3 w-full font-normal"
-              value={cliente.telefone || "N/A"}
+              value={cliente.telefone || cliente?.cliente?.telefone || "N/A"}
               readOnly
             />
           </div>
@@ -46,7 +97,7 @@ export default function ClienteDetailsModal({ open, onClose, cliente }) {
             <input
               type="text"
               className="border border-gray-300 rounded-md p-3 w-full font-normal"
-              value={cliente.email || "N/A"}
+              value={cliente.email || cliente?.cliente?.email || "N/A"}
               readOnly
             />
           </div>
@@ -57,50 +108,104 @@ export default function ClienteDetailsModal({ open, onClose, cliente }) {
           <input
             type="text"
             className="border border-gray-300 rounded-md p-3 w-full font-normal"
-            value={`${endereco.rua || ""}, ${endereco.bairro || ""}, ${endereco.cep || ""}` || "N/A"}
+            value={
+              endereco && (endereco.rua || endereco.bairro || endereco.cep || endereco.numero)
+                ? `${endereco.rua || ""}${endereco.numero ? ", " + endereco.numero : ""}${endereco.bairro ? " - " + endereco.bairro : ""}${endereco.cidade ? " / " + endereco.cidade : ""}${endereco.uf ? " - " + endereco.uf : ""}`
+                : "N/A"
+            }
             readOnly
           />
         </div>
 
-        {/* Histórico de Serviços */}
-        <h3 className="text-lg font-bold mb-3">Histórico de Serviço</h3>
+        <h3 className="text-lg font-bold mb-3">Histórico de Serviços</h3>
         <div className="border-4 border-[#007EA7] rounded-lg p-6 w-full max-h-[42vh] overflow-y-auto bg-[#e8f6fb] space-y-4">
-          {cliente.historicoServicos?.length > 0 ? (
-            cliente.historicoServicos.map((hist, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-lg p-5"
-              >
-                <div>
-                  <label className="block font-bold mb-2">Serviço</label>
-                  <input type="text" value={hist.servico} readOnly className="border border-gray-300 rounded-md p-3 w-full" />
+          {servicos && servicos.length > 0 ? (
+            servicos.map((pedido, index) => {
+
+              const serv = pedido.servico || {};
+              const statusNome = pedido.status?.nome || pedido.status || (pedido.ativo ? "ATIVO" : "INATIVO");
+
+              return (
+                <div
+                  key={pedido.id ?? index}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-lg p-5"
+                >
+                  <div>
+                    <label className="block font-bold mb-2">Serviço</label>
+                    <input
+                      type="text"
+                      value={serv.nome || serv.codigo || pedido.observacao || "N/A"}
+                      readOnly
+                      className="border border-gray-300 rounded-md p-3 w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold mb-2">Valor Total</label>
+                    <input
+                      type="text"
+                      value={formatCurrency(pedido.valorTotal ?? pedido.valor ?? serv.precoBase)}
+                      readOnly
+                      className="border border-gray-300 rounded-md p-3 w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold mb-2">Status</label>
+                    <input
+                      type="text"
+                      value={statusNome}
+                      readOnly
+                      className="border border-gray-300 rounded-md p-3 w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold mb-2">Forma de Pagamento</label>
+                    <input
+                      type="text"
+                      value={pedido.formaPagamento || "N/A"}
+                      readOnly
+                      className="border border-gray-300 rounded-md p-3 w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold mb-2">Observação</label>
+                    <input
+                      type="text"
+                      value={pedido.observacao || "N/A"}
+                      readOnly
+                      className="border border-gray-300 rounded-md p-3 w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold mb-2">Etapa / Tipo</label>
+                    <input
+                      type="text"
+                      value={
+                        serv.etapa?.nome ||
+                        pedido.status?.tipo ||
+                        pedido.tipoPedido ||
+                        "N/A"
+                      }
+                      readOnly
+                      className="border border-gray-300 rounded-md p-3 w-full"
+                    />
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <label className="block font-bold mb-2">Descrição do Serviço</label>
+                    <textarea
+                      value={serv.descricao || pedido.descricao || ""}
+                      readOnly
+                      className="border border-gray-300 rounded-md p-3 w-full h-24"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-bold mb-2">Valor</label>
-                  <input type="text" value={`R$ ${hist.valor}`} readOnly className="border border-gray-300 rounded-md p-3 w-full" />
-                </div>
-                <div>
-                  <label className="block font-bold mb-2">Desconto</label>
-                  <input type="text" value={`${hist.desconto}%`} readOnly className="border border-gray-300 rounded-md p-3 w-full" />
-                </div>
-                <div>
-                  <label className="block font-bold mb-2">Forma de Pagamento</label>
-                  <input type="text" value={hist.formaPagamento} readOnly className="border border-gray-300 rounded-md p-3 w-full" />
-                </div>
-                <div>
-                  <label className="block font-bold mb-2">Data Orçamento</label>
-                  <input type="text" value={hist.dataOrcamento} readOnly className="border border-gray-300 rounded-md p-3 w-full" />
-                </div>
-                <div>
-                  <label className="block font-bold mb-2">Data Pagamento</label>
-                  <input type="text" value={hist.dataServico} readOnly className="border border-gray-300 rounded-md p-3 w-full" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block font-bold mb-2">Funcionário</label>
-                  <input type="text" value={hist.funcionario} readOnly className="border border-gray-300 rounded-md p-3 w-full" />
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p>Nenhum histórico encontrado.</p>
           )}

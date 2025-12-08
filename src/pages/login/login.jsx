@@ -36,19 +36,27 @@ import Input from "../../shared/components/Ui/Input";
         const { id, token, firstLogin, nome, email: userEmail} = data;
         console.log("Login OK:", data);
 
+        // ✅ Salvar em localStorage com a mesma chave usada no dashboard
+        localStorage.setItem("authToken", token); 
+        localStorage.setItem("userId", id);
+        localStorage.setItem("userFirstLogin", String(firstLogin));
+        localStorage.setItem("loggedUserName", nome);
+        localStorage.setItem("loggedUserEmail", userEmail);
+        localStorage.setItem("nome", nome);
+
+        // Também manter em sessionStorage para compatibilidade
         sessionStorage.setItem("accessToken", token); 
         sessionStorage.setItem("userId", id);
         sessionStorage.setItem("userFirstLogin", String(firstLogin));
         sessionStorage.setItem("loggedUserName", nome);
         sessionStorage.setItem("loggedUserEmail", userEmail);
-        sessionStorage.setItem("nome", nome); // Para compatibilidade com novaSenha.jsx
+        sessionStorage.setItem("nome", nome);
 
         setModalOpen(true);
 
         setTimeout(() => {
           setModalOpen(false);
           
-          // Verificar se é primeiro login para redirecionar para nova senha
           if (data.firstLogin === true || data.firstLogin === "true") {
             navigate(`/primeiroAcesso/${data.id}`);
           } else {

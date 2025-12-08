@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import TaskCreateModal from "../../shared/components/Ui/TaskCreateModal";
+import AgendamentoNotification from "../../shared/components/Ui/AgendamentoNotification";
 import MiniCalendar from "./components/MiniCalendar";
 import SharedCalendarList from "./components/SharedCalendar";
 import CalendarView from "./components/CalendarView";
@@ -8,8 +9,10 @@ import Icon from "../../shared/components/AppIcon";
 import Button from "../../shared/components/buttons/button.component";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
-
-const API_BASE_URL = "http://localhost:3000/api";
+import Api from "../../axios/Api";
+import { useAgendamentoNotifications } from "./hooks/useAgendamentoNotifications";
+import EditarAgendamentoSimples from "../../shared/components/pedidosServicosComponents/EditarAgendamentoSimples";
+import agendamentosService from "../../services/agendamentosService";
 
 const CalendarDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,43 +23,40 @@ const CalendarDashboard = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
   const [tasks, setTasks] = useState([]);
+  const [showReagendarModal, setShowReagendarModal] = useState(false);
+  const [agendamentoToReagendar, setAgendamentoToReagendar] = useState(null);
 
-  const getToken = () => {
-    return (
-      localStorage.getItem("authToken") ||
-      localStorage.getItem("token") ||
-      localStorage.getItem("access_token") ||
-      (localStorage.getItem("user") && JSON.parse(localStorage.getItem("user")).token)
-    );
-  };
+  // Hook de notificações
+  const { currentNotification, dismissNotification, resetNotifications } = useAgendamentoNotifications(tasks);
 
   const fetchAgendamentos = async () => {
     try {
-      const token = getToken();
-      
-      const response = await fetch(`${API_BASE_URL}/agendamentos`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          // ...(token && { Authorization: `Bearer ${token}` }), // ✅ Adiciona token se existir
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const response = await Api.get("/agendamentos");
+      const data = response.data;
 
       const transformedTasks = data.map((agendamento) => {
-        let dataFormatada = agendamento.dataAgendamento;
-        if (agendamento.dataAgendamento && agendamento.dataAgendamento.includes("/")) {
-          const [dia, mes, ano] = agendamento.dataAgendamento.split("/");
-          dataFormatada = `${ano}-${mes}-${dia}`;
-        }
+        // Usar a data original da API (formato YYYY-MM-DD)
+        const dataFormatada = agendamento.dataAgendamento;
 
+        // Usar os horários originais da API (formato HH:mm:ss -> HH:mm)
         const startTime = agendamento.inicioAgendamento?.substring(0, 5) || "00:00";
         const endTime = agendamento.fimAgendamento?.substring(0, 5) || "00:00";
+
+        // Criar título completo para o modal usando código + nome do serviço
+        let fullTitle = "Agendamento";
+        let calendarTitle = `#${String(agendamento.id).padStart(3, '0')}`; // Título curto para o calendário
+        
+        if (agendamento.servico) {
+          const codigo = agendamento.servico.codigo || "";
+          const nome = agendamento.servico.nome || "";
+          fullTitle = `${codigo} ${nome}`.trim() || agendamento.tipoAgendamento || "Agendamento";
+          // Se tem código de serviço, usar no calendário
+          if (codigo) {
+            calendarTitle = codigo;
+          }
+        } else {
+          fullTitle = agendamento.tipoAgendamento || "Agendamento";
+        }
 
         let backgroundColor = "#3B82F6";
         if (agendamento.tipoAgendamento === "SERVICO") {
@@ -67,16 +67,13 @@ const CalendarDashboard = () => {
 
         return {
           id: agendamento.id,
-          title: agendamento.tipoAgendamento || "Agendamento",
+          title: calendarTitle, // Mostra apenas o código/número no calendário
+          fullTitle: fullTitle, // Para o modal de detalhes
           date: dataFormatada,
           startTime: startTime,
           endTime: endTime,
           backgroundColor: backgroundColor,
-          observacao: agendamento.observacao,
-          endereco: agendamento.endereco,
-          funcionarios: agendamento.funcionarios,
-          pedido: agendamento.pedido,
-          statusAgendamento: agendamento.statusAgendamento,
+          // Manter todos os dados originais da API
           ...agendamento,
         };
       });
@@ -98,25 +95,21 @@ const CalendarDashboard = () => {
       localStorage.setItem("tasks", JSON.stringify(next));
       return next;
     });
-    // opcional: sincronizar novamente
     setTimeout(fetchAgendamentos, 400);
   };
 
   const handleEventCreate = (data = {}) => {
-    // eventData.eventDate vem do CalendarView quando você clica num dia/slot
     let formattedDate =
       data?.eventDate ||
       data?.date ||
       selectedDate?.toISOString()?.split("T")?.[0];
-
-    // Garantir formato yyyy-MM-dd
     if (formattedDate && formattedDate.includes("/")) {
       const [dia, mes, ano] = formattedDate.split("/");
       formattedDate = `${ano}-${mes}-${dia}`;
     }
 
     setModalInitialData({
-      eventDate: formattedDate,           // ✅ pré-preenche a data
+      eventDate: formattedDate,           
       startTime: data?.startTime || "",
       endTime: data?.endTime || "",
       tipoAgendamento: data?.tipoAgendamento || "",
@@ -131,28 +124,83 @@ const CalendarDashboard = () => {
     const newTask = {
       id: Date.now(),
       ...taskData,
-      title: taskData?.category || "Agendamento", // adiciona título
+      title: taskData?.category || "Agendamento", 
       date: taskData.eventDate,
       startTime: taskData.startTime,
       endTime: taskData.endTime,
       createdAt: new Date().toISOString(),
-      backgroundColor: taskData.backgroundColor || "#3B82F6", // corrige aqui
-      color: taskData.backgroundColor, // se precisar também em color
+      backgroundColor: taskData.backgroundColor || "#3B82F6", 
+      color: taskData.backgroundColor, 
     };
-    console.log("Nova tarefa criada:", newTask); // debug
+    console.log("Nova tarefa criada:", newTask); 
     const updatedTasks = [...tasks, newTask];
     setTasks(updatedTasks);
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
 
-  // ✅ Adicionado: handler da seleção de data
   const handleDateSelect = (date) => {
     setSelectedDate(date);
   };
 
-  // ✅ Adicionado: evita erro em SharedCalendarList
   const handleCalendarToggle = (calendarId) => {
     console.log("Toggle calendário:", calendarId);
+  };
+
+  // Handlers para notificações de agendamento
+  const handleReagendarFromNotification = async (agendamento) => {
+    dismissNotification();
+    setAgendamentoToReagendar(agendamento);
+    setShowReagendarModal(true);
+  };
+
+  const handleCancelarFromNotification = async (agendamento) => {
+    try {
+      const confirmar = window.confirm(
+        `Tem certeza que deseja cancelar o agendamento #${String(agendamento.id).padStart(3, '0')}?`
+      );
+      
+      if (!confirmar) return;
+
+      await agendamentosService.delete(agendamento.id);
+      dismissNotification();
+      fetchAgendamentos();
+      
+      alert('Agendamento cancelado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento:', error);
+      alert('Erro ao cancelar agendamento. Tente novamente.');
+    }
+  };
+
+  const handleIniciarFromNotification = async (agendamento) => {
+    try {
+      const agendamentoData = {
+        tipoAgendamento: agendamento.tipoAgendamento,
+        dataAgendamento: agendamento.dataAgendamento,
+        inicioAgendamento: agendamento.inicioAgendamento,
+        fimAgendamento: agendamento.fimAgendamento,
+        statusAgendamento: {
+          tipo: "AGENDAMENTO",
+          nome: "EM ANDAMENTO"
+        },
+        observacao: agendamento.observacao || ""
+      };
+
+      await agendamentosService.update(agendamento.id, agendamentoData);
+      dismissNotification();
+      fetchAgendamentos();
+      
+      alert('Agendamento marcado como "Em Andamento"!');
+    } catch (error) {
+      console.error('Erro ao atualizar agendamento:', error);
+      alert('Erro ao atualizar agendamento. Tente novamente.');
+    }
+  };
+
+  const handleReagendarSuccess = () => {
+    setShowReagendarModal(false);
+    setAgendamentoToReagendar(null);
+    fetchAgendamentos();
   };
 
   return (
@@ -268,6 +316,28 @@ const CalendarDashboard = () => {
           onSave={handleTaskSave}
           initialData={modalInitialData}
         />
+
+        {/* Modal de Reagendamento */}
+        <EditarAgendamentoSimples
+          isOpen={showReagendarModal}
+          onClose={() => {
+            setShowReagendarModal(false);
+            setAgendamentoToReagendar(null);
+          }}
+          agendamento={agendamentoToReagendar}
+          onSuccess={handleReagendarSuccess}
+        />
+
+        {/* Notificação de Agendamento Próximo */}
+        {currentNotification && (
+          <AgendamentoNotification
+            agendamento={currentNotification}
+            onReagendar={handleReagendarFromNotification}
+            onCancelar={handleCancelarFromNotification}
+            onIniciar={handleIniciarFromNotification}
+            onClose={dismissNotification}
+          />
+        )}
       </div>
     </>
   );

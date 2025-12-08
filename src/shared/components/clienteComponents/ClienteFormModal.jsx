@@ -36,7 +36,7 @@ import {
 
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
-import Api from "../../../axios/Api";
+import api from "../../../axios/Api";
 
 const TextMaskAdapter = React.forwardRef(function TextMaskAdapter(
   props,
@@ -62,6 +62,43 @@ TextMaskAdapter.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
+const CpfMaskAdapter = React.forwardRef(function CpfMaskAdapter(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      radix="."
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
+
+const CepMaskAdapter = React.forwardRef(function CepMaskAdapter(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000"
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
+
+CpfMaskAdapter.propTypes = {
+  name: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
+CepMaskAdapter.propTypes = {
+  name: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
 const getClienteInicial = () => ({
   nome: "",
   contato: "",
@@ -73,16 +110,6 @@ const getClienteInicial = () => ({
   uf: "",
 });
 
-const getNovoServico = () => ({
-  id: `temp-${Date.now()}`,
-  servico: "",
-  valor: 0,
-  dataOrcamento: new Date().toISOString().split("T")[0],
-  dataServico: "",
-  formaPagamento: "N/A",
-  desconto: 0,
-  funcionario: "N/A",
-});
 
 export default function ClienteFormModal({
   open,
@@ -92,26 +119,6 @@ export default function ClienteFormModal({
   clienteInicial,
 }) {
   const [clienteData, setClienteData] = useState(getClienteInicial());
-  const [historico, setHistorico] = useState([]);
-  
-  const [funcionarios, setFuncionarios] = useState([]);
-
-  useEffect(() => {
-    if (open) {
-      const fetchFuncionarios = async () => {
-        try {
-          const response = await Api.get("/funcionarios");
-          setFuncionarios(response.data);
-        } catch (error) {
-          console.error("Erro ao buscar funcionários:", error);
-        }
-      };
-      
-      fetchFuncionarios();
-    } else {
-      setFuncionarios([]); 
-    }
-  }, [open]); 
 
 useEffect(() => {
   if (modoEdicao && clienteInicial) {
@@ -135,11 +142,9 @@ useEffect(() => {
       endereco: endereco.rua,
     });
 
-    setHistorico(clienteInicial.historicoServicos || []);
 
   } else {
     setClienteData(getClienteInicial());
-    setHistorico([]);
   }
 }, [open, modoEdicao, clienteInicial]);
 
@@ -156,71 +161,55 @@ useEffect(() => {
     }));
   };
 
-  const handleHistoricoChange = (index, fieldName, value) => {
-    const novoHistorico = [...historico];
-    if (!novoHistorico[index]) novoHistorico[index] = {};
 
-    let finalValue = value;
-    if (fieldName === "valor" || fieldName === "desconto") {
-      finalValue = parseFloat(value) || 0;
-    }
-
-    novoHistorico[index] = { ...novoHistorico[index], [fieldName]: finalValue };
-    setHistorico(novoHistorico);
-  };
-
-  const handleAddServico = () => {
-    setHistorico([...historico, getNovoServico()]);
-  };
-
-  const handleRemoveServico = (index) => {
-    const novoHistorico = historico.filter((_, i) => i !== index);
-    setHistorico(novoHistorico);
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     const dadosCompletos = {
       nome: clienteData.nome,
-      cpf: clienteData.cpf,
+      cpf: clienteData.cpf ? clienteData.cpf.replace(/\D/g, "") : undefined,
       email: clienteData.email,
-      telefone: clienteData.contato.replace(/\D/g, ""),
+      telefone: clienteData.contato ? clienteData.contato.replace(/\D/g, "") : undefined,
       status: clienteData.status,
-
       enderecos: [
         {
           rua: clienteData.rua,
           complemento: clienteData.complemento || "",
-          cep: clienteData.cep,
+          cep: clienteData.cep ? clienteData.cep.replace(/\D/g, "") : "",
           cidade: clienteData.cidade,
           bairro: clienteData.bairro,
           uf: clienteData.uf,
           pais: "Brasil",
+          numero: clienteData.numero || undefined,
         },
       ],
-
     };
-    onSubmit(dadosCompletos);
-    handleClose();
-  };
+
+    let createdCliente = null;
+    try {
+      const maybePromise = onSubmit(dadosCompletos);
+      if (maybePromise && typeof maybePromise.then === "function") {
+        createdCliente = await maybePromise;
+      } else {
+        createdCliente = maybePromise || clienteInicial || null;
+      }
+    } catch (err) {
+      createdCliente = clienteInicial || null;
+    }
+
+    if (typeof createdCliente === "string") {
+      console.warn("onSubmit returned a string (possible token). Ignoring as createdCliente:", createdCliente);
+      createdCliente = clienteInicial || null;
+    }
+
+  }
 
   const handleClose = () => {
     onClose();
     setTimeout(() => {
       setClienteData(getClienteInicial());
-      setHistorico([]);
     }, 300);
   };
-
-  const opcoesPagamento = [
-    { value: "N/A", label: "N/A" },
-    { value: "Debito", label: "Débito" },
-    { value: "Pix", label: "Pix" },
-    { value: "Dinheiro", label: "Dinheiro" },
-    { value: "Credito (1x)", label: "Crédito (1x)" },
-    { value: "Credito (2x)", label: "Crédito (2x)" },
-    { value: "Credito (3x)", label: "Crédito (3x)" },
-  ];
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
@@ -262,9 +251,12 @@ useEffect(() => {
                     required
                     label="CPF"
                     name="cpf"
-                    placeholder="Ex: 123.456.789-00"
+                    placeholder="Ex: 12345678900"
                     value={clienteData.cpf || ""}
                     onChange={handleChange}
+                    InputProps={{
+                      inputComponent: CpfMaskAdapter,
+                    }}
                   />
 
                   <TextField
@@ -321,6 +313,9 @@ useEffect(() => {
                     placeholder="Ex: 80035010"
                     value={clienteData.cep || ""}
                     onChange={handleChange}
+                    InputProps={{
+                      inputComponent: CepMaskAdapter,
+                    }}
                   />
 
                   <TextField
@@ -366,210 +361,6 @@ useEffect(() => {
                 />
               </Stack>
             </Box>
-
-            {clienteData.status !== "Ativo" && (
-              <Box>
-                <Typography variant="h6" mb={2}>
-                  Histórico de serviços prestados
-                </Typography>
-
-                <Stack spacing={3}>
-                  {historico.map((hist, index) => (
-                    <Box
-                      key={hist.id || index}
-                      bgcolor="white"
-                      p={3}
-                      borderRadius={2}
-                      border={1}
-                      borderColor="grey.200"
-                      position="relative"
-                    >
-                      <IconButton
-                        aria-label="Deletar serviço"
-                        onClick={() => handleRemoveServico(index)}
-                        color="error"
-                        sx={{ position: "absolute", top: 8, right: 8 }}
-                      >
-                        <DeleteOutline />
-                      </IconButton>
-
-                      <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                          <TextField
-                            fullWidth
-                            label={`Serviço ${index + 1}`}
-                            value={hist.servico || ""}
-                            onChange={(e) =>
-                              handleHistoricoChange(index, "servico", e.target.value)
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <SettingsOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={6} sm={4}>
-                          <TextField
-                            fullWidth
-                            label="Valor"
-                            type="number"
-                            value={hist.valor || ""}
-                            onChange={(e) =>
-                              handleHistoricoChange(index, "valor", e.target.value)
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <MonetizationOnOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={6} sm={4}>
-                          <TextField
-                            fullWidth
-                            label="Desconto (%)"
-                            type="number"
-                            value={hist.desconto || ""}
-                            onChange={(e) =>
-                              handleHistoricoChange(index, "desconto", e.target.value)
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <PercentOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-
-                        <Grid item xs={12} sm={4}>
-                          <TextField
-                            select 
-                            fullWidth
-                            label="Forma de Pagamento"
-                            value={hist.formaPagamento || "N/A"}
-                            onChange={(e) =>
-                              handleHistoricoChange(
-                                index,
-                                "formaPagamento",
-                                e.target.value
-                              )
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <PaymentOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          >
-                            {opcoesPagamento.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Data Orçamento"
-                            type="date"
-                            value={hist.dataOrcamento || ""}
-                            onChange={(e) =>
-                              handleHistoricoChange(
-                                index,
-                                "dataOrcamento",
-                                e.target.value
-                              )
-                            }
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <EventOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Data Serviço"
-                            type="date"
-                            value={hist.dataServico || ""}
-                            onChange={(e) =>
-                              handleHistoricoChange(
-                                index,
-                                "dataServico",
-                                e.target.value
-                              )
-                            }
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <EventOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                          <TextField
-                            select 
-                            fullWidth
-                            label="Funcionário"
-                            value={hist.funcionario || "N/A"}
-                            onChange={(e) =>
-                              handleHistoricoChange(
-                                index,
-                                "funcionario",
-                                e.target.value
-                              )
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <BadgeOutlined fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          >
-                            <MenuItem value="N/A">N/A</MenuItem>
-                            {funcionarios.map((func) => (
-                              <MenuItem key={func.id} value={func.nome}>
-                                {func.nome}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  ))}
-
-                  <Box>
-                    <Button
-                      startIcon={<Add />}
-                      onClick={handleAddServico}
-                      variant="outlined"
-                      size="medium"
-                    >
-                      Adicionar Serviço
-                    </Button>
-                  </Box>
-                </Stack>
-              </Box>
-            )}
             
           </Stack>
         </DialogContent>

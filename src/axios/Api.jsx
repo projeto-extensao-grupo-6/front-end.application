@@ -12,6 +12,14 @@ Api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Garantir que o Content-Type seja definido para requisições POST/PUT
+  if (config.method === 'post' || config.method === 'put') {
+    if (!config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+  }
+  
   return config;
 });
 

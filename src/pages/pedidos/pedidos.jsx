@@ -73,10 +73,10 @@ export default function Pedidos() {
                     
                     <div className="text-center mb-8 w-full max-w-[1380px] py-7">
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-2 flex items-center justify-center gap-2">
-                            Pedidos e Serviços
+                            Pedidos
                         </h1>
                         <p className="text-gray-500 text-sm sm:text-base">
-                            Acompanhe pedidos  de Produtos realizados e serviços em execução.
+                            Acompanhe todos seus pedidos de produtos e serviços em um só lugar.
                         </p>
                     </div>
 

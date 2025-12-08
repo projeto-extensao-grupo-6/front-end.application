@@ -1,21 +1,10 @@
-const API_BASE_URL = "http://localhost:3000/api";
+import Api from "../axios/Api";
 
 export const agendamentosService = {
   create: async (agendamento) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/agendamentos`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(agendamento),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao criar agendamento: ${response.statusText}`);
-      }
-
-      return await response.json();
+      const response = await Api.post("/agendamentos", agendamento);
+      return response.data;
     } catch (error) {
       console.error("Erro na requisição:", error);
       throw error;
@@ -24,13 +13,8 @@ export const agendamentosService = {
 
   getAll: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/agendamentos`);
-
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar agendamentos: ${response.statusText}`);
-      }
-
-      return await response.json();
+      const response = await Api.get("/agendamentos");
+      return response.data;
     } catch (error) {
       console.error("Erro na requisição:", error);
       throw error;
@@ -39,24 +23,30 @@ export const agendamentosService = {
 
   getById: async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/agendamentos/${id}`);
-
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar agendamento: ${response.statusText}`);
-      }
-
-      return await response.json();
+      const response = await Api.get(`/agendamentos/${id}`);
+      return response.data;
     } catch (error) {
       console.error("Erro na requisição:", error);
       throw error;
     }
   },
+
+  update: async (id, agendamento) => {
+    try {
+      console.log(`🔄 Atualizando agendamento ${id}...`);
+      const response = await Api.put(`/agendamentos/dados-basicos/${id}`, agendamento);
+      console.log(`✅ Agendamento ${id} atualizado com sucesso`);
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Erro ao atualizar agendamento ${id}:`, error.response?.data || error.message);
+      throw error;
+    }
+  },
+
   delete: async (id) => {
     try {
       console.log(`🗑️ Deletando agendamento ${id}...`);
-      const response = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
-        method: "DELETE",
-      });
+      const response = await Api.delete(`/agendamentos/${id}`);
       console.log(`✅ Agendamento ${id} deletado com sucesso`);
       return response.data;
     } catch (error) {

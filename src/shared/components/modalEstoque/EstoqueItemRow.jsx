@@ -14,6 +14,8 @@ const EstoqueItemRow = ({
       ? "text-red-600 font-semibold"
       : item.situacao === "Abaixo do normal"
       ? "text-yellow-600 font-semibold"
+      : item.situacao === "Reservado"
+      ? "text-yellow-500 font-semibold"
       : "text-green-600 font-semibold";
 
   const produto = item.produto || {};

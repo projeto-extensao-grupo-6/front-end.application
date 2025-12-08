@@ -35,6 +35,16 @@ export const getAgendamentosFuturos = () => {
     return Api.get(`${API_DASHBOARD}/agendamentos-futuros`);
 }
 
-export const getQtdServicosHoje = () => {
-    return Api.get(`${API_DASHBOARD}/qtd-servicos-hoje`);
+export const getQtdServicosHoje = async () => {
+    try {
+        const response = await Api.get(`${API_DASHBOARD}/qtd-servicos-hoje`);
+        // Se a quantidade de serviços for null/undefined, retorna 0
+        if (response.data === null || response.data === undefined || response.data.qtdServicosHoje === null || response.data.qtdServicosHoje === undefined) {
+            return { ...response, data: { ...response.data, qtdServicosHoje: 0 } };
+        }
+        return response;
+    } catch (error) {
+        console.error("Erro ao buscar qtdServicosHoje:", error);
+        return { data: { qtdServicosHoje: 0 } };
+    }
 }

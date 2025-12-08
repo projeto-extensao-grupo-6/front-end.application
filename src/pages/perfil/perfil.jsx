@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Api from '../../axios/Api';
 import { User, MapPin, Lock, Save, Edit2, Camera, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import Sidebar from '../../shared/components/sidebar/sidebar';
 import Header from '../../shared/components/header/header';
-import UserImg from '../../assets/User.png';
+import DefaultAvatar from '../../assets/Avatar.png';
 
+// Componente InputField (mantido inalterado)
 const InputField = ({ label, name, value, onChange, type = "text", disabled = false, className = "", showPasswordToggle = false, onTogglePassword, showPassword }) => (
     <div className={`flex flex-col ${className}`}>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -41,6 +42,7 @@ const InputField = ({ label, name, value, onChange, type = "text", disabled = fa
 );
 
 export default function Perfil() {
+    // ... Estados e Props (Mantidos inalterados)
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -73,29 +75,95 @@ export default function Perfil() {
         pais: "",
         complemento: ""
     });
+    
+    // NOVOS ESTADOS E REFS PARA FOTO DE PERFIL
+    const [userPhoto, setUserPhoto] = useState(DefaultAvatar); // Inicializa com a imagem padrão
+    const fileInputRef = useRef(null); // Referência para o input de arquivo
+
+    const getUserId = () => {
+        const userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            console.error("ID do usuário não encontrado no sessionStorage.");
+            return null;
+        }
+        return userId;
+    };
+
+    // FUNÇÕES DE UPLOAD DE FOTO (MODIFICADAS)
+    
+    // 1. Aciona o clique no input file escondido
+    const handlePhotoClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    // 2. Lida com a seleção do arquivo
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            previewProfilePhoto(file);
+        }
+        event.target.value = null; 
+    };
+
+    const previewProfilePhoto = (file) => {
+        const userId = getUserId();
+        if (!userId) {
+            setLoading(false); // Certifique-se de remover o estado de loading se não houver userId
+            setMessage({ type: 'error', text: 'Erro: ID do usuário não encontrado.' });
+            return;
+        }
+
+        setLoading(true);
+        setMessage({ type: '', text: 'Pré-visualizando foto de perfil...' });
+
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+            const base64Url = reader.result;
+            // Define a userPhoto como a URL base64 do arquivo
+            localStorage.setItem(`leoVidros_userPhoto_${userId}`, base64Url);
+            setUserPhoto(base64Url); 
+            setMessage({ type: 'success', text: 'Pré-visualização da foto carregada!' });
+            setLoading(false);
+        };
+
+        reader.onerror = () => {
+            setMessage({ type: 'error', text: 'Erro ao ler o arquivo de imagem.' });
+            setLoading(false);
+        };
+        
+        reader.readAsDataURL(file);
+    };
 
     useEffect(() => {
-        const userId = sessionStorage.getItem('userId');
+        const userId = getUserId();
 
         if (!userId) {
             console.error("ID do usuário não encontrado no sessionStorage.");
-            // window.location.href = '/login';
             return;
+        }
+
+        const localPhoto = localStorage.getItem(`leoVidros_userPhoto_${userId}`);
+         if (localPhoto) {
+            setUserPhoto(localPhoto);
         }
 
         setLoading(true);
         Api.get(`/usuarios/${userId}`)
             .then(response => {
-                // Tenta acessar os dados em diferentes estruturas possíveis
                 const userData = response.data.usuario || response.data.data || response.data;
-
-                console.log('userData extraído:', userData);
-                console.log('userData.endereco:', userData.endereco);
-
-                // Extrai o endereço com segurança
                 const endereco = userData.endereco || {};
 
-                console.log('Endereço processado:', endereco);
+                if (!localPhoto) {
+                    if (userData.fotoUrl) {
+                        setUserPhoto(userData.fotoUrl);
+                    } else {
+                        setUserPhoto(DefaultAvatar);
+                    }
+                }
+                // *****************************************
 
                 setFormData({
                     nome: userData.nome || "",
@@ -103,7 +171,7 @@ export default function Perfil() {
                     email: userData.email || "",
                     telefone: userData.telefone || "",
                     cargo: "Gerente Administrativo",
-
+                    
                     rua: endereco.rua || endereco.logradouro || "",
                     cep: endereco.cep || "",
                     bairro: endereco.bairro || "",
@@ -117,18 +185,17 @@ export default function Perfil() {
                     novaSenha: "",
                     confirmarSenha: ""
                 });
-
-                console.log('FormData setado com sucesso');
             })
             .catch(error => {
                 console.error("ERRO AO CARREGAR PERFIL");
                 console.error("Erro:", error);
-                console.error("Error.response:", error.response);
-                console.error("Error.response.data:", error.response?.data);
-                console.error("Error.message:", error.message);
+            })
+            .finally(() => {
+                setLoading(false);
             });
 
     }, []);
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -203,12 +270,15 @@ export default function Perfil() {
                 setIsEditing(false);
                 setIsChangingPassword(false);
 
-                // Recarrega os dados
                 return Api.get(`/usuarios/${userId}`);
             })
             .then(response => {
                 const userData = response.data.usuario || response.data.data || response.data;
                 const endereco = userData.endereco || {};
+                
+                if (userData.fotoUrl) {
+                    setUserPhoto(userData.fotoUrl);
+                }
 
                 setFormData({
                     nome: userData.nome || "",
@@ -224,15 +294,15 @@ export default function Perfil() {
                     estado: endereco.uf || endereco.estado || "",
                     pais: endereco.pais || "Brasil",
                     complemento: endereco.complemento || ""
-                    // senhaAtual: "",
-                    // novaSenha: "",
-                    // confirmarSenha: ""
                 });
             })
             .catch(error => {
                 console.error("Erro ao salvar:", error);
                 console.error("Detalhes:", error.response?.data);
                 alert('Erro ao salvar as informações. Verifique o console.');
+            })
+            .finally(() => {
+                setLoading(false);
             });
     };
 
@@ -260,8 +330,18 @@ export default function Perfil() {
         );
     };
 
+
     return (
         <div className="flex h-screen font-sans overflow-hidden">
+            {/* INPUT DE ARQUIVO ESCONDIDO - Adicionado */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                style={{ display: 'none' }}
+            />
+            
             <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
             <div className="flex-1 flex flex-col">
@@ -277,16 +357,23 @@ export default function Perfil() {
                                         Informações do Perfil
                                     </h2>
 
+                                    {/* BLOCO DA FOTO - Modificado */}
                                     <div className="flex flex-col items-center mb-10">
                                         <div className="relative group mb-4">
                                             <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-lg">
                                                 <img
-                                                    src={UserImg}
+                                                    // ** Usa a URL da foto do estado **
+                                                    src={userPhoto}
                                                     alt="Foto de perfil"
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
-                                            <button className="absolute bottom-0 right-0 bg-[#003d6b] border-2 border-white p-2 rounded-full hover:bg-blue-800 transition cursor-pointer">
+                                            {/* ** Conecta o onClick ao handler de foto ** */}
+                                            <button 
+                                                onClick={handlePhotoClick}
+                                                disabled={loading} // Desabilita o botão enquanto o preview está em andamento
+                                                className="absolute bottom-0 right-0 bg-[#003d6b] border-2 border-white p-2 rounded-full hover:bg-blue-800 transition cursor-pointer"
+                                            >
                                                 <Camera size={16} />
                                             </button>
                                         </div>
@@ -295,6 +382,7 @@ export default function Perfil() {
                                             <p className="text-sm text-gray-400">{formData.cargo}</p>
                                         </div>
                                     </div>
+                                    {/* Fim do Bloco da Foto */}
 
                                     <nav className="space-y-3">
                                         <button
@@ -343,7 +431,7 @@ export default function Perfil() {
                                                 <p className="text-gray-600 mt-2">Carregando...</p>
                                             </div>
                                         )}
-
+                                        {/* ABA DE DADOS PESSOAIS */}
                                         <div className="space-y-2">
                                             {activeTab === 'personal' ? (
                                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-6">
@@ -470,6 +558,7 @@ export default function Perfil() {
                                                     </div>
                                                 </div>
                                             ) : (
+                                                /* ABA DE DADOS DE ENDEREÇO */
                                                 <div className="grid grid-cols-1 lg:grid-cols-6 gap-10 py-9">
 
                                                     <InputField
@@ -545,7 +634,7 @@ export default function Perfil() {
                                                     />
                                                 </div>
                                             )}
-
+                                            {/* BOTÕES DE EDIÇÃO/SALVAR */}
                                             <div className="pt-4 flex justify-end">
                                                 <button
                                                     onClick={toggleEdit}

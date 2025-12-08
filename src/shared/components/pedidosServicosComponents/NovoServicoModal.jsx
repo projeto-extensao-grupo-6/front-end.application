@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Wrench, ChevronDown, Plus, X, AlertCircle, MapPin, User, FileText } from "lucide-react";
 import Api from "../../../axios/Api";
+import axios from "axios";
 import { cpfMask, phoneMask, cepMask, onlyLetters, removeMask } from "../../../utils/masks";
+
+// Instância separada para ViaCEP (API externa, não precisa de token)
+const viaCepApi = axios.create({
+    baseURL: 'https://viacep.com.br/ws',
+    timeout: 5000
+});
 
 const useServicoAPI = () => {
     const cadastrarCliente = async (clienteData) => {
@@ -59,8 +66,8 @@ const useServicoAPI = () => {
 
     const buscarCep = async (cep) => {
         try {
-            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-            const data = await response.json();
+            const response = await viaCepApi.get(`/${cep}/json/`);
+            const data = response.data;
             if (data.erro) {
                 throw new Error("CEP não encontrado");
             }
