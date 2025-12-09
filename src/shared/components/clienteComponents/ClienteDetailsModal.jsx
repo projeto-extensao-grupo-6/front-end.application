@@ -59,20 +59,20 @@ export default function ClienteDetailsModal({ open, onClose, cliente, servicos: 
   return (
     <Modal open={open} onClose={onClose}>
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                      w-11/12 max-h-[90vh] bg-white rounded-xl shadow-lg p-8 overflow-hidden space-y-8">
+                      w-11/12 max-h-[90vh] bg-white rounded-xl shadow-xs p-8 overflow-hidden space-y-8">
 
         <div className="flex justify-between items-center mb-6 ">
           <h2 className="text-2xl font-bold">Detalhes do Cliente</h2>
           <button
             onClick={onClose}
-            className="bg-[#007aa3] text-white px-5 py-2 rounded-lg hover:bg-[#007EA7]"
+            className="bg-white text-black px-5 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             Fechar
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+          <div className="flex flex-col gap-1">
             <label className="block font-bold mb-2">Nome</label>
             <input
               type="text"
@@ -82,7 +82,7 @@ export default function ClienteDetailsModal({ open, onClose, cliente, servicos: 
             />
           </div>
 
-          <div>
+          <div className="flex flex-col gap-1">
             <label className="block font-bold mb-2">Telefone</label>
             <input
               type="text"
@@ -92,7 +92,7 @@ export default function ClienteDetailsModal({ open, onClose, cliente, servicos: 
             />
           </div>
 
-          <div>
+          <div className="flex flex-col gap-1">
             <label className="block font-bold mb-2">Email</label>
             <input
               type="text"
@@ -103,7 +103,7 @@ export default function ClienteDetailsModal({ open, onClose, cliente, servicos: 
           </div>
         </div>
 
-        <div className="pt-4 pb-6">
+        <div className="flex flex-col gap-1 pt-4 pb-6">
           <label className="block font-bold mb-2">Endereço</label>
           <input
             type="text"
@@ -117,98 +117,59 @@ export default function ClienteDetailsModal({ open, onClose, cliente, servicos: 
           />
         </div>
 
-        <h3 className="text-lg font-bold mb-3">Histórico de Serviços</h3>
-        <div className="border-4 border-[#007EA7] rounded-lg p-6 w-full max-h-[42vh] overflow-y-auto bg-[#e8f6fb] space-y-4">
-          {servicos && servicos.length > 0 ? (
-            servicos.map((pedido, index) => {
+        <div className="flex flex-col gap-2">
+          <h3 className="text-lg font-bold mb-4">Histórico de Serviços</h3>
+          <div className="border border-gray-200 rounded-md w-full max-h-[42vh] overflow-auto bg-white shadow-sm">
+            {servicos && servicos.length > 0 ? (
+              <table className="w-full border-collapse">
+                <thead className="bg-[#007EA7] text-white sticky top-0">
+                  <tr>
+                    <th className="p-3 text-left font-semibold">Serviço</th>
+                    <th className="p-3 text-left font-semibold">Valor Total</th>
+                    <th className="p-3 text-left font-semibold">Status</th>
+                    <th className="p-3 text-left font-semibold">Forma de Pagamento</th>
+                    <th className="p-3 text-left font-semibold">Observação</th>
+                    <th className="p-3 text-left font-semibold">Etapa / Tipo</th>
+                    <th className="p-3 text-left font-semibold">Descrição do Serviço</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {servicos.map((pedido, index) => {
+                    const serv = pedido.servico || {};
+                    const statusNome = pedido.status?.nome || pedido.status || (pedido.ativo ? "ATIVO" : "INATIVO");
 
-              const serv = pedido.servico || {};
-              const statusNome = pedido.status?.nome || pedido.status || (pedido.ativo ? "ATIVO" : "INATIVO");
-
-              return (
-                <div
-                  key={pedido.id ?? index}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-lg p-5"
-                >
-                  <div>
-                    <label className="block font-bold mb-2">Serviço</label>
-                    <input
-                      type="text"
-                      value={serv.nome || serv.codigo || pedido.observacao || "N/A"}
-                      readOnly
-                      className="border border-gray-300 rounded-md p-3 w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold mb-2">Valor Total</label>
-                    <input
-                      type="text"
-                      value={formatCurrency(pedido.valorTotal ?? pedido.valor ?? serv.precoBase)}
-                      readOnly
-                      className="border border-gray-300 rounded-md p-3 w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold mb-2">Status</label>
-                    <input
-                      type="text"
-                      value={statusNome}
-                      readOnly
-                      className="border border-gray-300 rounded-md p-3 w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold mb-2">Forma de Pagamento</label>
-                    <input
-                      type="text"
-                      value={pedido.formaPagamento || "N/A"}
-                      readOnly
-                      className="border border-gray-300 rounded-md p-3 w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold mb-2">Observação</label>
-                    <input
-                      type="text"
-                      value={pedido.observacao || "N/A"}
-                      readOnly
-                      className="border border-gray-300 rounded-md p-3 w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold mb-2">Etapa / Tipo</label>
-                    <input
-                      type="text"
-                      value={
-                        serv.etapa?.nome ||
-                        pedido.status?.tipo ||
-                        pedido.tipoPedido ||
-                        "N/A"
-                      }
-                      readOnly
-                      className="border border-gray-300 rounded-md p-3 w-full"
-                    />
-                  </div>
-
-                  <div className="md:col-span-3">
-                    <label className="block font-bold mb-2">Descrição do Serviço</label>
-                    <textarea
-                      value={serv.descricao || pedido.descricao || ""}
-                      readOnly
-                      className="border border-gray-300 rounded-md p-3 w-full h-24"
-                    />
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <p>Nenhum histórico encontrado.</p>
-          )}
+                    return (
+                      <tr key={pedido.id ?? index} className="hover:bg-gray-50 transition-colors">
+                        <td className="p-3 text-gray-900">
+                          {serv.nome || serv.codigo || pedido.observacao || "N/A"}
+                        </td>
+                        <td className="p-3 text-gray-900">
+                          {formatCurrency(pedido.valorTotal ?? pedido.valor ?? serv.precoBase)}
+                        </td>
+                        <td className="p-3 text-gray-900">
+                          {statusNome}
+                        </td>
+                        <td className="p-3 text-gray-900">
+                          {pedido.formaPagamento || "N/A"}
+                        </td>
+                        <td className="p-3 text-gray-900">
+                          {pedido.observacao || "N/A"}
+                        </td>
+                        <td className="p-3 text-gray-900">
+                          {serv.etapa?.nome || pedido.status?.tipo || pedido.tipoPedido || "N/A"}
+                        </td>
+                        <td className="p-3 text-gray-900">
+                          {serv.descricao || pedido.descricao || "N/A"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <p className="p-6">Nenhum histórico encontrado.</p>
+            )}
+          </div>
         </div>
       </div>
     </Modal>

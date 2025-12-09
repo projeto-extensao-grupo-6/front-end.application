@@ -507,7 +507,7 @@ const handleProductSuccess = useCallback(async (savedProduct) => {
                     <div className="relative">
                       <button
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
-                        className={`flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors ${
+                        className={`flex items-center gap-2 border border-gray-300 py-2.5 px-4 rounded-md text-sm text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors ${
                           hasActiveFilters
                             ? "border-[#003d6b] text-[#003d6b] bg-[#e6f0f5]"
                             : ""
@@ -557,7 +557,7 @@ const handleProductSuccess = useCallback(async (savedProduct) => {
                       type="checkbox"
                       checked={isAllSelectedOnPage}
                       onChange={handleSelectAllChange}
-                      className="w-4 h-4 text-[#003d6b] border-gray-300 rounded focus:ring-[#003d6b]"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
                   <div className="py-3 w-[15%] pl-2 pr-1">Nome</div>
@@ -578,7 +578,6 @@ const handleProductSuccess = useCallback(async (savedProduct) => {
                     </div>
                   ) : renderedItems.length === 0 ? (
                     <div className="text-center p-8 text-gray-500">
-                      <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                       <p>Nenhum item encontrado.</p>
                       {busca && (
                         <button

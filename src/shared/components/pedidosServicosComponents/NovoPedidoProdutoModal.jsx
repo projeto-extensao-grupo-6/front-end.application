@@ -20,6 +20,31 @@ const usePedidoAPI = () => {
         }
     };
 
+    const cadastrarClienteAvulso = async (nomeCliente) => {
+        try {
+            const response = await Api.post(`/clientes`, {
+                nome: nomeCliente,
+                cpf: "",
+                email: "",
+                telefone: "",
+                status: "Avulso", // Status especial para clientes avulsos
+                enderecos: [{
+                    rua: "",
+                    complemento: "",
+                    cep: "",
+                    cidade: "",
+                    bairro: "",
+                    uf: "",
+                    pais: "Brasil",
+                    numero: 0
+                }]
+            });
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || "Erro ao cadastrar cliente avulso");
+        }
+    };
+
     const salvarPedido = async (pedidoData) => {
         try {
             const response = await Api.post(`/pedidos`, pedidoData);
@@ -47,7 +72,7 @@ const usePedidoAPI = () => {
         }
     };
 
-    return { cadastrarCliente, salvarPedido, buscarClientes, buscarProdutos };
+    return { cadastrarCliente, cadastrarClienteAvulso, salvarPedido, buscarClientes, buscarProdutos };
 };
 
 const DEFAULT_FORM_DATA = {
@@ -76,7 +101,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
     const [clientesExistentes, setClientesExistentes] = useState([]);
     const [produtosDisponiveis, setProdutosDisponiveis] = useState([]);
 
-    const { cadastrarCliente, salvarPedido, buscarClientes, buscarProdutos } = usePedidoAPI();
+    const { cadastrarCliente, cadastrarClienteAvulso, salvarPedido, buscarClientes, buscarProdutos } = usePedidoAPI();
 
     const steps = [
         { id: 0, name: "Cliente" },
@@ -103,8 +128,12 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
             console.log("Clientes carregados:", clientes);
             console.log("Produtos carregados:", produtos);
             
-            // Ensure arrays are always set, even if API returns unexpected data
-            setClientesExistentes(Array.isArray(clientes) ? clientes : []);
+            // Filtrar clientes avulsos da lista de seleção
+            const clientesFiltrados = Array.isArray(clientes) 
+                ? clientes.filter(c => c.status !== "Avulso") 
+                : [];
+            
+            setClientesExistentes(clientesFiltrados);
             setProdutosDisponiveis(Array.isArray(produtos) ? produtos : []);
         } catch (err) {
             console.error("Erro ao carregar dados:", err);
@@ -365,23 +394,8 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     };
                 }
             } else {
-                // Para tipoCliente "nenhum", criar cliente básico primeiro
-                const clienteBasico = await cadastrarCliente({
-                    nome: formData.clienteNome,
-                    cpf: "",
-                    email: "",
-                    telefone: "",
-                    enderecos: [{
-                        rua: "",
-                        complemento: "",
-                        cep: "",
-                        cidade: "",
-                        bairro: "",
-                        uf: "",
-                        pais: "Brasil",
-                        numero: 0
-                    }]
-                });
+                // Para tipoCliente "nenhum", criar cliente avulso (não aparece na lista de clientes)
+                const clienteBasico = await cadastrarClienteAvulso(formData.clienteNome);
 
                 clienteId = clienteBasico.id;
                 clienteData = {
@@ -390,7 +404,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                     cpf: "",
                     email: "",
                     telefone: "",
-                    status: "Ativo",
+                    status: "Avulso",
                     enderecos: [{
                         id: 0,
                         rua: "",

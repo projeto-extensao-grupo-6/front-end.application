@@ -1,103 +1,19 @@
 import React, { useState, useEffect } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  IconButton,
-  FormControlLabel,
-  Switch,
-  InputAdornment,
-  Typography,
-  Divider,
-  Box,
-  Stack,
-  Grid,
-  MenuItem, 
-} from "@mui/material";
-import {
-  PersonOutline,
-  PhoneOutlined,
-  EmailOutlined,
-  HomeOutlined,
-  DeleteOutline,
-  SettingsOutlined,
-  Add,
-  BusinessOutlined,
-  MapOutlined,
-  MonetizationOnOutlined,
-  EventOutlined,
-  PaymentOutlined,
-  PercentOutlined,
-  BadgeOutlined,
-} from "@mui/icons-material";
+  User,
+  Phone,
+  Mail,
+  Home,
+  MapPin,
+  Building2,
+  X,
+  Save,
+  CreditCard,
+} from "lucide-react";
 
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
 import api from "../../../axios/Api";
-
-const TextMaskAdapter = React.forwardRef(function TextMaskAdapter(
-  props,
-  ref
-) {
-  const { onChange, ...other } = props;
-  return (
-    <IMaskInput
-      {...other}
-      mask="(00) 00000-0000"
-      definitions={{
-        "#": /[1-9]/,
-      }}
-      inputRef={ref}
-      onAccept={(value) => onChange({ target: { name: props.name, value } })}
-      overwrite
-    />
-  );
-});
-
-TextMaskAdapter.propTypes = {
-  name: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-};
-
-const CpfMaskAdapter = React.forwardRef(function CpfMaskAdapter(props, ref) {
-  const { onChange, ...other } = props;
-  return (
-    <IMaskInput
-      {...other}
-      mask="00000000000"
-      radix="."
-      inputRef={ref}
-      onAccept={(value) => onChange({ target: { name: props.name, value } })}
-      overwrite
-    />
-  );
-});
-
-const CepMaskAdapter = React.forwardRef(function CepMaskAdapter(props, ref) {
-  const { onChange, ...other } = props;
-  return (
-    <IMaskInput
-      {...other}
-      mask="00000000"
-      inputRef={ref}
-      onAccept={(value) => onChange({ target: { name: props.name, value } })}
-      overwrite
-    />
-  );
-});
-
-CpfMaskAdapter.propTypes = {
-  name: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-};
-
-CepMaskAdapter.propTypes = {
-  name: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-};
 
 const getClienteInicial = () => ({
   nome: "",
@@ -119,6 +35,8 @@ export default function ClienteFormModal({
   clienteInicial,
 }) {
   const [clienteData, setClienteData] = useState(getClienteInicial());
+  const [loadingCep, setLoadingCep] = useState(false);
+  const [cepError, setCepError] = useState("");
 
 useEffect(() => {
   if (modoEdicao && clienteInicial) {
@@ -159,6 +77,54 @@ useEffect(() => {
       ...prev,
       status: e.target.checked ? "Ativo" : "Inativo",
     }));
+  };
+
+  const buscarCep = async (cep) => {
+    const cepLimpo = cep.replace(/\D/g, "");
+    
+    if (cepLimpo.length !== 8) {
+      setCepError("CEP deve conter 8 dígitos");
+      return;
+    }
+
+    setLoadingCep(true);
+    setCepError("");
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await response.json();
+
+      if (data.erro) {
+        setCepError("CEP não encontrado");
+        setLoadingCep(false);
+        return;
+      }
+
+      setClienteData((prev) => ({
+        ...prev,
+        rua: data.logradouro || prev.rua,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        uf: data.uf || prev.uf,
+        endereco: data.logradouro || prev.endereco,
+      }));
+
+      setCepError("");
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      setCepError("Erro ao buscar CEP");
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  const handleCepChange = (value) => {
+    handleChange({ target: { name: 'cep', value } });
+    
+    const cepLimpo = value.replace(/\D/g, "");
+    if (cepLimpo.length === 8) {
+      buscarCep(value);
+    }
   };
 
 
@@ -211,169 +177,252 @@ useEffect(() => {
     }, 300);
   };
 
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Box
-            bgcolor="grey.100"
-            borderRadius="8px"
-            p={1}
-            display="inline-flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <PersonOutline color="action" />
-          </Box>
-          <Typography variant="h6" component="div">
-            {modoEdicao ? "Editar Cliente" : "Adicionar novo cliente"}
-          </Typography>
-        </Box>
-      </DialogTitle>
+  if (!open) return null;
 
-      <form onSubmit={handleSubmit}>
-        <DialogContent dividers sx={{ p: 3, bgcolor: "grey.50" }}>
-          <Stack spacing={3}>
-            <Box bgcolor="white" p={3} borderRadius={2} border={1} borderColor="grey.200">
-              <Stack spacing={3}>
-                <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
-                  <TextField
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 flex justify-center items-start px-10 py-20 overflow-y-auto z-50"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[130vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#eeeeee] p-2.5 rounded-lg">
+              <User className="w-6 h-6 text-[#828282]" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {modoEdicao ? "Editar Cliente" : "Adicionar novo cliente"}
+            </h2>
+          </div>
+          <button
+            onClick={handleClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex flex-col gap-9 px-6 py-4 space-y-6 flex-1 overflow-y-auto">
+            {/* Informações Básicas */}
+            <div className="flex flex-col gap-5 space-y-4">
+              <h3 className="flex items-start text-lg font-bold text-gray-700">Informações Básicas</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    Nome: <span className="text-red-500">*</span>
+                  </label>
+                  <input
                     required
-                    label="Nome do cliente"
+                    type="text"
                     name="nome"
-                    placeholder="Ex: Tiago Mendes" 
+                    placeholder="Ex: Tiago Mendes"
                     value={clienteData.nome}
                     onChange={handleChange}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutline fontSize="small" /></InputAdornment> }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                   />
-                  
-                  <TextField
-                    required
-                    label="CPF"
-                    name="cpf"
-                    placeholder="Ex: 12345678900"
-                    value={clienteData.cpf || ""}
-                    onChange={handleChange}
-                    InputProps={{
-                      inputComponent: CpfMaskAdapter,
-                    }}
-                  />
+                </div>
 
-                  <TextField
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    CPF: <span className="text-red-500">*</span>
+                  </label>
+                  <IMaskInput
                     required
-                    label="Telefone"
+                    mask="000.000.000-00"
+                    name="cpf"
+                    placeholder="Ex: 123.456.789-00"
+                    value={clienteData.cpf || ""}
+                    onAccept={(value) => handleChange({ target: { name: 'cpf', value } })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    Telefone: <span className="text-red-500">*</span>
+                  </label>
+                  <IMaskInput
+                    required
+                    mask="(00) 00000-0000"
                     name="contato"
                     placeholder="Ex: (11) 91234-5678"
                     value={clienteData.contato}
-                    onChange={handleChange}
-                    InputProps={{
-                      inputComponent: TextMaskAdapter,
-                      startAdornment: <InputAdornment position="start"><PhoneOutlined fontSize="small" /></InputAdornment>,
-                    }}
+                    onAccept={(value) => handleChange({ target: { name: 'contato', value } })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                   />
+                </div>
 
-                  <TextField
-                  required
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  type="email"
-                  placeholder="Ex: tiago.mendes@email.com" 
-                  value={clienteData.email}
-                  onChange={handleChange}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><EmailOutlined fontSize="small" /></InputAdornment> }}
-                />
-
-                </Box>
-
-                <TextField
-                  fullWidth
-                  label="Endereço"
-                  name="endereco"
-                  placeholder="Ex: Rua das Flores, 123" 
-                  value={clienteData.endereco}
-                  onChange={handleChange}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><HomeOutlined fontSize="small" /></InputAdornment> }}
-                />
-
-                <Box display="grid" gridTemplateColumns="2fr 1fr" gap={2}>
-                  <TextField
-                    label="Cidade"
-                    name="cidade"
-                    placeholder="Ex: São Paulo"
-                    value={clienteData.cidade}
-                    onChange={handleChange}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><BusinessOutlined fontSize="small" /></InputAdornment> }}
-                  />
-                  
-                  <TextField
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    Email: <span className="text-red-500">*</span>
+                  </label>
+                  <input
                     required
-                    label="CEP"
-                    name="cep"
-                    placeholder="Ex: 80035010"
-                    value={clienteData.cep || ""}
+                    type="email"
+                    name="email"
+                    placeholder="Ex: tiago.mendes@email.com"
+                    value={clienteData.email}
                     onChange={handleChange}
-                    InputProps={{
-                      inputComponent: CepMaskAdapter,
-                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                   />
+                </div>
+              </div>
+            </div>
 
-                  <TextField
-                    label="UF"
-                    name="uf"
-                    placeholder="Ex: SP" 
-                    value={clienteData.uf}
-                    onChange={handleChange}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><MapOutlined fontSize="small" /></InputAdornment> }}
-                  />
+            {/* Endereço */}
+            <div className="flex flex-col gap-4 space-y-4">
+              <h3 className="flex items-start text-lg font-bold text-gray-700">Endereço</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    CEP: <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <IMaskInput
+                      required
+                      mask="00000-000"
+                      name="cep"
+                      placeholder="Ex: 80035-010"
+                      value={clienteData.cep || ""}
+                      onAccept={handleCepChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
+                    />
+                    {loadingCep && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="w-4 h-4 border-2 border-[#007EA7] border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                  </div>
+                  {cepError && (
+                    <p className="text-xs text-red-500 mt-1">{cepError}</p>
+                  )}
+                </div>
 
-                  <TextField
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    Rua: <span className="text-red-500">*</span>
+                  </label>
+                  <input
                     required
-                    label="Rua"
+                    type="text"
                     name="rua"
                     placeholder="Ex: Rua das Flores"
                     value={clienteData.rua || ""}
                     onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
                   />
+                </div>
 
-                  <TextField
-                    label="Complemento"
-                    name="complemento"
-                    placeholder="Ex: Bloco B, apto 13"
-                    value={clienteData.complemento || ""}
-                    onChange={handleChange}
-                  />
-
-                  <TextField
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    Bairro: <span className="text-red-500">*</span>
+                  </label>
+                  <input
                     required
-                    label="Bairro"
+                    type="text"
                     name="bairro"
                     placeholder="Ex: Centro"
                     value={clienteData.bairro || ""}
                     onChange={handleChange}
-                  />  
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
+                  />
+                </div>
 
-                </Box>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    Complemento:
+                  </label>
+                  <input
+                    type="text"
+                    name="complemento"
+                    placeholder="Ex: Bloco B, apto 13"
+                    value={clienteData.complemento || ""}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
+                  />
+                </div>
 
-                <FormControlLabel
-                  control={<Switch checked={clienteData.status === "Ativo"} onChange={handleSwitchChange} color="primary" />}
-                  label="Possui serviço em andamento (Status: Ativo)"
-                />
-              </Stack>
-            </Box>
-            
-          </Stack>
-        </DialogContent>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    Cidade: <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    name="cidade"
+                    placeholder="Ex: São Paulo"
+                    value={clienteData.cidade}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7]"
+                  />
+                </div>
 
-        <DialogActions sx={{ p: 2, justifyContent: "space-between", bgcolor: "white" }}>
-          <Button onClick={handleClose} variant="outlined" color="inherit">
-            Cancelar
-          </Button>
-          <Button type="submit" variant="contained" className="bg-[#007EA7]">
-            {modoEdicao ? "Salvar Alterações" : "Criar Cliente"}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start block text-sm font-medium text-gray-700">
+                    UF: <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    name="uf"
+                    placeholder="Ex: SP"
+                    maxLength={2}
+                    value={clienteData.uf}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="flex flex-col gap-3 space-y-4">
+              <h3 className="flex items-start text-md font-semibold text-gray-700">Status</h3>
+              
+              <div className="flex items-center gap-3">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={clienteData.status === "Ativo"}
+                    onChange={handleSwitchChange}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007EA7]"></div>
+                </label>
+                <span className="text-sm font-medium text-gray-700">
+                  Possui serviço em andamento (Status: {clienteData.status})
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2 font-semibold"
+            >
+              <Save className="w-4 h-4" />
+              {modoEdicao ? "Salvar Alterações" : "Criar Cliente"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

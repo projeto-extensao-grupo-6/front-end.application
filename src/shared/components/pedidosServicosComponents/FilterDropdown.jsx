@@ -12,10 +12,6 @@ const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange, mode
   }, [isOpen, selectedFilters]);
 
   const filterOptionsPedidos = {
-    situacao: {
-      title: "Situação do Pedido",
-      options: ["Ativo", "Finalizado"],
-    },
     pagamento: {
       title: "Forma de Pagamento",
       options: ["Pix", "Cartão de crédito", "Dinheiro", "Boleto"],

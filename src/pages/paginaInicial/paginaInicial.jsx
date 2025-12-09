@@ -187,28 +187,28 @@ export default function PaginaInicial() {
                       key={item.id}
                       className="flex flex-col md:flex-row items-center justify-between px-6 py-4"
                     >
-                      <div className="text-center md:text-left">
-                        <p className="font-semibold text-gray-800 text-base">
+                      <div className="flex flex-row items-center align-center gap-3 text-center md:text-left">
+                        <p className="text-lg font-semibold text-gray-800 text-base">
                           {item.nomeProduto || "Sem nome"}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-lg text-gray-600">
                           Quantidade: {item.quantidadeTotal} | Mínimo: {item.nivelMinimo}
                         </p>
                       </div>
                       <div className="flex items-center gap-3 mt-3 md:mt-0">
                         <span
-                          className={`text-sm px-4 py-2 rounded-full font-bold ${
+                          className={`text-xg px-4 py-2 rounded-full font-bold ${
                             item.status === "Crítico"
                               ? "bg-red-200 text-black-800"
                               : "bg-yellow-200 text-black-800"
                           }`}
                         >
-                          {item.status}
+                          {item.status === "Crítico" ? "Crítico" : "Atenção"}
                         </span>
                         <button
                           title="Ver detalhes do estoque"
                           onClick={() => handleEstoqueItemClick(item.id)}
-                          className="border border-gray-300 p-1.5 rounded-md hover:bg-gray-100 transition text-gray-600 hover:text-[#003d6b]"
+                          className="border border-gray-300 p-1.5 rounded-md cursor-pointer hover:bg-gray-100 transition text-gray-600 hover:text-[#003d6b]"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </button>

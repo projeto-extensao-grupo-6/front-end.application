@@ -214,7 +214,7 @@ export default function Acesso() {
         <div className="h-[80px]" />
 
         <main className="flex-1 p-8">
-          <div className="max-w-[1800px] mx-auto">
+          <div className="flex flex-col gap-10 max-w-[1800px] mx-auto">
 
             <div className="mb-10 text-center">
               <h1 className="text-3xl font-bold text-gray-800">Controle de acesso</h1>
@@ -222,8 +222,8 @@ export default function Acesso() {
                 Visualize todas as solicitações de acessos de sua empresa
               </p>
             </div>
-            <br />
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+
+            <div className="flex flex-col gap-4 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
 
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                  <div className="relative w-full md:w-1/2 lg:w-1/3">
@@ -257,12 +257,12 @@ export default function Acesso() {
               </div>
 
               <div className="mb-4 border-b border-gray-200">
-                  <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                  <nav className="flex flex-row gap-2 -mb-px flex space-x-6" aria-label="Tabs">
                       {['Pendentes', 'Aprovados', 'Recusados'].map((tab) => (
                       <button
                           key={tab}
                           onClick={() => changeTab(tab)}
-                          className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-150 ease-in-out focus:outline-none
+                          className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm cursor-pointer transition-colors duration-150 ease-in-out focus:outline-none
                             ${activeTab === tab
                                 ? 'border-[#007EA7] text-[#007EA7]'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -326,14 +326,14 @@ export default function Acesso() {
                                     <button
                                         onClick={() => handleApprove(s.id)}
                                         title="Aprovar"
-                                        className="p-1.5 rounded-full text-green-600 hover:bg-green-100 transition-colors"
+                                        className="p-1.5 rounded-full text-green-600 cursor-pointer hover:bg-green-100 transition-colors"
                                     >
                                         <Check className="w-5 h-5"/>
                                     </button>
                                      <button
                                         onClick={() => handleReject(s.id)}
                                         title="Recusar"
-                                        className="p-1.5 rounded-full text-red-600 hover:bg-red-100 transition-colors"
+                                        className="p-1.5 rounded-full text-red-600 cursor-pointer hover:bg-red-100 transition-colors"
                                      >
                                         <X className="w-5 h-5"/>
                                     </button>
@@ -376,14 +376,14 @@ export default function Acesso() {
                   <button
                     onClick={() => setPagina((p) => Math.max(p - 1, 1))}
                     disabled={pagina === 1}
-                    className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
                     <ChevronLeft className="w-4 h-4" /> Anterior
                   </button>
                   <button
                     onClick={() => setPagina((p) => Math.min(p + 1, totalPaginas))}
                     disabled={pagina === totalPaginas || totalPaginas === 0}
-                    className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1 border border-gray-300 py-2 px-4 rounded-md text-sm text-gray-700 font-medium cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
                     Próximo <ChevronRight className="w-4 h-4" />
                   </button>

@@ -11,27 +11,36 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [currentItemIndex, setCurrentItemIndex] = useState(0);
+    const [processedItems, setProcessedItems] = useState([]);
 
     useEffect(() => {
         if (isOpen && itemIds.length > 0) {
-            // Pega apenas o primeiro item já que é um registro por vez
-            const item = estoque.find(item => item.id === itemIds[0]);
-            console.log('EntradaSaidaEstoque: item selecionado', item);
-            if (item) {
-                setItemsInfo([{ 
-                    id: item.id, 
-                    nome: item.produto.nome, 
-                    unidade: item.detalhes?.unidadeMedida || 'Unidade',
-                    localizacao: item.localizacao || 'localizacao_20f384d35f5f'
-                }]);
-            }
+            // Carregar todos os itens selecionados
+            const items = itemIds.map(id => {
+                const item = estoque.find(item => item.id === id);
+                if (item) {
+                    return { 
+                        id: item.id, 
+                        nome: item.produto.nome, 
+                        unidade: item.detalhes?.unidadeMedida || 'Unidade',
+                        localizacao: item.localizacao || 'localizacao_20f384d35f5f'
+                    };
+                }
+                return null;
+            }).filter(Boolean);
 
+            setItemsInfo(items);
+            setCurrentItemIndex(0);
+            setProcessedItems([]);
             setTipoMovimento('entrada');
             setQuantidade(1);
             setError('');
             setSuccess(false);
         } else if (!isOpen) {
             setItemsInfo([]);
+            setCurrentItemIndex(0);
+            setProcessedItems([]);
             setError('');
             setSuccess(false);
         }
@@ -44,21 +53,37 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
         try {
             const endpoint = tipoMovimento === 'entrada' ? '/estoques/entrada' : '/estoques/saida';
             
-            const item = itemsInfo[0];
+            const item = itemsInfo[currentItemIndex];
             const requestBody = {
                 produtoId: item.id,
                 localizacao: item.localizacao,
                 quantidadeTotal: parseInt(quantidade, 10) || 0
             };
 
-            const response = await Api.post(endpoint, requestBody);
+            await Api.post(endpoint, requestBody);
             
-            setSuccess(true);
+            // Adicionar item processado à lista
+            setProcessedItems(prev => [...prev, item.nome]);
             
-            setTimeout(() => {
-                onClose();
-                navigate(0); 
-            }, 1000);
+            // Verificar se há mais itens para processar
+            if (currentItemIndex < itemsInfo.length - 1) {
+                // Avançar para o próximo item
+                setCurrentItemIndex(prev => prev + 1);
+                setQuantidade(1); // Resetar quantidade para o próximo item
+                setSuccess(true);
+                
+                setTimeout(() => {
+                    setSuccess(false);
+                }, 1500);
+            } else {
+                // Todos os itens foram processados
+                setSuccess(true);
+                
+                setTimeout(() => {
+                    onClose();
+                    navigate(0); 
+                }, 1500);
+            }
 
         } catch (err) {
             const errorMessage = err.response?.data?.message || err.message || 'Erro ao registrar movimento';
@@ -96,21 +121,37 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
 
                 <div className="p-6 space-y-5 overflow-y-auto">
                     {/* Produto Selecionado - Design Melhorado */}
-                    <div className='p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-lg'>
-                       <p className='text-xs font-semibold text-blue-900 uppercase tracking-wide mb-3'>
-                            Produto Selecionado
-                       </p>
-                       <br />
-                       <div className='flex items-center gap-3 text-sm bg-white/80 px-4 py-3 rounded-lg shadow-sm'>
-                            <div className='w-2.5 h-2.5 bg-blue-600 rounded-full flex-shrink-0'></div>
-                            <span className='font-bold text-gray-900 text-base'>{itemsInfo[0]?.nome || 'Carregando...'}</span>
+                    <div className='p-4 bg-linear-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-lg'>
+                       <div className='flex items-center justify-between mb-3'>
+                           <p className='text-xs font-semibold text-blue-900 uppercase tracking-wide'>
+                                Produto Atual ({currentItemIndex + 1}/{itemsInfo.length})
+                           </p>
+                           {itemsInfo.length > 1 && (
+                               <span className='text-xs text-blue-700 font-medium'>
+                                   {processedItems.length} processado(s)
+                               </span>
+                           )}
                        </div>
+                       <div className='flex items-center gap-3 text-sm bg-white/80 px-4 py-3 rounded-lg shadow-sm'>
+                            <div className='w-2.5 h-2.5 bg-blue-600 rounded-full shrink-0'></div>
+                            <span className='font-bold text-gray-900 text-base'>{itemsInfo[currentItemIndex]?.nome || 'Carregando...'}</span>
+                       </div>
+                       {processedItems.length > 0 && (
+                           <div className='mt-3 pt-3 border-t border-blue-200'>
+                               <p className='text-xs text-green-700 font-medium mb-2'>✓ Itens processados:</p>
+                               <div className='space-y-1'>
+                                   {processedItems.map((nome, idx) => (
+                                       <p key={idx} className='text-xs text-green-600 pl-4'>• {nome}</p>
+                                   ))}
+                               </div>
+                           </div>
+                       )}
                     </div>
 
                     {/* Mensagem de Erro */}
                     {error && (
                         <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg flex items-start gap-3 shadow-sm">
-                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-sm font-semibold text-red-900 mb-1">Erro ao processar</p>
                                 <p className="text-sm text-red-700">{error}</p>
@@ -194,19 +235,26 @@ const EntradaSaidaEstoque = ({ isOpen, onClose, itemIds, estoque }) => {
                     <button
                         onClick={handleSaveClick}
                         disabled={loading || quantidade <= 0 || success}
-                        className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg"
+                        className="px-5 py-2.5 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg"
                     >
                         {loading ? (
                             <>
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                 Processando...
                             </>
+                        ) : currentItemIndex < itemsInfo.length - 1 ? (
+                            <>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Salvar e Próximo
+                            </>
                         ) : (
                             <>
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
-                                Salvar Movimento
+                                Salvar e Finalizar
                             </>
                         )}
                     </button>

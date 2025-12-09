@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Header from "../../shared/components/header/header";
 import Sidebar from "../../shared/components/sidebar/sidebar";
-import {
-  Button,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Checkbox,
-  IconButton,
-  Chip,
-} from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
+import { Search, Edit, Trash2 } from "lucide-react";
 
 import FuncionarioForm from "../../shared/components/modalFuncionarios/FuncionarioForm";
 import DeleteFuncionario from "../../shared/components/modalFuncionarios/DeleteFuncionario";
@@ -36,6 +22,8 @@ export default function Funcionarios() {
 
   const [openDelete, setOpenDelete] = useState(false);
   const [funcionarioParaDeletar, setFuncionarioParaDeletar] = useState(null);
+
+  const [selecionados, setSelecionados] = useState([]);
 
   const fetchFuncionarios = async () => {
     try {
@@ -102,116 +90,204 @@ export default function Funcionarios() {
     }
   };
 
+  const isSelected = (id) => selecionados.indexOf(id) !== -1;
+
+  const handleSelectClick = (event, id) => {
+    const selectedIndex = selecionados.indexOf(id);
+    let newSelected = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selecionados, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selecionados.slice(1));
+    } else if (selectedIndex === selecionados.length - 1) {
+      newSelected = newSelected.concat(selecionados.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selecionados.slice(0, selectedIndex),
+        selecionados.slice(selectedIndex + 1)
+      );
+    }
+
+    setSelecionados(newSelected);
+  };
+
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelected = funcionariosFiltrados.map((n) => n.id);
+      setSelecionados(newSelected);
+      return;
+    }
+    setSelecionados([]);
+  };
+
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex-1 flex flex-col min-h-screen">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-        <div className="h-80px" />
+        <div className="pt-20 lg:pt-80px" />
 
-        <main className="flex-1 p-25">
-          <div className="mx-auto">
-            <div className="mb-10 text-center pb-7">
-              <h1 className="text-3xl font-bold text-gray-800">Controle de funcionário</h1>
-              <p className="text-gray-500 text-lg">
-                Visualize todos os funcionários de sua empresa
-              </p>
-            </div>
+        <main className="flex flex-col gap-10 flex-1 p-4 md:p-8">
+          {/* Cabeçalho */}
+          <div className="text-center mb-8 px-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-2">
+              Controle de Funcionários
+            </h1>
+            <p className="text-gray-500 text-sm sm:text-base">
+              Gerencie todos os funcionários de sua empresa
+            </p>
+          </div>
 
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-                <Button
-                  variant="contained"
-                  sx={{ backgroundColor: "#007EA7", "&:hover": { backgroundColor: "#00698A" } }}
+          <div className="max-w-[1800px] mx-auto">
+            <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-6">
+              {/* Barra de ações */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                <button
                   onClick={abrirModalCriar}
+                  className="bg-[#007EA7] text-white font-semibold py-2.5 px-6 rounded-md cursor-pointer hover:bg-[#006891] transition-colors w-full md:w-auto"
                 >
                   Novo Funcionário
-                </Button>
-                <TextField
-                  size="small"
-                  placeholder="Busque por nome..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="w-full sm:w-80"
-                />
+                </button>
+
+                <div className="relative w-full md:max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Busque por nome..."
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#007EA7] focus:border-[#007EA7] text-sm"
+                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                </div>
               </div>
 
-              <TableContainer component={Paper} elevation={0}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell padding="checkbox">
-                        <Checkbox />
-                      </TableCell>
-                      <TableCell>Nome</TableCell>
-                      <TableCell>Telefone</TableCell>
-                      <TableCell>Função</TableCell>
-                      <TableCell>Escala</TableCell>
-                      <TableCell>Contrato</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Ações</TableCell>
-                    </TableRow>
-                  </TableHead>
+              {/* Tabela */}
+              <div className="overflow-x-auto">
+                {/* Cabeçalho da tabela */}
+                <div className="flex items-center bg-gray-50 border-b border-gray-200 mb-2 min-h-12 rounded-t-md text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <div className="py-3 w-[5%] pl-4">
+                    <input
+                      type="checkbox"
+                      checked={
+                        funcionariosFiltrados.length > 0 &&
+                        selecionados.length === funcionariosFiltrados.length
+                      }
+                      onChange={handleSelectAllClick}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="py-3 w-[20%] pl-2">Nome</div>
+                  <div className="py-3 w-[15%]">Telefone</div>
+                  <div className="py-3 w-[15%]">Função</div>
+                  <div className="py-3 w-[12%]">Escala</div>
+                  <div className="py-3 w-[12%]">Contrato</div>
+                  <div className="py-3 w-[10%] text-center">Status</div>
+                  <div className="py-3 w-[11%] text-center">Ações</div>
+                </div>
 
-                  <TableBody>
-                    {funcionariosPagina.map((f) => (
-                      <TableRow key={f.id}>
-                        <TableCell padding="checkbox">
-                          <Checkbox />
-                        </TableCell>
-                        <TableCell>{f.nome}</TableCell>
-                        <TableCell>{f.telefone}</TableCell>
-                        <TableCell>{f.funcao}</TableCell>
-                        <TableCell>{f.escala || "N/A"}</TableCell>
-                        <TableCell>{f.contrato}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={f.status ? "Ativo" : "Inativo"}
-                            color={f.status ? "success" : "error"}
-                            variant="outlined"
-                            className="font-medium!"
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <IconButton size="small" onClick={() => abrirModalEditar(f)}>
-                              <Edit fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => abrirModalDeletar(f)}>
-                              <Delete fontSize="small" />
-                            </IconButton>
+                {/* Linhas da tabela */}
+                <div>
+                  {funcionariosPagina.length === 0 ? (
+                    <div className="text-center p-8 text-gray-500">
+                      <p>Nenhum funcionário encontrado.</p>
+                      {busca && (
+                        <button
+                          onClick={() => setBusca("")}
+                          className="mt-2 text-[#007EA7] hover:underline"
+                        >
+                          Limpar busca
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    funcionariosPagina.map((f) => {
+                      const isItemSelected = isSelected(f.id);
+
+                      return (
+                        <div
+                          key={f.id}
+                          className={`flex items-center border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+                            isItemSelected ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          <div className="py-3 w-[5%] pl-4">
+                            <input
+                              type="checkbox"
+                              checked={isItemSelected}
+                              onChange={(event) => handleSelectClick(event, f.id)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                          <div className="py-3 w-[20%] pl-2 text-sm text-gray-900 truncate">{f.nome}</div>
+                          <div className="py-3 w-[15%] text-sm text-gray-600 truncate">{f.telefone}</div>
+                          <div className="py-3 w-[15%] text-sm text-gray-600 truncate">{f.funcao}</div>
+                          <div className="py-3 w-[12%] text-sm text-gray-600 truncate">{f.escala || "N/A"}</div>
+                          <div className="py-3 w-[12%] text-sm text-gray-600 truncate">{f.contrato}</div>
+                          <div className="py-3 w-[10%] text-center">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                                f.status
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {f.status ? "Ativo" : "Inativo"}
+                            </span>
+                          </div>
+                          <div className="py-3 w-[11%] pr-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abrirModalEditar(f);
+                                }}
+                                className="p-1.5 text-gray-600 hover:text-[#007EA7] hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                                title="Editar"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abrirModalDeletar(f);
+                                }}
+                                className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                                title="Deletar"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
 
-              <div className="flex justify-between items-center mt-4 text-sm text-gray-600 p-3">
+              {/* Paginação */}
+              <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 text-sm text-gray-600">
                 <span>
                   Mostrando {indexPrimeiro + 1} a{" "}
                   {Math.min(indexUltimo, funcionariosFiltrados.length)} de{" "}
                   {funcionariosFiltrados.length} resultados
                 </span>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outlined"
-                    size="small"
+                  <button
                     onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
                     disabled={pagina === 1}
+                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Anterior
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
+                  </button>
+                  <button
                     onClick={() => setPagina((prev) => Math.min(prev + 1, totalPaginas))}
                     disabled={pagina === totalPaginas}
+                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Próximo
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>

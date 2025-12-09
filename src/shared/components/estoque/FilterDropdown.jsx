@@ -68,13 +68,13 @@ const FilterDropdown = ({ isOpen, onClose, selectedFilters, onFilterChange }) =>
       <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
         <button
           onClick={() => onFilterChange({})}
-          className="text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
+          className="text-sm font-medium text-gray-600 cursor-pointer hover:text-red-600 transition-colors"
         >
           Limpar Filtros
         </button>
         <button
           onClick={onClose}
-          className="bg-[#007EA7] text-white text-sm font-medium py-1.5 px-4 rounded-md hover:bg-[#006891] transition-colors"
+          className="bg-[#007EA7] text-white text-sm font-medium py-1.5 px-4 rounded-md cursor-pointer hover:bg-[#006891] transition-colors"
         >
           Aplicar
         </button>

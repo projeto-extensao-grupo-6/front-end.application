@@ -359,10 +359,10 @@ export default function ProductDetailPage() {
         <main className="flex-1 p-4 md:p-8">
           <div className="max-w-[1800px] mx-auto">
             {/* Botão Voltar */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 cursor-pointer">
               <button 
                 onClick={handleBack}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer transition-colors text-sm font-medium"
               >
                 <ArrowLeft className="w-5 h-5" />
                 Voltar para Estoque
@@ -380,41 +380,41 @@ export default function ProductDetailPage() {
             {sectionsOpen.kpis && (
               <div className="mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                  <div className="bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-sm text-white font-bold mb-2">Quantidade Total</p>
-                    <p className="text-2xl font-bold text-white">{estoque.quantidadeTotal}</p>
-                    <p className="text-xs text-blue-100 mt-2">{produto.unidademedida}</p>
+                  <div className="flex flex-col gap-1 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
+                    <p className="text-lg text-white font-bold mb-2">Quantidade Total</p>
+                    <p className="text-3xl font-bold text-white">{estoque.quantidadeTotal}</p>
+                    <p className="text-md text-blue-100 mt-2">{produto.unidademedida}</p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-sm text-white font-bold mb-2">Disponível</p>
+                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
+                    <p className="text-lg text-white font-bold mb-2">Disponível</p>
                     <p className="text-2xl font-bold text-white">{Math.max(0, estoque.quantidadeDisponivel - estoque.reservado)}</p>
-                    <p className="text-xs text-blue-100 mt-2">Pronto para uso</p>
+                    <p className="text-md text-blue-100 mt-2">Pronto para uso</p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-sm text-white font-bold mb-2">Reservado</p>
+                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
+                    <p className="text-lg text-white font-bold mb-2">Reservado</p>
                     <p className="text-2xl font-bold text-white">{estoque.reservado}</p>
-                    <p className="text-xs text-blue-100 mt-2">Em separação</p>
+                    <p className="text-md text-blue-100 mt-2">Em separação</p>
                   </div>
 
                   {/* KPI com cor dinâmica baseada na situação */}
-                  <div className={`bg-gradient-to-br ${situacaoKpiColors} rounded-lg border-2 p-6`}>
-                    <p className="text-sm text-white font-bold mb-2">Situação do Estoque</p>
-                    <p className="text-2xl font-bold text-white">{situacao}</p>
-                    <p className="text-xs text-white opacity-90 mt-2">Status atual</p>
+                  <div className={`flex flex-col gap-3 bg-gradient-to-br ${situacaoKpiColors} rounded-lg border-2 p-6`}>
+                    <p className="text-md text-white font-bold mb-2">Situação do Estoque</p>
+                    <p className="text-lg font-bold text-white">{situacao}</p>
+                    <p className="text-md text-white opacity-90 mt-2">Status atual</p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-sm text-white font-bold mb-2">Preço Unitário</p>
+                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
+                    <p className="text-lg text-white font-bold mb-2">Preço Unitário</p>
                     <p className="text-2xl font-bold text-white">{formatCurrency(produto.preco)}</p>
-                    <p className="text-xs text-blue-100 mt-2">Por {produto.unidademedida}</p>
+                    <p className="text-md text-blue-100 mt-2">Por {produto.unidademedida}</p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
-                    <p className="text-sm text-white font-bold mb-2">Valor Total</p>
+                  <div className="flex flex-col gap-2 bg-gradient-to-br from-[#007EA7] to-[#006891] rounded-lg border-2 border-[#005a7a] p-6">
+                    <p className="text-lg text-white font-bold mb-2">Valor Total</p>
                     <p className="text-2xl font-bold text-white">{formatCurrency(totalValue)}</p>
-                    <p className="text-xs text-blue-100 mt-2">Em estoque</p>
+                    <p className="text-md text-blue-100 mt-2">Em estoque</p>
                   </div>
                 </div>
               </div>
@@ -429,7 +429,7 @@ export default function ProductDetailPage() {
                 className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
               >
                 <h2 className="text-xl font-semibold text-gray-800">Métrica de Estoque</h2>
-                {sectionsOpen.metrics ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                {sectionsOpen.metrics ? <ChevronUp className="w-5 h-5 text-gray-500 cursor-pointer" /> : <ChevronDown className="w-5 h-5 text-gray-500 cursor-pointer" />}
               </button>
               
               {sectionsOpen.metrics && (
@@ -472,7 +472,7 @@ export default function ProductDetailPage() {
                 className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
               >
                 <h2 className="text-xl font-semibold text-gray-800">Informações do Produto</h2>
-                {sectionsOpen.info ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                {sectionsOpen.info ? <ChevronUp className="w-5 h-5 text-gray-500 cursor-pointer" /> : <ChevronDown className="w-5 h-5 text-gray-500 cursor-pointer" />}
               </button>
               
               {sectionsOpen.info && (
@@ -542,7 +542,7 @@ export default function ProductDetailPage() {
                 className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
               >
                 <h2 className="text-xl font-semibold text-gray-800">Atributos do Produto</h2>
-                {sectionsOpen.attributes ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                {sectionsOpen.attributes ? <ChevronUp className="w-5 h-5 text-gray-500 cursor-pointer" /> : <ChevronDown className="w-5 h-5 text-gray-500 cursor-pointer" />}
               </button>
               
               {sectionsOpen.attributes && (
@@ -602,7 +602,7 @@ export default function ProductDetailPage() {
                   className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
                 >
                   <h2 className="text-xl font-semibold text-gray-800">Variação de Estoque</h2>
-                  {sectionsOpen.chart ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                  {sectionsOpen.chart ? <ChevronUp className="w-5 h-5 text-gray-500 cursor-pointer" /> : <ChevronDown className="w-5 h-5 text-gray-500 cursor-pointer" />}
                 </button>
                 
                 {sectionsOpen.chart && (
@@ -655,7 +655,7 @@ export default function ProductDetailPage() {
                   className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
                 >
                   <h2 className="text-xl font-semibold text-gray-800">Histórico de Movimentações</h2>
-                  {sectionsOpen.movements ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                  {sectionsOpen.movements ? <ChevronUp className="w-5 h-5 text-gray-500 cursor-pointer" /> : <ChevronDown className="w-5 h-5 text-gray-500 cursor-pointer" />}
                 </button>
                 
                 {sectionsOpen.movements && (

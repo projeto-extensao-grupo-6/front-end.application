@@ -58,6 +58,13 @@ const DEFAULT_FORM_DATA = {
     clienteCpf: "",
     clienteEmail: "",
     clienteTelefone: "",
+    clienteRua: "",
+    clienteNumero: "",
+    clienteBairro: "",
+    clienteCidade: "",
+    clienteUf: "",
+    clienteCep: "",
+    clienteComplemento: "",
 
     // Etapa 2 - Produtos
     produtos: [],
@@ -141,6 +148,13 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
             clienteCpf: "",
             clienteEmail: "",
             clienteTelefone: "",
+            clienteRua: "",
+            clienteNumero: "",
+            clienteBairro: "",
+            clienteCidade: "",
+            clienteUf: "",
+            clienteCep: "",
+            clienteComplemento: "",
         }));
         setError(null);
     };
@@ -152,6 +166,10 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
         );
 
         if (clienteSelecionado) {
+            console.log("Cliente selecionado:", clienteSelecionado);
+            const endereco = clienteSelecionado.enderecos?.[0] || {};
+            console.log("Endereço do cliente:", endereco);
+            
             setFormData((prev) => ({
                 ...prev,
                 clienteId: clienteSelecionado.id,
@@ -159,12 +177,31 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
                 clienteCpf: clienteSelecionado.cpf || "",
                 clienteEmail: clienteSelecionado.email || "",
                 clienteTelefone: clienteSelecionado.telefone || "",
+                clienteRua: endereco.rua || "",
+                clienteNumero: endereco.numero || "",
+                clienteBairro: endereco.bairro || "",
+                clienteCidade: endereco.cidade || "",
+                clienteUf: endereco.uf || "",
+                clienteCep: endereco.cep || "",
+                clienteComplemento: endereco.complemento || "",
             }));
+            
+            console.log("FormData atualizado com endereço");
         } else {
             setFormData((prev) => ({
                 ...prev,
                 clienteId: "",
                 clienteNome: "",
+                clienteCpf: "",
+                clienteEmail: "",
+                clienteTelefone: "",
+                clienteRua: "",
+                clienteNumero: "",
+                clienteBairro: "",
+                clienteCidade: "",
+                clienteUf: "",
+                clienteCep: "",
+                clienteComplemento: "",
             }));
         }
         setError(null);

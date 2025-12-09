@@ -66,12 +66,12 @@ const DEFAULT_FORM_DATA = {
     // Etapa 2 - Endereço
     endereco: {
         cep: "",
-        logradouro: "",
+        rua: "",
         numero: "",
         complemento: "",
         bairro: "",
         cidade: "",
-        estado: "",
+        uf: "",
     },
 
     // Etapa 3 - Dados do Serviço
@@ -196,6 +196,8 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         );
 
         if (clienteSelecionado) {
+            const enderecoCliente = clienteSelecionado.enderecos?.[0] || {};
+            
             setFormData((prev) => ({
                 ...prev,
                 clienteId: clienteSelecionado.id,
@@ -203,10 +205,15 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                 clienteCpf: clienteSelecionado.cpf || "",
                 clienteEmail: clienteSelecionado.email || "",
                 clienteTelefone: clienteSelecionado.telefone || "",
-                // Se cliente tem endereços, usar o primeiro
-                endereco: clienteSelecionado.enderecos && clienteSelecionado.enderecos.length > 0 
-                    ? clienteSelecionado.enderecos[0] 
-                    : prev.endereco
+                endereco: {
+                    cep: enderecoCliente.cep || "",
+                    rua: enderecoCliente.rua || "",
+                    numero: enderecoCliente.numero?.toString() || "",
+                    complemento: enderecoCliente.complemento || "",
+                    bairro: enderecoCliente.bairro || "",
+                    cidade: enderecoCliente.cidade || "",
+                    uf: enderecoCliente.uf || "",
+                }
             }));
         } else {
             setFormData((prev) => ({
@@ -299,7 +306,7 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
         }
 
         if (currentStep === 1) {
-            if (!formData.endereco.logradouro.trim()) {
+            if (!formData.endereco.rua.trim()) {
                 setError("Endereço é obrigatório");
                 return false;
             }
@@ -345,12 +352,12 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                     email: formData.clienteEmail,
                     telefone: formData.clienteTelefone,
                     enderecos: [{
-                        rua: formData.endereco.logradouro || "",
+                        rua: formData.endereco.rua || "",
                         complemento: formData.endereco.complemento || "",
                         cep: formData.endereco.cep || "",
                         cidade: formData.endereco.cidade || "",
                         bairro: formData.endereco.bairro || "",
-                        uf: formData.endereco.estado || "",
+                        uf: formData.endereco.uf || "",
                         pais: "Brasil",
                         numero: parseInt(formData.endereco.numero) || 0
                     }]
@@ -366,12 +373,12 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                     status: novoCliente.status || "Ativo",
                     enderecos: novoCliente.enderecos || [{
                         id: 0,
-                        rua: formData.endereco.logradouro || "",
+                        rua: formData.endereco.rua || "",
                         complemento: formData.endereco.complemento || "",
                         cep: formData.endereco.cep || "",
                         cidade: formData.endereco.cidade || "",
                         bairro: formData.endereco.bairro || "",
-                        uf: formData.endereco.estado || "",
+                        uf: formData.endereco.uf || "",
                         pais: "Brasil",
                         numero: parseInt(formData.endereco.numero) || 0
                     }]
@@ -646,14 +653,14 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                                 
                                 <div className="flex flex-col gap-1 col-span-2">
                                     <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                        Logradouro <span className="text-red-500">*</span>
+                                        Rua <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        name="logradouro"
+                                        name="rua"
                                         placeholder="Rua, Avenida, etc."
                                         className="w-full border border-gray-300 rounded-md px-4 py-3"
-                                        value={formData.endereco.logradouro}
+                                        value={formData.endereco.rua}
                                         onChange={handleEnderecoChange}
                                     />
                                 </div>
@@ -713,14 +720,14 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                                 </div>
 
                                 <div className="flex flex-col gap-1">
-                                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">Estado</label>
+                                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">UF</label>
                                     <input
                                         type="text"
-                                        name="estado"
+                                        name="uf"
                                         placeholder="SP"
                                         maxLength={2}
-                                        className="w-full border border-gray-300 rounded-md px-4 py-3"
-                                        value={formData.endereco.estado}
+                                        className="w-full border border-gray-300 rounded-md px-4 py-3 uppercase"
+                                        value={formData.endereco.uf}
                                         onChange={handleEnderecoChange}
                                     />
                                 </div>
@@ -866,13 +873,13 @@ const NovoPedidoServicoModal = ({ isOpen, onClose, onSuccess }) => {
                                     <h4 className="font-semibold text-gray-900">Endereço</h4>
                                 </div>
                                 <p className="text-gray-900">
-                                    {formData.endereco.logradouro}
+                                    {formData.endereco.rua}
                                     {formData.endereco.numero && `, ${formData.endereco.numero}`}
                                     {formData.endereco.complemento && ` - ${formData.endereco.complemento}`}
                                     <br />
                                     {formData.endereco.bairro && `${formData.endereco.bairro}, `}
                                     {formData.endereco.cidade}
-                                    {formData.endereco.estado && ` - ${formData.endereco.estado}`}
+                                    {formData.endereco.uf && ` - ${formData.endereco.uf}`}
                                     {formData.endereco.cep && ` - ${formData.endereco.cep}`}
                                 </p>
                             </div>
