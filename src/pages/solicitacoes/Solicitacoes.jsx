@@ -56,36 +56,38 @@ export default function Acesso() {
     }
   }
   
-  const updateSolicitacaoStatus = (ids, novoStatus) => {
-    const promises = ids.map(id => {
-      const endpoint = novoStatus === 'Aprovado' 
-        ? `/solicitacoes/aceitar/${id}` 
-        : `/solicitacoes/recusar/${id}`;
-  
-      const statusBackend = novoStatus === 'Aprovado' ? 'ACEITO' : 'RECUSADO';
-  
-      const options = {
-        method: novoStatus === 'Aprovado' ? 'PUT' : 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      };
-  
-      if (novoStatus === 'Aprovado') {
-        options.body = JSON.stringify({ status: statusBackend });
+  const updateSolicitacaoStatus = async (ids, novoStatus) => {
+    const promises = ids.map(async (id) => {
+      try {
+        if (novoStatus === 'Aprovado') {
+          // Para aprovar, usa PUT com o status
+          console.log(`Enviando PUT para /solicitacoes/aceitar/${id} com body:`, { status: 'ACEITO' });
+          const response = await Api.put(`/solicitacoes/aceitar/${id}`, 
+            { status: 'ACEITO' },
+            {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          console.log('Resposta do aceitar:', response);
+          return response.data;
+        } else {
+          // Para recusar, usa DELETE
+          console.log(`Enviando DELETE para /solicitacoes/recusar/${id}`);
+          const response = await Api.delete(`/solicitacoes/recusar/${id}`);
+          console.log('Resposta do recusar:', response);
+          return response.data;
+        }
+      } catch (error) {
+        console.error(`Erro ao atualizar solicitação ${id}:`, error);
+        console.error('Detalhes do erro:', error.response?.data);
+        throw error;
       }
-  
-      return Api.request({
-        url: endpoint,
-        method: options.method,
-        data: options.method !== 'GET' ? JSON.parse(options.body) : undefined,
-        headers: options.headers
-      }).then(res => {
-        if (res.status < 200 || res.status >= 300) throw new Error(`Falha ao atualizar ${id}`);
-        return res.data;
-      });
     });
-  
+
     return Promise.all(promises);
-  };  
+  };
 
   const handleApprove = (id) => {
     setIdSelecionado(id);
