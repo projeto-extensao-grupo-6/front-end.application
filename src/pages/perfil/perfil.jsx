@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Api from '../../axios/Api';
-import { User, MapPin, Lock, Save, Edit2, Camera, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, MapPin, Lock, Save, Edit2, Camera, Eye, EyeOff, AlertCircle, CheckCircle, X } from 'lucide-react';
 import Sidebar from '../../shared/components/sidebar/sidebar';
 import Header from '../../shared/components/header/header';
-import DefaultAvatar from '../../assets/Avatar.png';
+import DefaultAvatar from '../../assets/Avatar.jpg';
 
 // Componente InputField (mantido inalterado)
 const InputField = ({ label, name, value, onChange, type = "text", disabled = false, className = "", showPasswordToggle = false, onTogglePassword, showPassword }) => (
@@ -135,6 +135,21 @@ export default function Perfil() {
         };
         
         reader.readAsDataURL(file);
+    };
+
+    // 3. Remove a foto de perfil
+    const handleRemovePhoto = () => {
+        const userId = getUserId();
+        if (!userId) {
+            setMessage({ type: 'error', text: 'Erro: ID do usuário não encontrado.' });
+            return;
+        }
+
+        // Remove do localStorage
+        localStorage.removeItem(`leoVidros_userPhoto_${userId}`);
+        // Volta para a foto padrão
+        setUserPhoto(DefaultAvatar);
+        setMessage({ type: 'success', text: 'Foto de perfil removida com sucesso!' });
     };
 
     useEffect(() => {
@@ -352,15 +367,15 @@ export default function Perfil() {
                         <div className="bg-white h-full border-t border-gray-200">
                             <div className="flex flex-col lg:flex-row h-full">
 
-                                <div className="lg:w-80 bg-[#003249] text-white p-8 pt-16 flex flex-col border-r border-gray-700">
-                                    <h2 className="text-lg font-medium text-gray-300 mb-8 pb-4">
+                                <div className="lg:w-80 bg-[#003249] text-white p-4 lg:p-8 pt-8 lg:pt-16 flex flex-col border-r border-gray-700">
+                                    <h2 className="text-base lg:text-lg font-medium text-gray-300 mb-4 lg:mb-8 pb-2 lg:pb-4">
                                         Informações do Perfil
                                     </h2>
 
                                     {/* BLOCO DA FOTO - Modificado */}
-                                    <div className="flex flex-col items-center mb-10">
-                                        <div className="relative group mb-4">
-                                            <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-lg">
+                                    <div className="flex flex-col items-center mb-6 lg:mb-10">
+                                        <div className="relative group mb-3 lg:mb-4">
+                                            <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full border-4 border-white overflow-hidden shadow-lg">
                                                 <img
                                                     // ** Usa a URL da foto do estado **
                                                     src={userPhoto}
@@ -368,42 +383,54 @@ export default function Perfil() {
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
-                                            {/* ** Conecta o onClick ao handler de foto ** */}
+                                            {/* Botão para adicionar/trocar foto */}
                                             <button 
                                                 onClick={handlePhotoClick}
-                                                disabled={loading} // Desabilita o botão enquanto o preview está em andamento
+                                                disabled={loading}
                                                 className="absolute bottom-0 right-0 bg-[#003d6b] border-2 border-white p-2 rounded-full hover:bg-blue-800 transition cursor-pointer"
+                                                title="Adicionar/Trocar foto"
                                             >
                                                 <Camera size={16} />
                                             </button>
+                                            {/* Botão para remover foto - só aparece se não for a foto padrão */}
+                                            {userPhoto !== DefaultAvatar && (
+                                                <button 
+                                                    onClick={handleRemovePhoto}
+                                                    disabled={loading}
+                                                    className="absolute top-0 right-0 bg-gray-600 border-2 border-white p-1.5 rounded-full hover:bg-gray-700 transition opacity-70 hover:opacity-100 cursor-pointer"
+                                                    title="Remover foto"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            )}
                                         </div>
-                                        <div className='flex flex-col mb-10 py-6'>
-                                            <h3 className="text-xl font-semibold mb-1">{formData.nome}</h3>
-                                            <p className="text-sm text-gray-400">{formData.cargo}</p>
+                                        <div className='flex flex-col mb-4 lg:mb-10 py-2 lg:py-6'>
+                                            <h3 className="text-lg lg:text-xl font-semibold mb-1">{formData.nome}</h3>
+                                            <p className="text-xs lg:text-sm text-gray-400">{formData.cargo}</p>
                                         </div>
                                     </div>
                                     {/* Fim do Bloco da Foto */}
 
-                                    <nav className="space-y-3">
+                                    <nav className="space-y-2 lg:space-y-3">
                                         <button
                                             onClick={() => { setActiveTab('personal'); setIsEditing(false); }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 cursor-pointer rounded-lg transition-all ${activeTab === 'personal'
+                                            className={`w-full flex items-center gap-3 px-3 lg:px-4 py-2 lg:py-3 cursor-pointer rounded-lg transition-all text-sm lg:text-base ${activeTab === 'personal'
                                                 ? 'bg-cyan-500/20 text-white border-l-4 border-cyan-400 shadow-lg'
                                                 : 'text-gray-300 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
-                                            <User size={20} />
+                                            <User size={18} />
                                             <span className="font-medium">Dados Pessoais</span>
                                         </button>
 
                                         <button
                                             onClick={() => { setActiveTab('address'); setIsEditing(false); }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 cursor-pointer rounded-lg transition-all ${activeTab === 'address'
+                                            className={`w-full flex items-center gap-3 px-3 lg:px-4 py-2 lg:py-3 cursor-pointer rounded-lg transition-all text-sm lg:text-base ${activeTab === 'address'
                                                 ? 'bg-cyan-500/20 text-white border-l-4 border-cyan-400 shadow-lg'
                                                 : 'text-gray-300 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
-                                            <MapPin size={20} />
+                                            <MapPin size={18} />
                                             <span className="font-medium">Dados de Endereço</span>
                                         </button>
                                     </nav>

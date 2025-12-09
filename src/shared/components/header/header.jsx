@@ -21,7 +21,7 @@ import {
   AccountCircleOutlined
 } from "@mui/icons-material";
 import Logo from "../../../assets/logo/logo.png";
-import DefaultAvatar from '../../../assets/Avatar.png';
+import DefaultAvatar from '../../../assets/Avatar.jpg';
 
 export default function Header({ toggleSidebar, sidebarOpen }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -115,18 +115,19 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
           <img
             src={Logo}
             alt="Logo Léo Vidros"
-            className="h-8 sm:h-10 md:h-12 transition-all duration-300"
+            className="h-8 sm:h-10 md:h-12 transition-all duration-300 cursor-pointer hover:opacity-80"
+            onClick={() => navigate("/paginaInicial")}
           />
         </div>
 
         {/* Usuário */}
         <div
-          className="flex items-center gap-1 sm:gap-2 cursor-pointer group"
+          className="flex items-center gap-2 sm:gap-2 cursor-pointer group"
           onClick={handleProfileClick}
         >
           <div className="hidden sm:block text-right mr-1">
             <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-gray-200 transition-colors">{userName}</p>
-            <p className="text-[11px] sm:text-xs text-gray-300">Admin</p>
+            <p className="text-[11px] sm:text-xs text-gray-300">Administador</p>
           </div>
           {/* 3. SUBSTITUIÇÃO: Usa userPhoto no Avatar principal */}
           <Avatar
@@ -162,7 +163,6 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
         >
           {/* Seção de Perfil Destacada */}
           <Box className="flex items-center px-4 py-5 gap-3">
-             {/* 3. SUBSTITUIÇÃO: Usa userPhoto no Avatar do Menu */}
              <Avatar
                src={userPhoto}
                className="w-12 h-12 border-2 border-white"
