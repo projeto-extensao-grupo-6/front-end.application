@@ -361,20 +361,44 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   };
 
   const handlePedidoChange = (selectedPedidoOption) => {
-      setFormData(prev => ({ ...prev, pedido: selectedPedidoOption }));
-      if (selectedPedidoOption?.originalData?.endereco) {
-          const end = selectedPedidoOption.originalData.endereco;
-          setFormData(prev => ({
-              ...prev,
-              rua: end.rua || prev.rua || end.logradouro || "",
-              cep: end.cep || prev.cep || "",
-              numero: end.numero || prev.numero || "",
-              bairro: end.bairro || prev.bairro || "",
-              cidade: end.cidade || prev.cidade || "",
-              uf: end.uf || prev.uf || "",
-              pais: end.pais || prev.pais || "Brasil",
-              complemento: end.complemento || prev.complemento || ""
-          }));
+      console.log('🔍 Pedido selecionado:', selectedPedidoOption);
+      
+      // Tenta puxar o endereço do pedido ou do cliente associado
+      if (selectedPedidoOption?.originalData) {
+          const data = selectedPedidoOption.originalData;
+          console.log('📦 Dados originais do pedido:', data);
+          console.log('👤 Cliente:', data.cliente);
+          console.log('🛠️ Serviço:', data.servico);
+          console.log('🏠 Endereço direto:', data.endereco);
+          console.log('🏠 Endereço do cliente:', data.cliente?.endereco);
+          console.log('🏠 Endereço do serviço->cliente:', data.servico?.cliente?.endereco);
+          
+          // Busca o endereço em múltiplas fontes possíveis
+          const end = data.endereco || 
+                      data.cliente?.endereco || 
+                      data.servico?.cliente?.endereco ||
+                      data.servico?.endereco;
+          
+          if (end) {
+              console.log('✅ Endereço encontrado:', end);
+              setFormData(prev => ({
+                  ...prev,
+                  pedido: selectedPedidoOption,
+                  rua: end.rua || end.logradouro || "",
+                  cep: end.cep || "",
+                  numero: end.numero || "",
+                  bairro: end.bairro || "",
+                  cidade: end.cidade || "",
+                  uf: end.uf || "",
+                  pais: end.pais || "Brasil",
+                  complemento: end.complemento || ""
+              }));
+          } else {
+              console.warn('⚠️ Nenhum endereço encontrado para este pedido');
+              setFormData(prev => ({ ...prev, pedido: selectedPedidoOption }));
+          }
+      } else {
+          setFormData(prev => ({ ...prev, pedido: selectedPedidoOption }));
       }
   };
 
@@ -648,7 +672,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   if (isSuccess) {
     return (
-      <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={onClose}>
+      <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-9999 backdrop-blur-sm" onClick={onClose}>
         <div className="bg-white border border-gray-200 rounded-xl p-10 m-3 w-full max-w-md shadow-2xl flex flex-col items-center justify-center text-center transform transition-all scale-100" onClick={(e) => e?.stopPropagation()}>
           <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce"><CheckCircle className="w-12 h-12 text-green-600" /></div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Agendamento {formData.id ? "Atualizado" : "Criado"}!</h2>
@@ -660,8 +684,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={onClose}>
-      <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-xl p-5 m-3 w-full max-w-4xl shadow-2xl overflow-hidden" onClick={(e) => e?.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-9999 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-xl p-5 w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden" onClick={(e) => e?.stopPropagation()}>
         <div className="flex flex-row items-center justify-between border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">{formData.id ? "Editar Agendamento" : "Novo Agendamento"}</h2>
           <Button variant="ghost" size="icon" onClick={onClose} className="cursor-pointer"><X size={20} /></Button>

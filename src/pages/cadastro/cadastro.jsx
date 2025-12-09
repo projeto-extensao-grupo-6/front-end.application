@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Input from "../../shared/components/Ui/Input.jsx";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import EmailIcon from "@mui/icons-material/Email";
 import BadgeIcon from "@mui/icons-material/Badge";
@@ -104,6 +103,13 @@ function Cadastro() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-[#ffffff] to-[#f3f4f6] p-4">
+      <div className="absolute top-5 right-10">
+        <img
+          src="/src/assets/logo/logo-sidebar.png"
+          alt="Logo"
+          className="h-12 w-auto"
+        />
+      </div>
       <div className="w-full max-w-6xl flex items-center justify-center gap-12">
         <div
           className="hidden lg:flex flex-1 h-[600px] rounded-xl bg-cover bg-center shadow-lg"
@@ -114,8 +120,9 @@ function Cadastro() {
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md p-8 rounded-xl"
+          className="w-full max-w-md p-8 rounded-xl relative"
         >
+          
           <div className="flex flex-col gap-8">
             <div className="mb-10 text-center flex flex-col gap-2">
               <h1 className="text-4xl font-bold text-[#111827] mb-2">Criar conta</h1>

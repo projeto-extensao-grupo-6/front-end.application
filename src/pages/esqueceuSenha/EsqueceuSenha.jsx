@@ -81,6 +81,13 @@ const EsqueceuSenha = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-[#ffffff] to-[#f3f4f6] p-4">
+      <div className="absolute top-5 right-10">
+        <img
+          src="/src/assets/logo/logo-sidebar.png"
+          alt="Logo"
+          className="h-12 w-auto"
+        />
+      </div>
       <div className="w-full max-w-6xl flex items-center justify-center gap-12">
         {/* Imagem lateral */}
         <div

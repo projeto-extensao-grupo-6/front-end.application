@@ -125,8 +125,15 @@ export default function Perfil() {
             // Define a userPhoto como a URL base64 do arquivo
             localStorage.setItem(`leoVidros_userPhoto_${userId}`, base64Url);
             setUserPhoto(base64Url); 
-            setMessage({ type: 'success', text: 'Pré-visualização da foto carregada!' });
+            setMessage({ type: 'success', text: 'Foto de perfil atualizada!' });
             setLoading(false);
+            
+            // Atualizar header automaticamente
+            if (typeof window.updateHeaderUserInfo === 'function') {
+                console.log('🔄 Perfil: Atualizando foto no header');
+                window.updateHeaderUserInfo();
+            }
+            window.dispatchEvent(new Event('userDataUpdated'));
         };
 
         reader.onerror = () => {
@@ -150,6 +157,13 @@ export default function Perfil() {
         // Volta para a foto padrão
         setUserPhoto(DefaultAvatar);
         setMessage({ type: 'success', text: 'Foto de perfil removida com sucesso!' });
+        
+        // Atualizar header automaticamente
+        if (typeof window.updateHeaderUserInfo === 'function') {
+            console.log('🔄 Perfil: Removendo foto do header');
+            window.updateHeaderUserInfo();
+        }
+        window.dispatchEvent(new Event('userDataUpdated'));
     };
 
     useEffect(() => {
@@ -278,6 +292,24 @@ export default function Perfil() {
         Api.put(`/usuarios/${userId}`, usuarioRequest)
             .then(response => {
                 console.log('Salvo com sucesso!', response.data);
+                
+                // Atualizar nome no storage
+                sessionStorage.setItem('loggedUserName', formData.nome);
+                localStorage.setItem('loggedUserName', formData.nome);
+                sessionStorage.setItem('loggedUserEmail', formData.email);
+                localStorage.setItem('loggedUserEmail', formData.email);
+                
+                console.log('✅ Perfil: Dados salvos no storage', { nome: formData.nome, email: formData.email });
+                
+                // Disparar evento customizado para atualizar o header
+                window.dispatchEvent(new Event('userDataUpdated'));
+                
+                // Chamar função global diretamente como backup
+                if (typeof window.updateHeaderUserInfo === 'function') {
+                    console.log('🔄 Perfil: Chamando atualização direta do header');
+                    window.updateHeaderUserInfo();
+                }
+                
                 setMessage({ 
                     type: 'success', 
                     text: isChangingPassword ? 'Perfil e senha atualizados com sucesso!' : 'Perfil atualizado com sucesso!' 
@@ -372,12 +404,11 @@ export default function Perfil() {
                                         Informações do Perfil
                                     </h2>
 
-                                    {/* BLOCO DA FOTO - Modificado */}
+                                    {/* BLOCO DA FOTO */}
                                     <div className="flex flex-col items-center mb-6 lg:mb-10">
                                         <div className="relative group mb-3 lg:mb-4">
-                                            <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full border-4 border-white overflow-hidden shadow-lg">
+                                            <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden shadow-lg">
                                                 <img
-                                                    // ** Usa a URL da foto do estado **
                                                     src={userPhoto}
                                                     alt="Foto de perfil"
                                                     className="w-full h-full object-cover"
@@ -397,7 +428,7 @@ export default function Perfil() {
                                                 <button 
                                                     onClick={handleRemovePhoto}
                                                     disabled={loading}
-                                                    className="absolute top-0 right-0 bg-gray-600 border-2 border-white p-1.5 rounded-full hover:bg-gray-700 transition opacity-70 hover:opacity-100 cursor-pointer"
+                                                    className="absolute top-0 left-0 bg-gray-600 border-2 border-white p-1.5 rounded-full hover:bg-gray-700 transition opacity-70 hover:opacity-100 cursor-pointer"
                                                     title="Remover foto"
                                                 >
                                                     <X size={14} />
@@ -409,7 +440,6 @@ export default function Perfil() {
                                             <p className="text-xs lg:text-sm text-gray-400">{formData.cargo}</p>
                                         </div>
                                     </div>
-                                    {/* Fim do Bloco da Foto */}
 
                                     <nav className="space-y-2 lg:space-y-3">
                                         <button
