@@ -18,7 +18,6 @@ const CalendarDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalInitialData, setModalInitialData] = useState({});
@@ -210,54 +209,13 @@ const CalendarDashboard = () => {
       
       <div className="bg-background h-full pt-15">
         <div className="h-[calc(100vh-80px)] flex">
-          {/* Left Sidebar */}
-          <div
-            className={`${
-              sidebarCollapsed ? "w-16" : "w-80"
-            } transition-all duration-300 border-r border-hairline bg-surface flex flex-col`}
-          >
-            <div className="p-5 border-b border-hairline">
-              <div className="flex items-center justify-between">
-                {!sidebarCollapsed && (
-                  <h2 className="font-semibold text-text-primary">
-                    Navegação do Calendário
-                  </h2>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className="cursor-pointer"
-                >
-                  <Icon
-                    name={sidebarCollapsed ? "ChevronRight" : "ChevronLeft"}
-                    size={20}
-                  />
-                </Button>
-              </div>
-            </div>
-
-            {!sidebarCollapsed && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                <MiniCalendar
-                  selectedDate={selectedDate}
-                  onDateSelect={handleDateSelect}
-                />
-
-                {/* <SharedCalendarList onCalendarToggle={handleCalendarToggle} /> */}
-              </div>
-            )}
-          </div>
-
           {/* Main Calendar View */}
           <div className="flex-1 flex flex-col">
             <div className="border-b border-hairline bg-surface p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <h1 className="text-2xl font-semibold text-text-primary">
-                    Agenda de Atendimentos
-                  </h1>
-                </div>
+              <div className="flex items-center justify-center">
+                <h1 className="text-2xl font-semibold text-text-primary">
+                  Agenda de Atendimentos
+                </h1>
               </div>
             </div>
 
@@ -293,21 +251,29 @@ const CalendarDashboard = () => {
                 </Button>
                 {!rightPanelCollapsed && (
                   <h2 className="font-semibold text-text-primary">
-                    Próximos Eventos
+                    Calendário
                   </h2>
                 )}
               </div>
             </div>
 
             {!rightPanelCollapsed && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              <div className="flex flex-col gap-3 flex-1 overflow-y-auto p-4 space-y-6">
+                {/* Mini Calendário */}
+                <MiniCalendar
+                  selectedDate={selectedDate}
+                  onDateSelect={handleDateSelect}
+                />
+
+                {/* Divisor */}
+                <div className="border-t border-hairline my-4"></div>
+
+                {/* Lista de Próximos Eventos */}
                 <UpcomingEvents events={tasks} />
               </div>
             )}
           </div>
         </div>
-
-      
 
         {/* Modal */}
         <TaskCreateModal

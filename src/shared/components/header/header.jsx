@@ -35,32 +35,53 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
   const [userPhoto, setUserPhoto] = useState(DefaultAvatar); 
   
   useEffect(() => {
-    const storedName = sessionStorage.getItem('loggedUserName');
-    const storedEmail = sessionStorage.getItem('loggedUserEmail');
+    const updateUserInfo = () => {
+      const storedName = sessionStorage.getItem('loggedUserName') || localStorage.getItem('loggedUserName');
+      const storedEmail = sessionStorage.getItem('loggedUserEmail') || localStorage.getItem('loggedUserEmail');
+      const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+
+      console.log('🔄 Header: Atualizando informações do usuário', { storedName, storedEmail });
+
+      // LÓGICA DE CARREGAMENTO DA FOTO
+      if (userId) {
+        const localPhoto = localStorage.getItem(`leoVidros_userPhoto_${userId}`);
+        if (localPhoto) 
+          setUserPhoto(localPhoto);
+        else
+          setUserPhoto(DefaultAvatar);
+      } else {
+          setUserPhoto(DefaultAvatar);
+      }
+
+      if (storedName) {
+        setUserName(storedName);
+      } else {
+        setUserName("Usuário Léo Vidros"); 
+      }
+
+      if (storedEmail) {
+        setUserEmail(storedEmail);
+      }
+    };
+
+    // Atualizar na montagem
+    updateUserInfo();
+
+    // Criar função global para atualização forçada
+    window.updateHeaderUserInfo = updateUserInfo;
+
+    // Escutar evento customizado
+    const handleStorageChange = (e) => {
+      console.log('📢 Header: Evento recebido', e.type);
+      updateUserInfo();
+    };
     
-    const userId = sessionStorage.getItem('userId');
+    window.addEventListener('userDataUpdated', handleStorageChange);
 
-    // 2. LÓGICA DE CARREGAMENTO DA FOTO
-    if (userId) {
-      const localPhoto = localStorage.getItem(`leoVidros_userPhoto_${userId}`);
-      if (localPhoto) 
-        setUserPhoto(localPhoto);
-      else
-        setUserPhoto(DefaultAvatar);
-    } else {
-        setUserPhoto(DefaultAvatar);
-
-    }
-
-    if (storedName) {
-      setUserName(storedName);
-    } else {
-      setUserName("Usuário Léo Vidros"); 
-    }
-
-    if (storedEmail) {
-      setUserEmail(storedEmail);
-    }
+    return () => {
+      window.removeEventListener('userDataUpdated', handleStorageChange);
+      delete window.updateHeaderUserInfo;
+    };
   }, []); 
 
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);

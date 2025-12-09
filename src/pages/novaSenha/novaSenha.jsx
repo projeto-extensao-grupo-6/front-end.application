@@ -95,7 +95,7 @@ export default function NovaSenha() {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 font-[Inter]">
-            <Paper elevation={3} className="rounded-xl shadow-2xl p-10 w-full max-w-md mx-auto">
+            <Paper elevation={3} className="rounded-xl shadow-2xl p-10 w-full max-w-md mx-auto relative">
                 <div className="flex flex-col items-center text-center">
 
                     <img
