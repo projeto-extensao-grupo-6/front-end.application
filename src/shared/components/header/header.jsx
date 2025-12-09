@@ -40,9 +40,6 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
       const storedEmail = sessionStorage.getItem('loggedUserEmail') || localStorage.getItem('loggedUserEmail');
       const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
 
-      console.log('🔄 Header: Atualizando informações do usuário', { storedName, storedEmail });
-
-      // LÓGICA DE CARREGAMENTO DA FOTO
       if (userId) {
         const localPhoto = localStorage.getItem(`leoVidros_userPhoto_${userId}`);
         if (localPhoto) 
@@ -64,13 +61,10 @@ export default function Header({ toggleSidebar, sidebarOpen }) {
       }
     };
 
-    // Atualizar na montagem
     updateUserInfo();
 
-    // Criar função global para atualização forçada
     window.updateHeaderUserInfo = updateUserInfo;
 
-    // Escutar evento customizado
     const handleStorageChange = (e) => {
       console.log('📢 Header: Evento recebido', e.type);
       updateUserInfo();

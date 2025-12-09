@@ -26,6 +26,11 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
         etapa: "",
         progressoValor: 1,
         progressoTotal: 7,
+        valorTotal: 0,
+        formaPagamento: "",
+        servicoNome: "",
+        servicoCodigo: "",
+        precoBase: 0,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -74,6 +79,10 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
     useEffect(() => {
         if (isOpen && servico) {
+            console.log('🔍 Objeto servico recebido:', servico);
+            console.log('📋 Cliente do servico:', servico.cliente);
+            console.log('📋 ClienteInfo do servico:', servico.clienteInfo);
+            
             const rawEtapa = servico.etapaOriginal || servico.etapa || "PENDENTE";
             
             // Usa a função para achar o valor correto para o dropdown
@@ -90,6 +99,11 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 etapa: etapaParaExibicao,
                 progressoValor: etapaInfo ? etapaInfo.progresso : (servico.progresso?.[0] || 1),
                 progressoTotal: 7,
+                valorTotal: servico.valorTotal || 0,
+                formaPagamento: servico.formaPagamento || "",
+                servicoNome: servico.servico?.nome || servico.servicoNome || "",
+                servicoCodigo: servico.servico?.codigo || "",
+                precoBase: servico.servico?.precoBase || 0,
             });
             setEtapaAnterior(etapaParaExibicao);
             setModoEdicao(false);
@@ -99,6 +113,10 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        
+        if (name === "valorTotal") {
+            console.log('💰 Valor Total alterado:', value);
+        }
         
         if (name === "etapa") {
             const etapaInfo = ETAPAS_SERVICO.find(e => e.valor === value);
@@ -143,11 +161,14 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
             // O Backend espera "ANÁLISE DO ORÇAMENTO", não "ANALISE_DO_ORCAMENTO"
             const etapaParaBackend = formData.etapa;
 
+            console.log('📝 FormData antes de salvar:', formData);
+            console.log('💰 Valor Total a ser enviado:', parseFloat(formData.valorTotal));
+            
             const pedidoData = {
                 pedido: {
-                    valorTotal: servico.valorTotal || 0.00,
+                    valorTotal: parseFloat(formData.valorTotal) || 0.00,
                     ativo: formData.status === "Ativo",
-                    formaPagamento: servico.formaPagamento || "A negociar",
+                    formaPagamento: formData.formaPagamento || "A negociar",
                     observacao: formData.descricao || "",
                     cliente: {
                         id: servico.clienteId || servico.clienteInfo?.id,
@@ -175,9 +196,10 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 },
                 servico: {
                     id: servico.servico?.id, 
-                    nome: servico.servicoNome || servico.servico?.nome || "Serviço",
+                    nome: formData.servicoNome || servico.servicoNome || servico.servico?.nome || "Serviço",
+                    codigo: formData.servicoCodigo || servico.servico?.codigo || "",
                     descricao: formData.descricao || "",
-                    precoBase: servico.servico?.precoBase || 0.00,
+                    precoBase: parseFloat(formData.precoBase) || 0.00,
                     ativo: true,
                     etapa: {
                         tipo: "PEDIDO", 
@@ -186,8 +208,10 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                 }
             };
 
-            console.log('📤 Enviando para backend:', etapaParaBackend);
+            console.log('📤 Enviando pedidoData para backend:', JSON.stringify(pedidoData, null, 2));
             const response = await Api.put(`/pedidos/${servico.id}`, pedidoData);
+            
+            console.log('✅ Resposta do backend:', response.status, response.data);
             
             if (response.status === 200 || response.status === 204) {
                 if (onSuccess) {
@@ -198,10 +222,20 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                         etapa: formData.etapa, 
                         etapaOriginal: etapaParaBackend,
                         progresso: [parseInt(formData.progressoValor), 7],
+                        valorTotal: parseFloat(formData.valorTotal),
+                        formaPagamento: formData.formaPagamento,
+                        servicoNome: formData.servicoNome,
+                        servico: {
+                            ...servico.servico,
+                            nome: formData.servicoNome,
+                            codigo: formData.servicoCodigo,
+                            precoBase: parseFloat(formData.precoBase),
+                        }
                     });
                 }
                 setEtapaAnterior(formData.etapa);
                 setMostrarModalExcluirAgendamentos(false);
+                setModoEdicao(false);
                 onClose();
             } else {
                 setError("Erro ao atualizar serviço");
@@ -393,31 +427,36 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     if (!isOpen || !servico) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 10000 }}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden">
+        <div 
+            className="fixed inset-0 bg-black/50 flex justify-center items-start px-10 py-20 overflow-y-auto" 
+            style={{ zIndex: 10000 }}
+            onClick={onClose}
+        >
+            <div 
+                className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header Modernizado */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-white/20 p-3 rounded-xl">
-                                <Wrench className="w-7 h-7 text-white" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold">
-                                    Pedido #{servico.id?.toString().padStart(3, "0")}
-                                </h2>
-                                <p className="text-blue-100 text-sm">
-                                    {modoEdicao ? "Editando informações" : "Visualizando informações"}
-                                </p>
-                            </div>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-[#eeeeee] p-2.5 rounded-lg">
+                            <Wrench className="w-6 h-6 text-[#828282]" />
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-white/20 rounded-xl transition-colors"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Pedido #{servico.id?.toString().padStart(3, "0")}
+                            </h2>
+                            <p className="text-md text-gray-500">
+                                ({modoEdicao ? "Editando informações" : "Visualizando informações"})
+                            </p>
+                        </div>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                    >
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
                 </div>
 
                 {/* Error Alert */}
@@ -429,91 +468,255 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto">
-                    <div className="p-6">
-                        <div className="grid grid-cols-12 gap-6">
+                    <div className="flex flex-col gap-3 p-6">
+                        <div className="grid grid-cols-12 gap-3">
                             {/* Coluna Esquerda - Informações Principais */}
-                            <div className="col-span-5 space-y-6">
-                                {/* Resumo do Pedido */}
+                            <div className="col-span-5 space-y-6 flex flex-col gap-2">
+                                {/* Resumo do Pedido / Serviço (unificado) */}
                                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="p-2 bg-blue-100 rounded-lg">
                                             <FileText className="w-5 h-5 text-blue-600" />
                                         </div>
-                                        <h3 className="text-lg font-semibold text-gray-900">Resumo do Pedido</h3>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            {modoEdicao ? 'Editar Pedido' : 'Resumo do Pedido'}
+                                        </h3>
                                     </div>
                                     
                                     <div className="space-y-4">
-                                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                                            <span className="text-gray-600 font-medium">Valor Total:</span>
-                                            <span className="text-xl font-bold text-green-600">
-                                                R$ {servico?.valorTotal?.toFixed(2) || '0,00'}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                                            <span className="text-gray-600 font-medium">Forma de Pagamento:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {servico?.formaPagamento || 'A negociar'}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                                            <span className="text-gray-600 font-medium">Tipo:</span>
-                                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                                {servico?.tipoPedido || 'Serviço'}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-2">
-                                            <span className="text-gray-600 font-medium">Status:</span>
-                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                                formData.status === 'Ativo' 
-                                                    ? 'bg-green-100 text-green-800' 
-                                                    : 'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {formData.status}
-                                            </span>
-                                        </div>
+                                        {/* Modo Leitura */}
+                                        {!modoEdicao && (
+                                            <>
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Valor Total:</span>
+                                                    <span className="text-xl font-bold text-green-600">
+                                                        R$ {formData.valorTotal?.toFixed(2) || '0,00'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Forma de Pagamento:</span>
+                                                    <span className="text-gray-900 font-medium">
+                                                        {formData.formaPagamento || 'A negociar'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Tipo:</span>
+                                                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                                        {servico?.tipoPedido || 'Serviço'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Status:</span>
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                        formData.status === 'Ativo' 
+                                                            ? 'bg-green-100 text-green-800' 
+                                                            : 'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                        {formData.status}
+                                                    </span>
+                                                </div>
+                                                <div className="py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium block mb-1">Serviço:</span>
+                                                    <span className="text-gray-900 font-semibold">
+                                                        {formData.servicoNome || 'Não informado'}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3 py-2 border-b border-gray-100">
+                                                    <div>
+                                                        <span className="text-gray-600 font-medium block mb-1">Código:</span>
+                                                        <span className="text-gray-900">{formData.servicoCodigo || 'N/A'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600 font-medium block mb-1">Preço Base:</span>
+                                                        <span className="text-gray-900">R$ {formData.precoBase?.toFixed(2) || '0,00'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium block mb-1">Descrição:</span>
+                                                    <p className="text-gray-700 text-sm">{formData.descricao || 'Sem descrição'}</p>
+                                                </div>
+                                                <div className="py-2">
+                                                    <span className="text-gray-600 font-medium block mb-1">Etapa:</span>
+                                                    <span className="text-gray-900 font-semibold">
+                                                        {ETAPAS_SERVICO.find(e => e.valor === formData.etapa)?.label || formData.etapa}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                        
+                                        {/* Modo Edição */}
+                                        {modoEdicao && (
+                                            <>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Serviço</label>
+                                                    <input
+                                                        type="text"
+                                                        name="servicoNome"
+                                                        className={getInputClass(true)}
+                                                        value={formData.servicoNome || ''}
+                                                        onChange={handleChange}
+                                                        placeholder="Nome do serviço"
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
+                                                        <input
+                                                            type="text"
+                                                            className={getLockedClass()}
+                                                            value={formData.servicoCodigo || 'Não informado'}
+                                                            readOnly
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Preço Base</label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            name="precoBase"
+                                                            className={getInputClass(true)}
+                                                            value={formData.precoBase || 0}
+                                                            onChange={handleChange}
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                                                    <textarea
+                                                        name="descricao"
+                                                        rows={3}
+                                                        className={getInputClass(true) + " resize-none"}
+                                                        value={formData.descricao}
+                                                        onChange={handleChange}
+                                                        placeholder="Descrição do serviço..."
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Etapa Atual</label>
+                                                    <select
+                                                        name="etapa"
+                                                        className={getInputClass(true)}
+                                                        value={formData.etapa}
+                                                        onChange={handleChange}
+                                                    >
+                                                        {ETAPAS_SERVICO.map((etapa) => (
+                                                            <option key={etapa.valor} value={etapa.valor}>
+                                                                {etapa.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                {/* Barra de Progresso */}
+                                                <div className="bg-gray-50 rounded-lg p-4">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-sm font-medium text-gray-700">
+                                                            Progresso do Serviço
+                                                        </span>
+                                                        <span className="text-sm font-bold text-blue-600">
+                                                            {Math.round((formData.progressoValor / 7) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                                        <div
+                                                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
+                                                            style={{
+                                                                width: `${Math.min(100, (formData.progressoValor / 7) * 100)}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 mt-1">
+                                                        Etapa {formData.progressoValor} de 7
+                                                    </p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
                                 {/* Cliente */}
-                                {servico?.cliente && (
-                                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                                        <div className="flex items-center gap-3 mb-4">
+                                {(servico?.cliente || servico?.clienteInfo) && (
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm">
+                                        <div className="flex items-center gap-3 mb-5">
                                             <div className="p-2 bg-green-100 rounded-lg">
                                                 <User className="w-5 h-5 text-green-600" />
                                             </div>
                                             <h3 className="text-lg font-semibold text-gray-900">Cliente</h3>
                                         </div>
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3">
-                                                <User className="w-4 h-4 text-gray-500" />
-                                                <div>
-                                                    <p className="font-semibold text-gray-900">{servico.cliente.nome}</p>
-                                                    <p className="text-sm text-gray-600">CPF: {servico.cliente.cpf || 'Não informado'}</p>
+                                        <div className="space-y-4 flex flex-col gap-2">
+                                            {/* Avatar e Nome */}
+                                            <div className="flex flex-col gap-2 items-center pb-4 border-b border-green-200">
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-gray-900 text-lg">
+                                                        {servico.cliente?.nome || servico.clienteInfo?.nome || servico.clienteNome || 'Cliente'}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 mt-1">
+                                                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                                            (servico.cliente?.status || servico.clienteInfo?.status) === 'Ativo' 
+                                                                ? 'bg-green-100 text-green-700 border border-green-300' 
+                                                                : 'bg-gray-200 text-gray-600 border border-gray-300'
+                                                        }`}>
+                                                            {servico.cliente?.status || servico.clienteInfo?.status || 'Ativo'}
+                                                        </span>
+                                                        {(servico.cliente?.cpf || servico.clienteInfo?.cpf) && (
+                                                            <span className="text-sm text-gray-600">
+                                                                CPF: {servico.cliente?.cpf || servico.clienteInfo?.cpf}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            {servico.cliente.email && (
-                                                <div className="flex items-center gap-3">
-                                                    <Mail className="w-4 h-4 text-gray-500" />
-                                                    <span className="text-gray-700">{servico.cliente.email}</span>
-                                                </div>
-                                            )}
-                                            {servico.cliente.telefone && (
-                                                <div className="flex items-center gap-3">
-                                                    <Phone className="w-4 h-4 text-gray-500" />
-                                                    <span className="text-gray-700">{servico.cliente.telefone}</span>
-                                                </div>
-                                            )}
-                                            {servico.cliente.enderecos && servico.cliente.enderecos.length > 0 && (
-                                                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <MapPin className="w-4 h-4 text-gray-500" />
-                                                        <span className="text-sm font-medium text-gray-700">Endereço</span>
+
+                                            {/* Contatos */}
+                                            <div className="space-y-3">
+                                                {(servico.cliente?.email || servico.clienteInfo?.email) && (
+                                                    <div className="flex items-center gap-3 bg-white/60 p-3 rounded-lg">
+                                                        <div className="p-2 bg-blue-100 rounded-lg">
+                                                            <Mail className="w-4 h-4 text-blue-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm text-gray-900 font-medium">
+                                                               Email: {servico.cliente?.email || servico.clienteInfo?.email}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    {servico.cliente.enderecos.map((endereco, index) => (
-                                                        <div key={index} className="text-sm text-gray-600">
-                                                            <p>{endereco.rua}, {endereco.numero || 'S/N'}</p>
-                                                            <p>{endereco.bairro}, {endereco.cidade} - {endereco.uf}</p>
-                                                            <p>CEP: {endereco.cep}</p>
+                                                )}
+                                                {(servico.cliente?.telefone || servico.clienteInfo?.telefone) && (
+                                                    <div className="flex items-center gap-3 bg-white/60 p-3 rounded-lg">
+                                                        <div className="p-2 bg-purple-100 rounded-lg">
+                                                            <Phone className="w-4 h-4 text-purple-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm text-gray-900 font-medium">
+                                                               Tel: {servico.cliente?.telefone || servico.clienteInfo?.telefone}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Endereço */}
+                                            {((servico.cliente?.enderecos && servico.cliente.enderecos.length > 0) || 
+                                              (servico.clienteInfo?.enderecos && servico.clienteInfo.enderecos.length > 0) ||
+                                              servico.clienteInfo?.endereco) && (
+                                                <div className="flex items-center gap-2 bg-white/60 p-4 rounded-lg border border-green-200">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <div className="p-2 bg-orange-100 rounded-lg">
+                                                            <MapPin className="w-4 h-4 text-orange-600" />
+                                                        </div>
+                                                    </div>
+                                                    {(servico.cliente?.enderecos || servico.clienteInfo?.enderecos || [servico.clienteInfo?.endereco]).filter(Boolean).map((endereco, index) => (
+                                                        <div key={index} className="text-sm text-gray-700">
+                                                            <p className="font-medium">
+                                                                {endereco.rua}, {endereco.numero || 'S/N'}
+                                                                {endereco.complemento && ` - ${endereco.complemento}`}
+                                                            </p>
+                                                            <p>{endereco.bairro} - {endereco.cidade}/{endereco.uf}</p>
+                                                            <p className="text-gray-600">CEP: {endereco.cep}</p>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -521,106 +724,6 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Serviço */}
-                                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="p-2 bg-purple-100 rounded-lg">
-                                            <Wrench className="w-5 h-5 text-purple-600" />
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-gray-900">Serviço</h3>
-                                    </div>
-                                    
-                                    <div className="space-y-4">
-                                        {/* Campos Read-Only permanentes */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Nome</label>
-                                            <input
-                                                type="text"
-                                                className={getLockedClass()}
-                                                value={servico?.servico?.nome || servico?.servicoNome || 'Serviço não especificado'}
-                                                readOnly
-                                            />
-                                        </div>
-
-                                        {servico?.servico && (
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
-                                                    <input
-                                                        type="text"
-                                                        className={getLockedClass()}
-                                                        value={servico.servico.codigo || 'Não informado'}
-                                                        readOnly
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preço Base</label>
-                                                    <input
-                                                        type="text"
-                                                        className={getLockedClass()}
-                                                        value={`R$ ${servico.servico.precoBase?.toFixed(2) || '0,00'}`}
-                                                        readOnly
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Campos Editáveis */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
-                                            <textarea
-                                                name="descricao"
-                                                rows={3}
-                                                className={getInputClass(modoEdicao) + " resize-none"}
-                                                value={formData.descricao}
-                                                onChange={handleChange}
-                                                readOnly={!modoEdicao}
-                                                placeholder="Descrição do serviço..."
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Etapa Atual</label>
-                                            <select
-                                                name="etapa"
-                                                className={getInputClass(modoEdicao)}
-                                                value={formData.etapa}
-                                                onChange={handleChange}
-                                                disabled={!modoEdicao}
-                                            >
-                                                {ETAPAS_SERVICO.map((etapa) => (
-                                                    <option key={etapa.valor} value={etapa.valor}>
-                                                        {etapa.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        {/* Barra de Progresso */}
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-sm font-medium text-gray-700">
-                                                    Progresso do Serviço
-                                                </span>
-                                                <span className="text-sm font-bold text-blue-600">
-                                                    {Math.round((formData.progressoValor / 7) * 100)}%
-                                                </span>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-3">
-                                                <div
-                                                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
-                                                    style={{
-                                                        width: `${Math.min(100, (formData.progressoValor / 7) * 100)}%`,
-                                                    }}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-gray-600 mt-1">
-                                                Etapa {formData.progressoValor} de 7
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             {/* Coluna Direita - Agendamentos */}

@@ -4,9 +4,6 @@ import { useNavigate } from "react-router-dom";
 import Api from "../../../axios/Api";
 import { cepMask } from "../../../utils/masks";
 
-// --- COMPONENTES UI INTERNOS (Button, Input, Select, etc...) ---
-// Mantidos exatamente iguais para não quebrar o layout que arrumamos
-
 const Button = ({ children, variant = "primary", size = "md", className = "", onClick, disabled, type = "button" }) => {
   const baseClass = "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
   const variants = {
@@ -101,7 +98,6 @@ const categoryOptions = [
   { value: "ORCAMENTO", label: "Orçamento", color: "#FBBF24" },
 ];
 
-// --- COMPONENTE PRINCIPAL ---
 
 const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const navigate = useNavigate();
@@ -136,6 +132,9 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [selectedFuncionarios, setSelectedFuncionarios] = useState([]);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [useExistingAddress, setUseExistingAddress] = useState(true);
+  const [savedAddress, setSavedAddress] = useState(null);
+  const [clienteInfo, setClienteInfo] = useState(null);
 
   const fetchFuncionarios = useCallback(async (tipoValue) => {
     if (!tipoValue) {
@@ -161,7 +160,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     }
   }, [navigate]);
 
-  // --- CORREÇÃO AQUI: Lógica inteligente para buscar pedidos disponíveis ---
   const fetchOpcoesPedido = useCallback(async (tipoValue) => {
     if (!tipoValue) { 
         setPedidoOptions([]); 
@@ -172,7 +170,6 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
     try {
       console.log('🔍 Buscando pedidos para tipo:', tipoValue);
       
-      // Tenta primeiro buscar todos os pedidos de serviço
       let allOrders = [];
       
       try {
@@ -363,30 +360,42 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const handlePedidoChange = (selectedPedidoOption) => {
       console.log('🔍 Pedido selecionado:', selectedPedidoOption);
       
-      // Tenta puxar o endereço do pedido ou do cliente associado
       if (selectedPedidoOption?.originalData) {
           const data = selectedPedidoOption.originalData;
-          console.log('📦 Dados originais do pedido:', data);
-          console.log('👤 Cliente:', data.cliente);
-          console.log('🛠️ Serviço:', data.servico);
-          console.log('🏠 Endereço direto:', data.endereco);
-          console.log('🏠 Endereço do cliente:', data.cliente?.endereco);
-          console.log('🏠 Endereço do serviço->cliente:', data.servico?.cliente?.endereco);
+          
+          // Extrai informações do cliente
+          const cliente = data.cliente || data.servico?.cliente;
+          if (cliente) {
+              setClienteInfo({
+                  nome: cliente.nome || "",
+                  cpf: cliente.cpf || "",
+                  email: cliente.email || "",
+                  telefone: cliente.telefone || "",
+                  status: cliente.status || ""
+              });
+          } else {
+              setClienteInfo(null);
+          }
           
           // Busca o endereço em múltiplas fontes possíveis
+          // Se vier como array (enderecos), pega o primeiro
           const end = data.endereco || 
                       data.cliente?.endereco || 
+                      (data.cliente?.enderecos && data.cliente.enderecos.length > 0 ? data.cliente.enderecos[0] : null) ||
                       data.servico?.cliente?.endereco ||
+                      (data.servico?.cliente?.enderecos && data.servico.cliente.enderecos.length > 0 ? data.servico.cliente.enderecos[0] : null) ||
                       data.servico?.endereco;
           
           if (end) {
               console.log('✅ Endereço encontrado:', end);
+              setSavedAddress(end); // Salva o endereço original
+              setUseExistingAddress(true); // Por padrão, usa o endereço existente
               setFormData(prev => ({
                   ...prev,
                   pedido: selectedPedidoOption,
                   rua: end.rua || end.logradouro || "",
                   cep: end.cep || "",
-                  numero: end.numero || "",
+                  numero: end.numero !== null && end.numero !== undefined ? String(end.numero) : "",
                   bairro: end.bairro || "",
                   cidade: end.cidade || "",
                   uf: end.uf || "",
@@ -395,9 +404,12 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
               }));
           } else {
               console.warn('⚠️ Nenhum endereço encontrado para este pedido');
+              setSavedAddress(null);
+              setUseExistingAddress(false);
               setFormData(prev => ({ ...prev, pedido: selectedPedidoOption }));
           }
       } else {
+          setClienteInfo(null);
           setFormData(prev => ({ ...prev, pedido: selectedPedidoOption }));
       }
   };
@@ -405,6 +417,38 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors?.[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleToggleAddressMode = () => {
+    if (useExistingAddress && savedAddress) {
+      // Mudar para novo endereço - limpa os campos
+      setUseExistingAddress(false);
+      setFormData(prev => ({
+        ...prev,
+        rua: "",
+        cep: "",
+        numero: "",
+        bairro: "",
+        cidade: "",
+        uf: "",
+        pais: "Brasil",
+        complemento: ""
+      }));
+    } else if (savedAddress) {
+      // Voltar para o endereço existente
+      setUseExistingAddress(true);
+      setFormData(prev => ({
+        ...prev,
+        rua: savedAddress.rua || savedAddress.logradouro || "",
+        cep: savedAddress.cep || "",
+        numero: savedAddress.numero !== null && savedAddress.numero !== undefined ? String(savedAddress.numero) : "",
+        bairro: savedAddress.bairro || "",
+        cidade: savedAddress.cidade || "",
+        uf: savedAddress.uf || "",
+        pais: savedAddress.pais || "Brasil",
+        complemento: savedAddress.complemento || ""
+      }));
+    }
   };
 
   const handleCepChange = async (value) => {
@@ -685,8 +729,8 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-9999 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-xl p-5 w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden" onClick={(e) => e?.stopPropagation()}>
-        <div className="flex flex-row items-center justify-between border-b border-gray-100">
+      <div className="flex flex-col gap-3 bg-white border border-gray-200 rounded-xl p-5 w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden" onClick={(e) => e?.stopPropagation()}>
+        <div className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
           <h2 className="text-lg font-bold text-gray-900">{formData.id ? "Editar Agendamento" : "Novo Agendamento"}</h2>
           <Button variant="ghost" size="icon" onClick={onClose} className="cursor-pointer"><X size={20} /></Button>
         </div>
@@ -731,6 +775,38 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
                   {errors?.pedido && <span className="text-red-500 text-xs mt-1">{errors.pedido}</span>}
                 </div>
               </div>
+
+              {/* Informações do Cliente */}
+              {clienteInfo && (
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-blue-600 font-bold text-lg">{clienteInfo.nome?.charAt(0)?.toUpperCase()}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-bold text-gray-900">{clienteInfo.nome}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${clienteInfo.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                        {clienteInfo.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-gray-500 font-medium">CPF:</span>
+                      <p className="text-gray-900 font-semibold">{clienteInfo.cpf || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 font-medium">Telefone:</span>
+                      <p className="text-gray-900 font-semibold">{clienteInfo.telefone || '-'}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-gray-500 font-medium">Email:</span>
+                      <p className="text-gray-900 font-semibold truncate">{clienteInfo.email || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Funcionários responsáveis</label>
                 <MultipleSelectCheckmarks placeholder="Selecione os funcionários" options={funcionariosOptions} value={selectedFuncionarios} onChange={setSelectedFuncionarios} />
@@ -755,6 +831,30 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           {/* STEP 2 */}
           {step === 2 && (
             <>
+              {savedAddress && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-blue-900 mb-1">
+                        {useExistingAddress ? '📍 Usando endereço cadastrado' : '🆕 Cadastrando novo endereço'}
+                      </p>
+                      {useExistingAddress && (
+                        <p className="text-xs text-blue-700">
+                          {savedAddress.rua}, {savedAddress.numero || 'S/N'} - {savedAddress.bairro}, {savedAddress.cidade}/{savedAddress.uf}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleToggleAddressMode}
+                      className="ml-3 border-blue-300 text-blue-700 hover:bg-blue-100 cursor-pointer"
+                    >
+                      {useExistingAddress ? 'Usar novo endereço' : 'Usar endereço cadastrado'}
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="flex text-sm font-semibold text-gray-700 mb-2 justify-between"><span>CEP <span className="text-red-500">*</span></span>{loadingCep && <span className="text-xs text-blue-600 animate-pulse">Buscando...</span>}</label><Input type="text" value={formData?.cep} onChange={(e) => handleCepChange(e?.target?.value)} placeholder="00000-000" error={errors?.cep} maxLength={9} /></div>
                 <div><label className="block text-sm font-semibold text-gray-700 mb-2">Rua <span className="text-red-500">*</span></label><Input type="text" value={formData?.rua} onChange={(e) => handleInputChange("rua", e?.target?.value)} placeholder="Nome da rua" error={errors?.rua} /></div>
@@ -810,7 +910,7 @@ const TaskCreateModal = ({ isOpen, onClose, onSave, initialData = {} }) => {
           )}
 
           {/* FOOTER */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+          <div className="flex justify-between items-center pt-4 border-t border-gray-100">
             <div>{step > 1 && (<Button variant="outline" onClick={handleBack}>Voltar</Button>)}</div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={onClose}>Cancelar</Button>

@@ -21,7 +21,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const menuItems = [
     { text: "Painel de Controle", icon: <Dashboard />, path: "/paginaInicial" },
     { text: "Controle de Estoque", icon: <Inventory />, path: "/estoque" },
-    { text: "Pedidos e Serviços", icon: <Assignment />, path: "/pedidos" },
+    { text: "Pedidos", icon: <Assignment />, path: "/pedidos" },
     { text: "Agendamentos", icon: <Event />, path: "/agendamentos" },
     { text: "Clientes", icon: <People />, path: "/clientes" },
     { text: "Controle de Funcionários", icon: <Work />, path: "/funcionarios" },
