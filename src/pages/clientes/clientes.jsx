@@ -165,11 +165,14 @@ export default function Clientes() {
       try {
         const clienteAtualizado = { ...clienteSelecionado, ...dadosCliente };
 
-        await Api.put(`/clientes/${clienteSelecionado.id}`, clienteAtualizado);
+        const response = await Api.put(`/clientes/${clienteSelecionado.id}`, clienteAtualizado);
+
+        // Usar os dados retornados pela API
+        const clienteRetornado = response.data;
 
         setClientes((prev) =>
           prev.map((c) =>
-            c.id === clienteSelecionado.id ? clienteAtualizado : c
+            c.id === clienteSelecionado.id ? clienteRetornado : c
           )
         );
 
