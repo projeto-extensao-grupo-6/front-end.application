@@ -186,29 +186,13 @@ export default function PedidosList({ busca = "", triggerNovoRegistro, onNovoReg
         console.log('Pedido criado com sucesso');
     };
 
-    const handleEditarPedidoSuccess = async (pedidoAtualizado) => {
+    const handleEditarPedidoSuccess = async () => {
         try {
-            
-            const dadosMapeados = PedidosService.mapearParaBackend(pedidoAtualizado);
-            
-            const result = await PedidosService.atualizarPedido(pedidoAtualizado.id, dadosMapeados);
-            
-            if (result.success) {
-                
-                await fetchData();
-                console.log('Pedido atualizado com sucesso');
-            } else {
-                console.error('Erro ao atualizar pedido:', result.error);
-                alert(`Erro ao atualizar pedido: ${result.error}`);
-                
-                
-                if (result.validationErrors && Object.keys(result.validationErrors).length > 0) {
-                    console.error('Erros de validação:', result.validationErrors);
-                }
-            }
+            // Recarregar os dados do servidor após edição bem-sucedida
+            await fetchData();
+            console.log('Pedido atualizado com sucesso');
         } catch (error) {
-            console.error('Erro inesperado ao atualizar pedido:', error);
-            alert('Erro inesperado ao atualizar pedido. Tente novamente.');
+            console.error('Erro inesperado ao recarregar pedidos:', error);
         }
     };
 

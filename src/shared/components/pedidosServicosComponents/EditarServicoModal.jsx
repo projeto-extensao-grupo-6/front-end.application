@@ -393,7 +393,7 @@ const EditarServicoModal = ({ isOpen, onClose, servico, onSuccess }) => {
     if (!isOpen || !servico) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[1300]">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 10000 }}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden">
                 {/* Header Modernizado */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 text-white">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ShoppingCart, ChevronDown, Plus, X, AlertCircle, User, Package, Trash2 } from "lucide-react";
 import Api from "../../../axios/Api";
 import { cpfMask, phoneMask, onlyLetters, removeMask } from "../../../utils/masks";
+import SuccessModal from "../modalComponent/SuccessModal";
 
 const usePedidoAPI = () => {
     const cadastrarCliente = async (clienteData) => {
@@ -75,6 +76,7 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
     const [error, setError] = useState(null);
     const [clientesExistentes, setClientesExistentes] = useState([]);
     const [produtosDisponiveis, setProdutosDisponiveis] = useState([]);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const { cadastrarCliente, salvarPedido, buscarClientes, buscarProdutos } = usePedidoAPI();
 
@@ -428,10 +430,23 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
 
             const pedidoSalvo = await salvarPedido(pedidoData);
 
-            if (onSuccess) {
-                onSuccess(pedidoSalvo);
-            }
-            onClose();
+            console.log('✅ Pedido criado com sucesso! Mostrando modal...');
+            
+            // Mostrar modal de sucesso
+            setShowSuccessModal(true);
+            
+            console.log('Estado showSuccessModal:', true);
+
+            // Aguardar para o usuário ver o modal antes de fechar
+            setTimeout(() => {
+                console.log('Fechando modal após timeout...');
+                setShowSuccessModal(false);
+                if (onSuccess) {
+                    onSuccess(pedidoSalvo);
+                }
+                onClose();
+            }, 2500);
+
         } catch (err) {
             setError(err.message || "Erro ao salvar pedido");
         } finally {
@@ -448,591 +463,603 @@ const NovoPedidoModal = ({ isOpen, onClose, onSuccess }) => {
     if (!isOpen) return null;
 
     return (
-        <div
-            className="fixed inset-0 bg-black/50 flex justify-center items-start z-9999 px-10 py-20 overflow-y-auto"
-            onClick={onClose}
-        >
+        <>
             <div
-                className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[10000vh] flex flex-col overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
+                className="fixed inset-0 bg-black/50 flex justify-center items-start z-9999 px-10 py-20 overflow-y-auto"
+                onClick={onClose}
             >
-                {/* Header */}
-                <div className="flex items-center px-8 py-4 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-[#eeeeee] p-2.5 rounded-lg">
-                            <ShoppingCart className="w-6 h-6 text-[#828282]" />
+                <div
+                    className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[10000vh] flex flex-col overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="flex items-center px-8 py-4 border-b border-gray-200">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-[#eeeeee] p-2.5 rounded-lg">
+                                <ShoppingCart className="w-6 h-6 text-[#828282]" />
+                            </div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Novo Pedido de Produto
+                            </h2>
                         </div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            Novo Pedido de Produto
-                        </h2>
                     </div>
-                </div>
 
-                {/* Stepper */}
-                <div className="px-8 pt-6 pb-4">
-                    <div className="flex items-center justify-between">
-                        {steps.map((step, index) => (
-                            <React.Fragment key={step.id}>
-                                <div className="flex flex-col items-center flex-1 gap-2">
-                                    <div
-                                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                                            index <= currentStep
-                                                ? "bg-[#007EA7] text-white shadow-md"
-                                                : "bg-gray-200 text-gray-500"
-                                        }`}
-                                    >
-                                        {index + 1}
+                    {/* Stepper */}
+                    <div className="px-8 pt-6 pb-4">
+                        <div className="flex items-center justify-between">
+                            {steps.map((step, index) => (
+                                <React.Fragment key={step.id}>
+                                    <div className="flex flex-col items-center flex-1 gap-2">
+                                        <div
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                                                index <= currentStep
+                                                    ? "bg-[#007EA7] text-white shadow-md"
+                                                    : "bg-gray-200 text-gray-500"
+                                            }`}
+                                        >
+                                            {index + 1}
+                                        </div>
+                                        <span
+                                            className={`text-sm mt-2 text-center ${
+                                                index <= currentStep
+                                                    ? "text-gray-900 font-semibold"
+                                                    : "text-gray-500 font-medium"
+                                            }`}
+                                        >
+                                            {step.name}
+                                        </span>
                                     </div>
-                                    <span
-                                        className={`text-sm mt-2 text-center ${
-                                            index <= currentStep
-                                                ? "text-gray-900 font-semibold"
-                                                : "text-gray-500 font-medium"
-                                        }`}
-                                    >
-                                        {step.name}
-                                    </span>
-                                </div>
 
-                                {index < steps.length - 1 && (
-                                    <div
-                                        className={`flex-1 h-1 mb-6 mx-3 rounded-full ${
-                                            index < currentStep ? "bg-[#007EA7]" : "bg-gray-200"
-                                        }`}
-                                    />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Error Alert */}
-                <div className="flex justify-center w-full px-8">
-                    {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 mb-4">
-                            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-red-800">Erro</p>
-                                <p className="text-sm text-red-700">{error}</p>
-                            </div>
+                                    {index < steps.length - 1 && (
+                                        <div
+                                            className={`flex-1 h-1 mb-6 mx-3 rounded-full ${
+                                                index < currentStep ? "bg-[#007EA7]" : "bg-gray-200"
+                                            }`}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            ))}
                         </div>
-                    )}
-                </div>
+                    </div>
 
-                {/* Conteúdo */}
-                <div className="flex flex-col px-8 py-4">
-                    {/* Etapa 0 - Cliente */}
-                    {currentStep === 0 && (
-                        <div className="flex flex-col gap-4">
-                            <div className="text-left">
-                                <h3 className="text-base font-semibold text-gray-900">
-                                    Cliente (Opcional)
-                                </h3>
-                                <p className="text-md text-gray-500 mt-1">
-                                    Vincule a um cliente ou apenas informe um nome
-                                </p>
+                    {/* Error Alert */}
+                    <div className="flex justify-center w-full px-8">
+                        {error && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 mb-4">
+                                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-red-800">Erro</p>
+                                    <p className="text-sm text-red-700">{error}</p>
+                                </div>
                             </div>
+                        )}
+                    </div>
 
-                            <div className="flex gap-10">
-                                <button
-                                    type="button"
-                                    onClick={() => handleTipoClienteChange("nenhum")}
-                                    className={`px-10 py-5 rounded-md border transition-all
-                                        flex items-center justify-center gap-2 cursor-pointer
-                                        shadow-sm hover:shadow-md ${
-                                        formData.tipoCliente === "nenhum"
-                                            ? "border-[#007EA7] bg-blue-50"
-                                            : "border-gray-200 bg-white hover:border-gray-300"
-                                    }`}
-                                >
-                                    <User className="w-5 h-5 mx-auto mb-1 text-[#007EA7]" />
-                                    <p className="text-md font-semibold text-gray-900">Apenas Nome</p>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleTipoClienteChange("existente")}
-                                    className={`px-10 py-5 rounded-md border transition-all
-                                        flex items-center justify-center gap-2 cursor-pointer
-                                        shadow-sm hover:shadow-md ${
-                                        formData.tipoCliente === "existente"
-                                            ? "border-[#007EA7] bg-blue-50"
-                                            : "border-gray-200 bg-white hover:border-gray-300"
-                                    }`}
-                                >
-                                    <User className="w-5 h-5 mx-auto mb-1 text-[#007EA7]" />
-                                    <p className="text-md font-semibold text-gray-900">Cliente Existente</p>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleTipoClienteChange("novo")}
-                                    className={`px-10 py-5 rounded-md border transition-all
-                                        flex items-center justify-center gap-2 cursor-pointer
-                                        shadow-sm hover:shadow-md ${
-                                        formData.tipoCliente === "novo"
-                                            ? "border-[#007EA7] bg-blue-50"
-                                            : "border-gray-200 bg-white hover:border-gray-300"
-                                    }`}
-                                >
-                                    <Plus className="w-5 h-5 mx-auto mb-1 text-[#007EA7]" />
-                                    <p className="text-md font-semibold text-gray-900">Cadastrar Novo</p>
-                                </button>
-                            </div>
-
-                            {formData.tipoCliente === "nenhum" && (
-                                <div className="flex flex-col gap-1">
-                                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                        Nome para Identificação <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="clienteNome"
-                                        placeholder="Ex: Fornecedor XYZ, Cliente Particular..."
-                                        className="w-full border border-gray-300 rounded-md px-4 py-3"
-                                        value={formData.clienteNome}
-                                        onChange={handleChange}
-                                    />
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        Este nome será usado apenas para identificação do pedido
+                    {/* Conteúdo */}
+                    <div className="flex flex-col px-8 py-4">
+                        {/* Etapa 0 - Cliente */}
+                        {currentStep === 0 && (
+                            <div className="flex flex-col gap-4">
+                                <div className="text-left">
+                                    <h3 className="text-base font-semibold text-gray-900">
+                                        Cliente (Opcional)
+                                    </h3>
+                                    <p className="text-md text-gray-500 mt-1">
+                                        Vincule a um cliente ou apenas informe um nome
                                     </p>
                                 </div>
-                            )}
 
-                            {formData.tipoCliente === "existente" && (
-                                <div className="flex flex-col gap-1">
-                                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                        Selecionar Cliente
-                                    </label>
-                                    <div className="relative">
-                                        <select
-                                            name="clienteId"
-                                            className="w-full border border-gray-300 rounded-md px-4 py-3 text-left z-10 appearance-none shadow-sm cursor-pointer"
-                                            value={formData.clienteId}
-                                            onChange={handleClienteExistenteChange}
-                                        >
-                                            <option value="">Selecione um cliente...</option>
-                                            {clientesExistentes.map((cliente) => (
-                                                <option key={cliente.id} value={String(cliente.id)}>
-                                                    {cliente.nome}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 text-gray-400 pointer-events-none" />
-                                    </div>
+                                <div className="flex gap-10">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTipoClienteChange("nenhum")}
+                                        className={`px-10 py-5 rounded-md border transition-all
+                                            flex items-center justify-center gap-2 cursor-pointer
+                                            shadow-sm hover:shadow-md ${
+                                            formData.tipoCliente === "nenhum"
+                                                ? "border-[#007EA7] bg-blue-50"
+                                                : "border-gray-200 bg-white hover:border-gray-300"
+                                        }`}
+                                    >
+                                        <User className="w-5 h-5 mx-auto mb-1 text-[#007EA7]" />
+                                        <p className="text-md font-semibold text-gray-900">Apenas Nome</p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTipoClienteChange("existente")}
+                                        className={`px-10 py-5 rounded-md border transition-all
+                                            flex items-center justify-center gap-2 cursor-pointer
+                                            shadow-sm hover:shadow-md ${
+                                            formData.tipoCliente === "existente"
+                                                ? "border-[#007EA7] bg-blue-50"
+                                                : "border-gray-200 bg-white hover:border-gray-300"
+                                        }`}
+                                    >
+                                        <User className="w-5 h-5 mx-auto mb-1 text-[#007EA7]" />
+                                        <p className="text-md font-semibold text-gray-900">Cliente Existente</p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTipoClienteChange("novo")}
+                                        className={`px-10 py-5 rounded-md border transition-all
+                                            flex items-center justify-center gap-2 cursor-pointer
+                                            shadow-sm hover:shadow-md ${
+                                            formData.tipoCliente === "novo"
+                                                ? "border-[#007EA7] bg-blue-50"
+                                                : "border-gray-200 bg-white hover:border-gray-300"
+                                        }`}
+                                    >
+                                        <Plus className="w-5 h-5 mx-auto mb-1 text-[#007EA7]" />
+                                        <p className="text-md font-semibold text-gray-900">Cadastrar Novo</p>
+                                    </button>
                                 </div>
-                            )}
 
-                            {formData.tipoCliente === "novo" && (
-                                <div className="flex flex-col gap-3">
+                                {formData.tipoCliente === "nenhum" && (
                                     <div className="flex flex-col gap-1">
                                         <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                            Nome Completo <span className="text-red-500">*</span>
+                                            Nome para Identificação <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             name="clienteNome"
-                                            placeholder="Digite o nome do cliente"
+                                            placeholder="Ex: Fornecedor XYZ, Cliente Particular..."
                                             className="w-full border border-gray-300 rounded-md px-4 py-3"
                                             value={formData.clienteNome}
                                             onChange={handleChange}
                                         />
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Este nome será usado apenas para identificação do pedido
+                                        </p>
                                     </div>
+                                )}
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col gap-1">
-                                            <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                                CPF <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="clienteCpf"
-                                                placeholder="000.000.000-00"
-                                                maxLength={14}
-                                                className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                                                value={formData.clienteCpf}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col gap-1">
-                                            <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                                Telefone <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="clienteTelefone"
-                                                placeholder="(00) 00000-0000"
-                                                maxLength={15}
-                                                className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
-                                                value={formData.clienteTelefone}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                    </div>
-
+                                {formData.tipoCliente === "existente" && (
                                     <div className="flex flex-col gap-1">
                                         <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                            E-mail
+                                            Selecionar Cliente
                                         </label>
-                                        <input
-                                            type="email"
-                                            name="clienteEmail"
-                                            placeholder="cliente@email.com"
-                                            className="w-full border border-gray-300 rounded-md px-4 py-3"
-                                            value={formData.clienteEmail}
-                                            onChange={handleChange}
-                                        />
+                                        <div className="relative">
+                                            <select
+                                                name="clienteId"
+                                                className="w-full border border-gray-300 rounded-md px-4 py-3 text-left z-10 appearance-none shadow-sm cursor-pointer"
+                                                value={formData.clienteId}
+                                                onChange={handleClienteExistenteChange}
+                                            >
+                                                <option value="">Selecione um cliente...</option>
+                                                {clientesExistentes.map((cliente) => (
+                                                    <option key={cliente.id} value={String(cliente.id)}>
+                                                        {cliente.nome}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 text-gray-400 pointer-events-none" />
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
 
-                    {/* Etapa 1 - Produtos */}
-                    {currentStep === 1 && (
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col items-start gap-1">
-                                    <h3 className="text-base font-semibold text-gray-900">
-                                        Produtos do Pedido
-                                    </h3>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        Adicione os produtos e quantidades
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleAddProduto}
-                                    className="px-4 py-2 bg-[#007EA7] texte-sm text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Adicionar Produto
-                                </button>
-                            </div>
+                                {formData.tipoCliente === "novo" && (
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                                                Nome Completo <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="clienteNome"
+                                                placeholder="Digite o nome do cliente"
+                                                className="w-full border border-gray-300 rounded-md px-4 py-3"
+                                                value={formData.clienteNome}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
 
-                            {formData.produtos.length === 0 ? (
-                                <div className="flex gap-2 items-center justify-center py-4 bg-gray-50 rounded-md border-2 border-dashed border-gray-300">
-                                    <Package className="w-8 h-8 mx-auto text-gray-400 mb-3" />
-                                    <p className="text-gray-600 font-semibold">Nenhum produto adicionado:</p>
-                                    <p className="text-md text-gray-500 mt-1">
-                                        Clique em "Adicionar Produto" para começar
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-3 items-center justify-center">
-                                    {formData.produtos.map((produto, index) => (
-                                        <div key={index} className="flex gap-20 p-4 w-full bg-gray-50 rounded-md border">
-                                            <div className="flex flex-col items-start justify-center">
-                                                <label className="block text-md font-medium text-gray-700 mb-1">
-                                                    Produto <span className="text-red-500">*</span>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                                                    CPF <span className="text-red-500">*</span>
                                                 </label>
-                                                <div className="relative">
-                                                    <select
-                                                        className="w-full border border-gray-300 rounded-md px-10 py-2 appearance-none cursor-pointer z-50"
-                                                        value={produto.produtoId}
+                                                <input
+                                                    type="text"
+                                                    name="clienteCpf"
+                                                    placeholder="000.000.000-00"
+                                                    maxLength={14}
+                                                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
+                                                    value={formData.clienteCpf}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+
+                                            <div className="flex flex-col gap-1">
+                                                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                                                    Telefone <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="clienteTelefone"
+                                                    placeholder="(00) 00000-0000"
+                                                    maxLength={15}
+                                                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-left"
+                                                    value={formData.clienteTelefone}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                                                E-mail
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="clienteEmail"
+                                                placeholder="cliente@email.com"
+                                                className="w-full border border-gray-300 rounded-md px-4 py-3"
+                                                value={formData.clienteEmail}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Etapa 1 - Produtos */}
+                        {currentStep === 1 && (
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex flex-col items-start gap-1">
+                                        <h3 className="text-base font-semibold text-gray-900">
+                                            Produtos do Pedido
+                                        </h3>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Adicione os produtos e quantidades
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddProduto}
+                                        className="px-4 py-2 bg-[#007EA7] texte-sm text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors flex items-center gap-2"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Adicionar Produto
+                                    </button>
+                                </div>
+
+                                {formData.produtos.length === 0 ? (
+                                    <div className="flex gap-2 items-center justify-center py-4 bg-gray-50 rounded-md border-2 border-dashed border-gray-300">
+                                        <Package className="w-8 h-8 mx-auto text-gray-400 mb-3" />
+                                        <p className="text-gray-600 font-semibold">Nenhum produto adicionado:</p>
+                                        <p className="text-md text-gray-500 mt-1">
+                                            Clique em "Adicionar Produto" para começar
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-3 items-center justify-center">
+                                        {formData.produtos.map((produto, index) => (
+                                            <div key={index} className="flex gap-20 p-4 w-full bg-gray-50 rounded-md border">
+                                                <div className="flex flex-col items-start justify-center">
+                                                    <label className="block text-md font-medium text-gray-700 mb-1">
+                                                        Produto <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <div className="relative">
+                                                        <select
+                                                            className="w-full border border-gray-300 rounded-md px-10 py-2 appearance-none cursor-pointer z-50"
+                                                            value={produto.produtoId}
+                                                            onChange={(e) =>
+                                                                handleProdutoChange(index, "produtoId", e.target.value)
+                                                            }
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {produtosDisponiveis.map((p) => (
+                                                                <option key={p.id} value={p.id}>
+                                                                    {p.nome} - R$ {p.preco?.toFixed(2)}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-24 flex flex-col gap-1 items-start justify-center">
+                                                    <label className="block text-md font-medium text-gray-700 mb-1">
+                                                        Qtd. <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                                        value={produto.quantidade}
                                                         onChange={(e) =>
-                                                            handleProdutoChange(index, "produtoId", e.target.value)
+                                                            handleProdutoChange(index, "quantidade", e.target.value)
                                                         }
+                                                    />
+                                                </div>
+
+                                                <div className="w-32 flex flex-col gap-1 items-start justify-center">
+                                                    <label className="block text-md font-medium text-gray-700 mb-1">
+                                                        Preço Unitário
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                                        value={produto.preco}
+                                                        onChange={(e) =>
+                                                            handleProdutoChange(index, "preco", e.target.value)
+                                                        }
+                                                        placeholder="0.00"
+                                                    />
+                                                </div>
+
+                                                <div className="flex items-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveProduto(index)}
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Remover produto"
                                                     >
-                                                        <option value="">Selecione...</option>
-                                                        {produtosDisponiveis.map((p) => (
-                                                            <option key={p.id} value={p.id}>
-                                                                {p.nome} - R$ {p.preco?.toFixed(2)}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                                        <Trash2 className="w-6 h-10 cursor-pointer" />
+                                                    </button>
                                                 </div>
                                             </div>
+                                        ))}
 
-                                            <div className="w-24 flex flex-col gap-1 items-start justify-center">
-                                                <label className="block text-md font-medium text-gray-700 mb-1">
-                                                    Qtd. <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                                                    value={produto.quantidade}
-                                                    onChange={(e) =>
-                                                        handleProdutoChange(index, "quantidade", e.target.value)
-                                                    }
-                                                />
+                                        <div className="flex justify-end pt-3 border-t">
+                                            <div className="text-right">
+                                                <p className="text-sm text-gray-600">Valor Total</p>
+                                                <p className="text-2xl font-bold text-gray-900">
+                                                    R$ {calcularValorTotal().toFixed(2)}
+                                                </p>
                                             </div>
-
-                                            <div className="w-32 flex flex-col gap-1 items-start justify-center">
-                                                <label className="block text-md font-medium text-gray-700 mb-1">
-                                                    Preço Unitário
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                                                    value={produto.preco}
-                                                    onChange={(e) =>
-                                                        handleProdutoChange(index, "preco", e.target.value)
-                                                    }
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-
-                                            <div className="flex items-end">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveProduto(index)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Remover produto"
-                                                >
-                                                    <Trash2 className="w-6 h-10 cursor-pointer" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    <div className="flex justify-end pt-3 border-t">
-                                        <div className="text-right">
-                                            <p className="text-sm text-gray-600">Valor Total</p>
-                                            <p className="text-2xl font-bold text-gray-900">
-                                                R$ {calcularValorTotal().toFixed(2)}
-                                            </p>
                                         </div>
                                     </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Etapa 2 - Pagamento */}
+                        {currentStep === 2 && (
+                            <div className="flex flex-col gap-3">
+                                <div className="text-left">
+                                    <h3 className="text-base font-semibold text-gray-900">
+                                        Informações de Pagamento
+                                    </h3>
+                                    <p className="text-md text-gray-500 mt-1">
+                                        Defina a forma de pagamento e observações
+                                    </p>
                                 </div>
-                            )}
-                        </div>
-                    )}
 
-                    {/* Etapa 2 - Pagamento */}
-                    {currentStep === 2 && (
-                        <div className="flex flex-col gap-3">
-                            <div className="text-left">
-                                <h3 className="text-base font-semibold text-gray-900">
-                                    Informações de Pagamento
-                                </h3>
-                                <p className="text-md text-gray-500 mt-1">
-                                    Defina a forma de pagamento e observações
-                                </p>
-                            </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                                        Data do Pedido
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="data"
+                                        className="w-full border border-gray-300 rounded-md px-4 py-3 bg-gray-100"
+                                        value={formData.data}
+                                        readOnly
+                                    />
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Data atual do sistema
+                                    </p>
+                                </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                    Data do Pedido
-                                </label>
-                                <input
-                                    type="date"
-                                    name="data"
-                                    className="w-full border border-gray-300 rounded-md px-4 py-3 bg-gray-100"
-                                    value={formData.data}
-                                    readOnly
-                                />
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Data atual do sistema
-                                </p>
-                            </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                                        Forma de Pagamento <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            name="formaPagamento"
+                                            className="w-full border border-gray-300 rounded-md px-4 py-3 appearance-none"
+                                            value={formData.formaPagamento}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="Pix">Pix</option>
+                                            <option value="Dinheiro">Dinheiro</option>
+                                            <option value="Cartão de crédito">Cartão de crédito</option>
+                                            <option value="Cartão de débito">Cartão de débito</option>
+                                            <option value="Boleto">Boleto</option>
+                                            <option value="Transferência">Transferência bancária</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                    Forma de Pagamento <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        name="formaPagamento"
-                                        className="w-full border border-gray-300 rounded-md px-4 py-3 appearance-none"
-                                        value={formData.formaPagamento}
+                                <div className="flex flex-col gap-2">
+                                    <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
+                                        Observações
+                                    </label>
+                                    <textarea
+                                        name="descricao"
+                                        placeholder="Observações adicionais sobre o pedido..."
+                                        rows={4}
+                                        className="w-full border border-gray-300 rounded-md px-4 py-3 resize-none"
+                                        value={formData.descricao}
                                         onChange={handleChange}
-                                    >
-                                        <option value="Pix">Pix</option>
-                                        <option value="Dinheiro">Dinheiro</option>
-                                        <option value="Cartão de crédito">Cartão de crédito</option>
-                                        <option value="Cartão de débito">Cartão de débito</option>
-                                        <option value="Boleto">Boleto</option>
-                                        <option value="Transferência">Transferência bancária</option>
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    />
                                 </div>
-                            </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="block text-sm font-semibold text-gray-900 mb-2 text-left">
-                                    Observações
-                                </label>
-                                <textarea
-                                    name="descricao"
-                                    placeholder="Observações adicionais sobre o pedido..."
-                                    rows={4}
-                                    className="w-full border border-gray-300 rounded-md px-4 py-3 resize-none"
-                                    value={formData.descricao}
-                                    onChange={handleChange}
-                                />
-                            </div>
-
-                            <div className="bg-gray-50 rounded-lg p-4 border">
-                                <div className="flex justify-between items-center">
-                                    <span className="font-semibold text-gray-900">Valor Total do Pedido:</span>
-                                    <span className="text-2xl font-bold text-[#007EA7]">
-                                        R$ {calcularValorTotal().toFixed(2)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Etapa 3 - Revisão */}
-                    {currentStep === 3 && (
-                        <div className="flex flex-col gap-3">
-                            <div className="text-left">
-                                <h3 className="text-base font-semibold text-gray-900">
-                                    Revisão do Pedido
-                                </h3>
-                                <p className="text-md text-gray-500 mt-1">
-                                    Confirme as informações antes de salvar
-                                </p>
-                            </div>
-
-                            {/* Cliente */}
-                            <div className="flex flex-row gap-3 items-center justify-start bg-gray-50 rounded-md p-4 border">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <User className="w-5 h-5 text-[#007EA7]" />
-                                    <h4 className="font-semibold text-gray-900">Cliente</h4>
-                                </div>
-                                <div className="flex flex-row gap-4 text-md">
-                                    <div className="flex flex-row justify-start gap-1">
-                                        <span className="text-gray-600">Nome:</span>
-                                        <span className="font-medium text-gray-900">
-                                            {formData.clienteNome || "Não informado"}
-                                        </span>
-                                    </div>
-                                    {formData.tipoCliente === "nenhum" && (
-                                        <p className="text-sm text-gray-500 italic">
-                                            (Apenas identificação - não vinculado a cliente cadastrado)
-                                        </p>
-                                    )}
-                                    {formData.clienteTelefone && (
-                                        <div className="flex flex-row justify-start gap-1">
-                                            <span className="text-gray-600">Telefone:</span>
-                                            <span className="font-medium text-gray-900">
-                                                {formData.clienteTelefone}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Produtos */}
-                            <div className="flex flex-col gap-3 bg-gray-50 rounded-md p-4 border">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Package className="w-5 h-5 text-[#007EA7]" />
-                                    <h4 className="font-semibold text-gray-900">Produtos</h4>
-                                </div>
-                                <div className="flex flex-col gap-5 text-md">
-                                    {formData.produtos.map((produto, index) => (
-                                        <div key={index} className="flex items-center justify-evenly flex-col gap-5 text-md py-2">
-                                            <div className="flex flex-col gap-1 items-start">
-                                                <li>
-                                                    <u><p className="font-semibold text-gray-900">{produto.nome}</p></u>
-                                                   
-                                                    <p className="text-gray-600">
-                                                    {produto.quantidade}x R$ {produto.preco.toFixed(2)}
-                                                    </p>
-                                                </li>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div className="flex gap-4 items-center justify-center pt-3 border-t-2">
-                                        <span className="font-semibold text-gray-900">Total:</span>
-                                        <span className="text-xl font-bold text-[#007EA7]">
+                                <div className="bg-gray-50 rounded-lg p-4 border">
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-semibold text-gray-900">Valor Total do Pedido:</span>
+                                        <span className="text-2xl font-bold text-[#007EA7]">
                                             R$ {calcularValorTotal().toFixed(2)}
                                         </span>
                                     </div>
                                 </div>
                             </div>
+                        )}
 
-                            {/* Pagamento */}
-                            <div className="flex flex-col gap-3 bg-gray-50 rounded-md p-4 border">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <ShoppingCart className="w-5 h-5 text-[#007EA7]" />
-                                    <h4 className="font-semibold text-gray-900">Pagamento</h4>
+                        {/* Etapa 3 - Revisão */}
+                        {currentStep === 3 && (
+                            <div className="flex flex-col gap-3">
+                                <div className="text-left">
+                                    <h3 className="text-base font-semibold text-gray-900">
+                                        Revisão do Pedido
+                                    </h3>
+                                    <p className="text-md text-gray-500 mt-1">
+                                        Confirme as informações antes de salvar
+                                    </p>
                                 </div>
-                                <div className="flex flex-col gap-2 items-start text-md">
-                                    <div className="flex gap-2">
-                                        <span className="text-gray-600">Data:</span>
-                                        <span className="font-medium text-gray-900">
-                                            {new Date(formData.data + "T00:00:00").toLocaleDateString("pt-BR")}
-                                        </span>
+
+                                {/* Cliente */}
+                                <div className="flex flex-row gap-3 items-center justify-start bg-gray-50 rounded-md p-4 border">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <User className="w-5 h-5 text-[#007EA7]" />
+                                        <h4 className="font-semibold text-gray-900">Cliente</h4>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <span className="text-gray-600">Forma de Pagamento:</span>
-                                        <span className="font-medium text-gray-900">
-                                            {formData.formaPagamento}
-                                        </span>
-                                    </div>
-                                    {formData.descricao && (
-                                        <div className="pt-2 border-t">
-                                            <p className="text-gray-600 mb-1">Observações:</p>
-                                            <p className="text-gray-900">{formData.descricao}</p>
+                                    <div className="flex flex-row gap-4 text-md">
+                                        <div className="flex flex-row justify-start gap-1">
+                                            <span className="text-gray-600">Nome:</span>
+                                            <span className="font-medium text-gray-900">
+                                                {formData.clienteNome || "Não informado"}
+                                            </span>
                                         </div>
-                                    )}
+                                        {formData.tipoCliente === "nenhum" && (
+                                            <p className="text-sm text-gray-500 italic">
+                                                (Apenas identificação - não vinculado a cliente cadastrado)
+                                            </p>
+                                        )}
+                                        {formData.clienteTelefone && (
+                                            <div className="flex flex-row justify-start gap-1">
+                                                <span className="text-gray-600">Telefone:</span>
+                                                <span className="font-medium text-gray-900">
+                                                    {formData.clienteTelefone}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Produtos */}
+                                <div className="flex flex-col gap-3 bg-gray-50 rounded-md p-4 border">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Package className="w-5 h-5 text-[#007EA7]" />
+                                        <h4 className="font-semibold text-gray-900">Produtos</h4>
+                                    </div>
+                                    <div className="flex flex-col gap-5 text-md">
+                                        {formData.produtos.map((produto, index) => (
+                                            <div key={index} className="flex items-center justify-evenly flex-col gap-5 text-md py-2">
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <li>
+                                                        <u><p className="font-semibold text-gray-900">{produto.nome}</p></u>
+                                                       
+                                                        <p className="text-gray-600">
+                                                        {produto.quantidade}x R$ {produto.preco.toFixed(2)}
+                                                        </p>
+                                                    </li>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="flex gap-4 items-center justify-center pt-3 border-t-2">
+                                            <span className="font-semibold text-gray-900">Total:</span>
+                                            <span className="text-xl font-bold text-[#007EA7]">
+                                                R$ {calcularValorTotal().toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Pagamento */}
+                                <div className="flex flex-col gap-3 bg-gray-50 rounded-md p-4 border">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <ShoppingCart className="w-5 h-5 text-[#007EA7]" />
+                                        <h4 className="font-semibold text-gray-900">Pagamento</h4>
+                                    </div>
+                                    <div className="flex flex-col gap-2 items-start text-md">
+                                        <div className="flex gap-2">
+                                            <span className="text-gray-600">Data:</span>
+                                            <span className="font-medium text-gray-900">
+                                                {new Date(formData.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                                            </span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <span className="text-gray-600">Forma de Pagamento:</span>
+                                            <span className="font-medium text-gray-900">
+                                                {formData.formaPagamento}
+                                            </span>
+                                        </div>
+                                        {formData.descricao && (
+                                            <div className="pt-2 border-t">
+                                                <p className="text-gray-600 mb-1">Observações:</p>
+                                                <p className="text-gray-900">{formData.descricao}</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
+                        )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-8 py-4 border-t bg-gray-50 flex justify-between">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={loading}
+                            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50"
+                        >
+                            Cancelar
+                        </button>
+
+                        <div className="flex gap-3">
+                            {currentStep > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentStep(currentStep - 1)}
+                                    disabled={loading}
+                                    className="px-5 py-2.5 border border-gray-300 rounded-md cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                >
+                                    Voltar
+                                </button>
+                            )}
+
+                            {currentStep < steps.length - 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={handleNext}
+                                    disabled={loading}
+                                    className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 font-semibold"
+                                >
+                                    Próxima Etapa
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleSave}
+                                    disabled={loading}
+                                    className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 font-semibold flex items-center gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            Salvando...
+                                        </>
+                                    ) : (
+                                        <>Salvar Pedido</>
+                                    )}
+                                </button>
+                            )}
                         </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="px-8 py-4 border-t bg-gray-50 flex justify-between">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={loading}
-                        className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50"
-                    >
-                        Cancelar
-                    </button>
-
-                    <div className="flex gap-3">
-                        {currentStep > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => setCurrentStep(currentStep - 1)}
-                                disabled={loading}
-                                className="px-5 py-2.5 border border-gray-300 rounded-md cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
-                            >
-                                Voltar
-                            </button>
-                        )}
-
-                        {currentStep < steps.length - 1 ? (
-                            <button
-                                type="button"
-                                onClick={handleNext}
-                                disabled={loading}
-                                className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 font-semibold"
-                            >
-                                Próxima Etapa
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={handleSave}
-                                disabled={loading}
-                                className="px-6 py-2.5 bg-[#007EA7] text-white rounded-md cursor-pointer hover:bg-[#006891] transition-colors disabled:opacity-50 font-semibold flex items-center gap-2"
-                            >
-                                {loading ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                        Salvando...
-                                    </>
-                                ) : (
-                                    <>Salvar Pedido</>
-                                )}
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Modal de Sucesso - FORA do modal principal */}
+            {showSuccessModal && (
+                <SuccessModal
+                    title="Pedido Criado!"
+                    message="Seu pedido foi cadastrado com sucesso!"
+                    open={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                />
+            )}
+        </>
     );
 };
 
